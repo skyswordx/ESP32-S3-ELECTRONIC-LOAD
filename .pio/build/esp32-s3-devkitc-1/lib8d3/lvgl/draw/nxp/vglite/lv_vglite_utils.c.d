@@ -1,0 +1,8 @@
+.pio/build/esp32-s3-devkitc-1/lib8d3/lvgl/draw/nxp/vglite/lv_vglite_utils.c.o: \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/draw/nxp/vglite/lv_vglite_utils.c \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/draw/nxp/vglite/lv_vglite_utils.h \
+ d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\lv_conf_internal.h \
+ d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\lv_conf_kconfig.h \
+ C:/Users/c1rcLEmoon/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/qio_qspi/include/sdkconfig.h \
+ C:/Users/c1rcLEmoon/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/esp_common/include/esp_attr.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/lv_conf.h
