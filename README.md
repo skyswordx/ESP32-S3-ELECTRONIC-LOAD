@@ -15,4 +15,4 @@
 ├── README.md
 ```
 
-## 2. [项目文档 ✨](./document/ESP32S3.md)
+## 2. [项目文档 ✨](document/README.md)

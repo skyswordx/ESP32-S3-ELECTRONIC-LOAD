@@ -200,13 +200,13 @@
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/hal/../draw/lv_draw.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/hal/../draw/../lv_conf_internal.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/hal/../draw/../misc/lv_style.h \
- d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\font\lv_font.h \
- d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\lv_conf_internal.h \
- d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\font\lv_symbol_def.h \
- d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\misc\lv_area.h \
- d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\lv_conf_internal.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/hal/../draw/../misc/../font/lv_font.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/hal/../draw/../misc/../font/../lv_conf_internal.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/hal/../draw/../misc/../font/lv_symbol_def.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/hal/../draw/../misc/../font/../misc/lv_area.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/hal/../draw/../misc/../font/../misc/../lv_conf_internal.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/hal/../draw/../misc/lv_color.h \
- d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\lv_conf_internal.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/hal/../draw/../misc/../lv_conf_internal.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/hal/../draw/../misc/lv_assert.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/hal/../draw/../misc/lv_log.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/hal/../draw/../misc/lv_mem.h \
@@ -232,7 +232,7 @@
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/hal/../draw/sw/../../misc/lv_style.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/hal/../draw/sw/lv_draw_sw_dither.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/hal/../draw/sw/../../core/lv_obj_pos.h \
- d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\misc\lv_area.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/hal/../draw/sw/../../core/../misc/lv_area.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/hal/../draw/lv_draw_label.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/hal/../draw/../misc/lv_bidi.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/hal/../draw/lv_draw_img.h \
@@ -319,90 +319,90 @@
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/lv_extra.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/layouts/lv_layouts.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/layouts/flex/lv_flex.h \
- d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\core\lv_obj.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/layouts/flex/../../../core/lv_obj.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/layouts/grid/lv_grid.h \
- d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\core\lv_obj.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/layouts/grid/../../../core/lv_obj.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/libs/lv_libs.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/libs/bmp/lv_bmp.h \
- d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\lv_conf_internal.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/libs/bmp/../../../lv_conf_internal.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/libs/fsdrv/lv_fsdrv.h \
- d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\lv_conf_internal.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/libs/fsdrv/../../../lv_conf_internal.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/libs/png/lv_png.h \
- d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\lv_conf_internal.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/libs/png/../../../lv_conf_internal.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/libs/gif/lv_gif.h \
- d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\lvgl.h \
- d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\lvgl.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/libs/gif/../../../lvgl.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/libs/gif/../../../../lvgl.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/libs/qrcode/lv_qrcode.h \
- d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\lvgl.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/libs/qrcode/../../../lvgl.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/libs/sjpg/lv_sjpg.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/libs/freetype/lv_freetype.h \
- d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\lvgl.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/libs/freetype/../../../lvgl.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/libs/rlottie/lv_rlottie.h \
- d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\lvgl.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/libs/rlottie/../../../lvgl.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/libs/ffmpeg/lv_ffmpeg.h \
- d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\lvgl.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/libs/ffmpeg/../../../lvgl.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/others/lv_others.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/others/snapshot/lv_snapshot.h \
- d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\lv_conf_internal.h \
- d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\core\lv_obj.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/others/snapshot/../../../lv_conf_internal.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/others/snapshot/../../../core/lv_obj.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/others/monkey/lv_monkey.h \
- d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\lvgl.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/others/monkey/../../../lvgl.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/others/gridnav/lv_gridnav.h \
- d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\core\lv_obj.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/others/gridnav/../../../core/lv_obj.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/others/fragment/lv_fragment.h \
- d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\lv_conf_internal.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/others/fragment/../../../lv_conf_internal.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/others/imgfont/lv_imgfont.h \
- d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\lvgl.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/others/imgfont/../../../lvgl.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/others/msg/lv_msg.h \
- d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\core\lv_obj.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/others/msg/../../../core/lv_obj.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/others/ime/lv_ime_pinyin.h \
- d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\lvgl.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/others/ime/../../../lvgl.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/themes/lv_themes.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/themes/default/lv_theme_default.h \
- d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\core\lv_obj.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/themes/default/../../../core/lv_obj.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/themes/mono/lv_theme_mono.h \
- d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\core\lv_obj.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/themes/mono/../../../core/lv_obj.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/themes/basic/lv_theme_basic.h \
- d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\core\lv_obj.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/themes/basic/../../../core/lv_obj.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/widgets/lv_widgets.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/widgets/animimg/lv_animimg.h \
- d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\lvgl.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/widgets/animimg/../../../lvgl.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/widgets/calendar/lv_calendar.h \
- d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\widgets\lv_btnmatrix.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/widgets/calendar/../../../widgets/lv_btnmatrix.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/widgets/calendar/lv_calendar_header_arrow.h \
- d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\core\lv_obj.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/widgets/calendar/../../../core/lv_obj.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/widgets/calendar/lv_calendar_header_dropdown.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/widgets/chart/lv_chart.h \
- d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\lvgl.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/widgets/chart/../../../lvgl.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/widgets/keyboard/lv_keyboard.h \
- d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\widgets\lv_btnmatrix.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/widgets/keyboard/../../../widgets/lv_btnmatrix.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/widgets/list/lv_list.h \
- d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\core\lv_obj.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/widgets/list/../../../core/lv_obj.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/widgets/list/../../layouts/flex/lv_flex.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/widgets/menu/lv_menu.h \
- d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\core\lv_obj.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/widgets/menu/../../../core/lv_obj.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/widgets/msgbox/lv_msgbox.h \
- d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\lvgl.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/widgets/msgbox/../../../lvgl.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/widgets/meter/lv_meter.h \
- d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\lvgl.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/widgets/meter/../../../lvgl.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/widgets/spinbox/lv_spinbox.h \
- d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\lvgl.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/widgets/spinbox/../../../lvgl.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/widgets/spinner/lv_spinner.h \
- d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\lvgl.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/widgets/spinner/../../../lvgl.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/widgets/tabview/lv_tabview.h \
- d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\lvgl.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/widgets/tabview/../../../lvgl.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/widgets/tileview/lv_tileview.h \
- d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\core\lv_obj.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/widgets/tileview/../../../core/lv_obj.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/widgets/win/lv_win.h \
- d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\lvgl.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/widgets/win/../../../lvgl.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/widgets/colorwheel/lv_colorwheel.h \
- d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\lvgl.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/widgets/colorwheel/../../../lvgl.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/widgets/led/lv_led.h \
- d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\lvgl.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/widgets/led/../../../lvgl.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/widgets/imgbtn/lv_imgbtn.h \
- d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\lvgl.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/widgets/imgbtn/../../../lvgl.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/widgets/span/lv_span.h \
- d:\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\lvgl.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/widgets/span/../../../lvgl.h \
  C:/Users/c1rcLEmoon/.platformio/packages/framework-arduinoespressif32/libraries/SPI/src/SPI.h \
  C:/Users/c1rcLEmoon/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp32-hal-spi.h \
  .pio/libdeps/esp32-s3-devkitc-1/TFT_eSPI/TFT_eSPI.h \
@@ -509,4 +509,5 @@
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/demos/lv_demos.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/demos/../lvgl.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/demos/benchmark/lv_demo_benchmark.h \
- .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/demos/benchmark/../lv_demos.h
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/demos/benchmark/../lv_demos.h \
+ lib/lvgl_port/lv_port_disp.h lib/lvgl_port/lv_port_indev.h
