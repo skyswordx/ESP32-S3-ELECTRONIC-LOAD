@@ -186,7 +186,7 @@ static void touchpad_init(void)
 {
     /*Your code comes here*/
     // 我自己校准的数据
-    uint16_t calData[5] = { 223, 3596, 339, 3419, 4 };
+    uint16_t calData[5] = { 249, 3621, 237, 3591, 4 };
     tft.setTouch(calData);
 }
 

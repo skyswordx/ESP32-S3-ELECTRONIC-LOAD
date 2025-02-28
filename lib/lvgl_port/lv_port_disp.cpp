@@ -148,7 +148,7 @@ static void disp_init(void)
     // 例如：tft.begin();  //初始化配置
 
     tft.begin();  //初始化配置
-    tft.setRotation(3);//设置显示方向
+    tft.setRotation(1);//设置显示方向
 
 }
 

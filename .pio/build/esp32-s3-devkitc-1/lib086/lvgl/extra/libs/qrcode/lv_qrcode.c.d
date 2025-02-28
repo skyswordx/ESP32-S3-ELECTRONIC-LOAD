@@ -224,4 +224,5 @@
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/libs/qrcode/../../../../src/extra/widgets/imgbtn/lv_imgbtn.h \
  d:\musii-snapshot\githubrepo\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\lvgl.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/libs/qrcode/../../../../src/extra/widgets/span/lv_span.h \
- d:\musii-snapshot\githubrepo\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\lvgl.h
+ d:\musii-snapshot\githubrepo\esp32-s3-tft-lvgl\.pio\libdeps\esp32-s3-devkitc-1\lvgl\src\lvgl.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/libs/qrcode/qrcodegen.h

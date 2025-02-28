@@ -510,4 +510,5 @@
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/demos/../lvgl.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/demos/benchmark/lv_demo_benchmark.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/demos/benchmark/../lv_demos.h \
- lib/lvgl_port/lv_port_disp.h lib/lvgl_port/lv_port_indev.h
+ lib/lvgl_port/lv_port_disp.h lib/lvgl_port/lv_port_indev.h \
+ lib/generated/gui_guider.h

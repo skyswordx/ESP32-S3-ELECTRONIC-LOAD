@@ -1,0 +1,1 @@
+GEN_CSRCS += _Asuna_alpha_239x245.c _blue_alpha_98x271.c
