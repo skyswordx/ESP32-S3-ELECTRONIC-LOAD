@@ -62,8 +62,8 @@ void setup() {
   setup_ui(&guider_ui); // 初始化 gui_guider
   
   /* test */
-  setup_scr_screen(&guider_ui); // gui_guider 为每一个页面生成的，这里是名字为 screen 的页面
-  lv_scr_load(guider_ui.screen); //每一个页面的名字都是 gui_guider 结构体的元素
+  setup_scr_screen_1(&guider_ui); // gui_guider 为每一个页面生成的，这里是名字为 screen 的页面
+  lv_scr_load(guider_ui.screen_1); //每一个页面的名字都是 gui_guider 结构体的元素
 
   // lv_demo_benchmark();
 

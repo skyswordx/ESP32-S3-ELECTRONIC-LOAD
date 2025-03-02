@@ -18,16 +18,67 @@ extern "C" {
 typedef struct
 {
   
-	lv_obj_t *screen;
-	bool screen_del;
-	lv_obj_t *screen_img_1;
-	lv_obj_t *screen_img_2;
-	lv_obj_t *screen_btn_1;
-	lv_obj_t *screen_btn_1_label;
-	lv_obj_t *screen_sw_1;
-	lv_obj_t *screen_slider_1;
-	lv_obj_t *screen_ddlist_1;
-	lv_obj_t *screen_qrcode_1;
+	lv_obj_t *screen_1;
+	bool screen_1_del;
+	lv_obj_t *screen_1_img_1;
+	lv_obj_t *screen_1_img_3;
+	lv_obj_t *screen_1_btn_4;
+	lv_obj_t *screen_1_btn_4_label;
+	lv_obj_t *screen_1_img_4;
+	lv_obj_t *screen_1_btn_3;
+	lv_obj_t *screen_1_btn_3_label;
+	lv_obj_t *screen_1_btn_1;
+	lv_obj_t *screen_1_btn_1_label;
+	lv_obj_t *screen_1_spangroup_1;
+	lv_span_t *screen_1_spangroup_1_span;
+	lv_obj_t *screen_1_sw_1;
+	lv_obj_t *screen_1_spangroup_2;
+	lv_span_t *screen_1_spangroup_2_span;
+	lv_obj_t *screen_1_btn_6;
+	lv_obj_t *screen_1_btn_6_label;
+	lv_obj_t *screen_1_btn_5;
+	lv_obj_t *screen_1_btn_5_label;
+	lv_obj_t *screen_1_btn_7;
+	lv_obj_t *screen_1_btn_7_label;
+	lv_obj_t *screen_1_spangroup_3;
+	lv_span_t *screen_1_spangroup_3_span;
+	lv_obj_t *screen_1_img_5;
+	lv_obj_t *screen_1_label_1;
+	lv_obj_t *screen_1_spangroup_4;
+	lv_span_t *screen_1_spangroup_4_span;
+	lv_obj_t *screen_1_btn_8;
+	lv_obj_t *screen_1_btn_8_label;
+	lv_obj_t *screen_1_btn_9;
+	lv_obj_t *screen_1_btn_9_label;
+	lv_obj_t *screen_1_btn_10;
+	lv_obj_t *screen_1_btn_10_label;
+	lv_obj_t *screen_1_spangroup_5;
+	lv_span_t *screen_1_spangroup_5_span;
+	lv_obj_t *screen_1_spangroup_6;
+	lv_span_t *screen_1_spangroup_6_span;
+	lv_obj_t *screen_1_label_2;
+	lv_obj_t *screen_1_label_3;
+	lv_obj_t *screen_1_spangroup_7;
+	lv_span_t *screen_1_spangroup_7_span;
+	lv_obj_t *screen_1_spangroup_8;
+	lv_span_t *screen_1_spangroup_8_span;
+	lv_obj_t *screen_1_spangroup_9;
+	lv_span_t *screen_1_spangroup_9_span;
+	lv_obj_t *screen_1_label_4;
+	lv_obj_t *screen_1_spangroup_10;
+	lv_span_t *screen_1_spangroup_10_span;
+	lv_obj_t *screen_1_btn_11;
+	lv_obj_t *screen_1_btn_11_label;
+	lv_obj_t *debug_test;
+	bool debug_test_del;
+	lv_obj_t *debug_test_img_1;
+	lv_obj_t *debug_test_img_2;
+	lv_obj_t *debug_test_btn_1;
+	lv_obj_t *debug_test_btn_1_label;
+	lv_obj_t *debug_test_sw_1;
+	lv_obj_t *debug_test_slider_1;
+	lv_obj_t *debug_test_ddlist_1;
+	lv_obj_t *debug_test_qrcode_1;
 }lv_ui;
 
 typedef void (*ui_setup_scr_t)(lv_ui * ui);
@@ -51,12 +102,20 @@ void init_keyboard(lv_ui *ui);
 extern lv_ui guider_ui;
 
 
-void setup_scr_screen(lv_ui *ui);
+void setup_scr_screen_1(lv_ui *ui);
+void setup_scr_debug_test(lv_ui *ui);
+LV_IMG_DECLARE(_white_alpha_239x206);
+LV_IMG_DECLARE(_electric_sensor_3239_alpha_28x24);
+LV_IMG_DECLARE(_blue_alpha_59x240);
+LV_IMG_DECLARE(_cc_alpha_20x19);
 LV_IMG_DECLARE(_Asuna_alpha_239x245);
 LV_IMG_DECLARE(_blue_alpha_98x271);
 
 LV_FONT_DECLARE(lv_font_montserratMedium_16)
 LV_FONT_DECLARE(lv_font_montserratMedium_12)
+LV_FONT_DECLARE(lv_font_montserratMedium_23)
+LV_FONT_DECLARE(lv_font_montserratMedium_20)
+LV_FONT_DECLARE(lv_font_montserratMedium_18)
 
 
 #ifdef __cplusplus

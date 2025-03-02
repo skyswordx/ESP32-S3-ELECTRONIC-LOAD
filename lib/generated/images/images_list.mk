@@ -1,1 +1,1 @@
-GEN_CSRCS += _Asuna_alpha_239x245.c _blue_alpha_98x271.c
+GEN_CSRCS += _white_alpha_239x206.c _electric_sensor_3239_alpha_28x24.c _blue_alpha_59x240.c _cc_alpha_20x19.c _Asuna_alpha_239x245.c _blue_alpha_98x271.c
