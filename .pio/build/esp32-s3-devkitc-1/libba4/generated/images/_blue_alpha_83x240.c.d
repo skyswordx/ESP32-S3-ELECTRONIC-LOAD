@@ -1,5 +1,5 @@
-.pio/build/esp32-s3-devkitc-1/libba4/generated/setup_scr_screen_1.c.o: \
- lib/generated/setup_scr_screen_1.c \
+.pio/build/esp32-s3-devkitc-1/libba4/generated/images/_blue_alpha_83x240.c.o: \
+ lib/generated/images/_blue_alpha_83x240.c \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/lvgl.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/misc/lv_log.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/misc/../lv_conf_internal.h \
@@ -225,6 +225,4 @@
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/widgets/imgbtn/lv_imgbtn.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/widgets/imgbtn/../../../lvgl.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/widgets/span/lv_span.h \
- .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/widgets/span/../../../lvgl.h \
- lib/generated/gui_guider.h lib/generated/events_init.h \
- lib/generated/widgets_init.h
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/extra/widgets/span/../../../lvgl.h

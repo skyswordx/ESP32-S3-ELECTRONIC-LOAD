@@ -112,6 +112,9 @@ static void disp_init(void)
     // 实测从 3 变到 1 就正常了，可选的值为 0 ~3 可以在 vscode 跳转查看
 }
 ```
+
+
+[LVGL lv_label_set_text_fmt 显示只有f_lvgl浮点-CSDN博客](https://blog.csdn.net/weixin_44684950/article/details/124426341)
 ### 移植的经验总结
 
 LVGL 框架的两个核心组件就是任务调度器 (`timer_handler` 或者 `task_handler` 旧版)和系统心跳（`lv_tick_inc`）
