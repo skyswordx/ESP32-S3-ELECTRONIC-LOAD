@@ -72,6 +72,8 @@ LVGL + RTOS 部分（包括 TFT-ESPI 驱动）
 RTOS 快速入门相关
 - 感觉还行 [Learn_FreeRTOS_with_ESP32](https://gitee.com/yx_wang/learn_freertos_with_esp32#https://gitee.com/link?target=https%3A%2F%2Fblog.csdn.net%2Fwangyx1234%2Farticle%2Fdetails%2F127217253)
 	- 详情细分章节链接见 [Learn-RTOS-With-ESP32 细分链接文档](Learn-RTOS-With-ESP32.md)
+- [【壹拾捌】FreeRTOS 上用一个队列接收多个来源的数据 - 知乎](https://zhuanlan.zhihu.com/p/451984348)
+- 
  
 ### 操作时的 Trouble Shootings
 
@@ -173,3 +175,10 @@ void lvgl_task(void *pvParameters)
 
 - [🎉2025年电赛备赛资料合集—持续更新中 | 嘉立创EDA教育与开源文档中心](https://wiki.lceda.cn/zh-hans/contest/e-contests/resource/)
 - [《立创EDA硬件开发规范文档》](https://www.yuque.com/lceda_design/template/zso261/#dBBwU)，剪裁下到本地的文档在 [manual](manual.md)
+## 3d 模型获取
+
+- [▷ spi tft display 3d models 【 STLFinder 】](https://www.stlfinder.com/3dmodels/spi-tft-display/#google_vignette)
+- [DISPLAY LCD TFT 2.4" 240x320 TOUCH SPI | 3D CAD Model Library | GrabCAD](https://grabcad.com/library/display-lcd-tft-2-4-240x320-touch-spi-1)
+- [低成本LCD显示屏4.3、5、7英寸Arduino SPI I2C TFT触摸屏 Parasolid 3D模型下载 - 迪威模型](https://www.3dwhere.com/models/s4fv15syxuspa8om)
+- [ESP32-S3-DEVKITC-1U-N8R2 EDA | CAD 3D 模型下载| Digikey](https://www.digikey.cn/zhs/models/16162648)
+- [电池 3D模型下载,CAD图纸下载_三维模型网www.sanweimoxing.com](https://www.sanweimoxing.com/t-%E7%94%B5%E6%B1%A0-1.html)

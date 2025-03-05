@@ -11,15 +11,6 @@
 // 包含使用 GUI guider 生成的 GUI 部分
 #include "gui_guider.h"
 
-// 包含自定义的编码器类（依赖 ESP32Encoder 库）
-#include "our_encoder.h"
-/******** Encoder Setup *****/
-#define ENCODER_1_PIN_A 17
-#define ENCODER_1_PIN_B 18
-#define ENCODER_1_PIN_S 16
-encoder_handle_t encoder1(ENCODER_1_PIN_A, ENCODER_1_PIN_B, ENCODER_1_PIN_S);
-
-
 /******** LVGL-SetUP *******/
 // Use hardware SPI
 TFT_eSPI tft = TFT_eSPI();
@@ -35,18 +26,12 @@ SemaphoreHandle_t gui_xMutex;  // gui 互斥锁句柄，LVGL 线程不安全，�
 // GUI 更新使用的消息队列
 QueueHandle_t queue_handle; // 消息队列句柄
 const int queue_element_size = 10; // 消息队列元素大小
-// 定义一个枚举类型，表示发送消息的源设备 id
-enum DeviceId {
-  DEVICE_DUMMY_SENSOR = 0,
-  DEVICE_ENCODER = 1,
-  DEVICE_UNKNOWN = 99
-};
-
 typedef struct {
-  DeviceId device_id; // 设备ID
-  float value; // 存放的数据（简单设置为一个值，后期有需求再改为专门的结构体
+  float measured_Current;
+  float measured_Voltage;
+  float measured_Power;
+  // ...
 } message_t;
-
 
 void lvgl_task(void *pvParameters)
 {
@@ -62,46 +47,6 @@ void lvgl_task(void *pvParameters)
   vTaskDelete(NULL);
 }
 
-void encoder1_task(void *pvParameters)
-{
-  message_t msg;
-  while(1)
-  {
-    printf("\n[encoder1_task] running on core: %d, Free stack space: %d", xPortGetCoreID(), uxTaskGetStackHighWaterMark(NULL));
-    
-    // 获取旋转编码器数据
-    msg.device_id = DEVICE_ENCODER;
-    int64_t count = encoder1.read_count_accum_clear();
-
-
-
-    // 对旋转编码器的值进行处理
-    if (count < 0) {
-      msg.value = 0;
-    } else {
-      if (encoder1.mode == QUAD) {
-        msg.value = count;
-      } else {
-        msg.value = count/4.0;
-      }
-    }
-    
-    printf("\n[encoder1_task] encoder1 count: %lld", msg.value);
-
-    int return_value = xQueueSend(queue_handle, (void *)&msg, 0);
-    if (return_value == pdTRUE) {
-      printf("\n[encoder1_task] sent message  to the queue successfully\n");
-    } else if (return_value == errQUEUE_FULL) {
-      printf("\n[encoder1_task] failed to send message to queue, queue is full\n");
-    } else {
-      printf("\n[encoder1_task] failed to send message to queue\n");
-    }
-
-    vTaskDelay( 1000 );
-  }
-}
-
-
 void get_dummy_sensor_data_task(void *pvParameters)
 {
   message_t msg;
@@ -110,9 +55,9 @@ void get_dummy_sensor_data_task(void *pvParameters)
     printf("\n[get_sensor_data_task] running on core: %d, Free stack space: %d", xPortGetCoreID(), uxTaskGetStackHighWaterMark(NULL));
 
     // 模拟传感器数据
-    msg.device_id = DEVICE_DUMMY_SENSOR;
-    msg.value = 4.0 + (rand() % 100) / 100.0;
-   
+    msg.measured_Current = 4.0 + (rand() % 100) / 100.0;
+    msg.measured_Voltage = 5.0 + (rand() % 100) / 100.0;
+    msg.measured_Power = 20.0 + (rand() % 100) / 100.0;
 
     int return_value = xQueueSend(queue_handle, (void *)&msg, 0);
     if (return_value == pdTRUE) {
@@ -145,22 +90,13 @@ void update_gui_task(void *pvParameters)
           // if (!isnan(msg.measured_Current)){
           //   if ( guider_ui.xxx_label !=NULL){ lv_label_set_text_fmt(guider_ui.xxx_label, "%.3f", msg.measured_Current); }
           // }
-          /*
-            printf("\n[update_gui_task] using msg.measured_Current: %.3f", msg.value);
+          if (!isnan(msg.measured_Current)){
+            if ( guider_ui.main_page_measure_current_label !=NULL){ 
+              lv_label_set_text_fmt(guider_ui.main_page_measure_current_label, "%.3f", msg.measured_Current);
+              printf("\n[update_gui_task] using msg.measured_Current: %.3f", msg.measured_Current);
+            }
             printf("\n[update_gui_task] updated lvgl label");
-          */
-
-          switch (msg.device_id)
-          {
-          case DEVICE_DUMMY_SENSOR:
-            if ( guider_ui.main_page_measure_current_label !=NULL){ lv_label_set_text_fmt(guider_ui.main_page_measure_current_label, "%.3f", msg.value); }
-            break;
-          case DEVICE_ENCODER:
-            if (guider_ui.main_page_set_current_label != NULL){ lv_label_set_text_fmt(guider_ui.main_page_set_current_label, "%.3f", msg.value); }
-          default:
-            break;
           }
-
           xSemaphoreGive(gui_xMutex); // 释放互斥锁
         }
       } else {
@@ -243,15 +179,6 @@ void setup() {
               1024*4,
               NULL,
               1,
-              NULL,
-              1
-            );
-
-  xTaskCreatePinnedToCore(encoder1_task,
-              "encoder1_task",
-              1024*4,
-              NULL,
-              2,
               NULL,
               1
             );
