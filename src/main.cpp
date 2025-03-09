@@ -30,11 +30,14 @@ lv_ui guider_ui;
 /******** RTOS-SetUP *******/
 TaskHandle_t lvgl_task_handle; // LVGL 任务结构句柄
 SemaphoreHandle_t gui_xMutex;  // gui 互斥锁句柄，LVGL 线程不安全，需要加锁
-
+SemaphoreHandle_t button_xBinarySemaphore; // 按键二值信号量
 
 // GUI 更新使用的消息队列
-QueueHandle_t queue_handle; // 消息队列句柄
+QueueHandle_t sensor_queue_handle; // 消息队列句柄
 const int queue_element_size = 10; // 消息队列元素大小
+QueueHandle_t button_queue_handle; // 按键消息队列句柄
+
+
 // 定义一个枚举类型，表示发送消息的源设备 id
 enum DeviceId {
   DEVICE_DUMMY_SENSOR = 0,
@@ -67,13 +70,11 @@ void encoder1_task(void *pvParameters)
   message_t msg;
   while(1)
   {
-    printf("\n[encoder1_task] running on core: %d, Free stack space: %d", xPortGetCoreID(), uxTaskGetStackHighWaterMark(NULL));
+    // printf("\n[encoder1_task] running on core: %d, Free stack space: %d", xPortGetCoreID(), uxTaskGetStackHighWaterMark(NULL));
     
     // 获取旋转编码器数据
     msg.device_id = DEVICE_ENCODER;
     int64_t count = encoder1.read_count_accum_clear();
-
-
 
     // 对旋转编码器的值进行处理
     if (count < 0) {
@@ -86,15 +87,15 @@ void encoder1_task(void *pvParameters)
       }
     }
     
-    printf("\n[encoder1_task] encoder1 count: %lld", msg.value);
+    // printf("\n[encoder1_task] encoder1 count: %lld", msg.value);
 
-    int return_value = xQueueSend(queue_handle, (void *)&msg, 0);
+    int return_value = xQueueSend(sensor_queue_handle, (void *)&msg, 0);
     if (return_value == pdTRUE) {
-      printf("\n[encoder1_task] sent message  to the queue successfully\n");
+      // printf("\n[encoder1_task] sent message  to the queue successfully\n");
     } else if (return_value == errQUEUE_FULL) {
-      printf("\n[encoder1_task] failed to send message to queue, queue is full\n");
+      // printf("\n[encoder1_task] failed to send message to queue, queue is full\n");
     } else {
-      printf("\n[encoder1_task] failed to send message to queue\n");
+      // printf("\n[encoder1_task] failed to send message to queue\n");
     }
 
     vTaskDelay( 1000 );
@@ -107,20 +108,20 @@ void get_dummy_sensor_data_task(void *pvParameters)
   message_t msg;
   while(1)
   {
-    printf("\n[get_sensor_data_task] running on core: %d, Free stack space: %d", xPortGetCoreID(), uxTaskGetStackHighWaterMark(NULL));
+    // printf("\n[get_sensor_data_task] running on core: %d, Free stack space: %d", xPortGetCoreID(), uxTaskGetStackHighWaterMark(NULL));
 
     // 模拟传感器数据
     msg.device_id = DEVICE_DUMMY_SENSOR;
     msg.value = 4.0 + (rand() % 100) / 100.0;
    
 
-    int return_value = xQueueSend(queue_handle, (void *)&msg, 0);
+    int return_value = xQueueSend(sensor_queue_handle, (void *)&msg, 0);
     if (return_value == pdTRUE) {
-      printf("\n[get_sensor_data_task] sent message  to the queue successfully\n");
+      // printf("\n[get_sensor_data_task] sent message  to the queue successfully\n");
     } else if (return_value == errQUEUE_FULL) {
-      printf("\n[get_sensor_data_task] failed to send message to queue, queue is full\n");
+      // printf("\n[get_sensor_data_task] failed to send message to queue, queue is full\n");
     } else {
-      printf("\n[get_sensor_data_task] failed to send message to queue\n");
+      // printf("\n[get_sensor_data_task] failed to send message to queue\n");
     }
 
     vTaskDelay( 1000 );
@@ -133,11 +134,11 @@ void update_gui_task(void *pvParameters)
   message_t msg;
   while(1)
   {
-    printf("\n[update_gui_task] running on core: %d, Free stack space: %d\n", xPortGetCoreID(), uxTaskGetStackHighWaterMark(NULL));
+    // printf("\n[update_gui_task] running on core: %d, Free stack space: %d\n", xPortGetCoreID(), uxTaskGetStackHighWaterMark(NULL));
 
-    if( queue_handle != NULL){ // 检查消息队列是否创建成功
-      if (xQueueReceive(queue_handle, &msg, portMAX_DELAY) == pdTRUE) {
-        printf("\n[update_gui_task] received message from queue");
+    if( sensor_queue_handle != NULL){ // 检查消息队列是否创建成功
+      if (xQueueReceive(sensor_queue_handle, &msg, portMAX_DELAY) == pdTRUE) {
+        // printf("\n[update_gui_task] received message from queue");
 
         if (xSemaphoreTake(gui_xMutex, portMAX_DELAY) == pdTRUE) { // 获取互斥锁
           // 检测元素是否准备齐全并更新 GUI
@@ -164,10 +165,77 @@ void update_gui_task(void *pvParameters)
           xSemaphoreGive(gui_xMutex); // 释放互斥锁
         }
       } else {
-        printf("\n[update_gui_task] failed to receive message from queue\n");
+        // printf("\n[update_gui_task] failed to receive message from queue\n");
       }
     }
   }
+}
+
+
+void button_handler_task(void *pvParameters){
+
+  BaseType_t button_down = pdFALSE;
+  BaseType_t button_up = pdFALSE;
+  int time = 0;
+
+  gpio_num_t GPIO_PIN;
+  while(1){
+  
+    xSemaphoreTake(button_xBinarySemaphore, portMAX_DELAY); // 总是保持阻塞等待二值信号量
+
+
+    printf("\n[button_handler_task] running on core: %d, Free stack space: %d", xPortGetCoreID(), uxTaskGetStackHighWaterMark(NULL));
+    if ( button_queue_handle != NULL){ // 检查消息队列是否创建成功
+      if (xQueueReceive(button_queue_handle, &GPIO_PIN, portMAX_DELAY) == pdTRUE) {
+        printf("\n[button_handler_task] received message from queue");
+
+        /* 收到中断数据，开始检测 */
+
+        // 记录下用户按下按键的时间点
+        if (gpio_get_level(GPIO_PIN) == LOW) {
+          button_down = pdTRUE;
+          time = millis();
+
+        // 记录下用户松开按键的时间点  
+        } else if (button_down == pdTRUE) {
+          
+          button_up = pdTRUE;
+          // 如果当前GPIO口的电平已经记录为按下，则开始减去上次按下按键的时间点
+          time = millis() - time;
+        } 
+        if (button_down == pdTRUE && button_up == pdTRUE) {
+          // printf("\n[button_handler_task] button pressed for %d ms", time);
+          button_down = pdFALSE;
+          button_up = pdFALSE;
+
+          if (time < 1000000) { // 1s
+            printf("\n[button_handler_task] short press");
+          } else {
+            printf("\n[button_handler_task] long press");
+          }
+        }
+      } else {
+        printf("\n[button_handler_task] failed to receive message from queue\n");
+      }
+    }
+  }
+}
+
+
+
+void IRAM_ATTR button_press_ISR(void *arg ){ // 产生 GPIO 中断时调用
+  BaseType_t xHigherPriorityTaskWoken = pdFALSE; 
+  // 初始化为 pdFALSE，以便最后把耗时的数据处理移出中断给辅助任务处理
+  
+  // 释放二值信号量，对应阻塞于此信号量的任务（辅助任务）将被唤醒
+  xSemaphoreGiveFromISR(button_xBinarySemaphore, &xHigherPriorityTaskWoken);
+
+  gpio_num_t GPIO_PIN = encoder1.pin_S;
+  xQueueSendFromISR(button_queue_handle, &GPIO_PIN, &xHigherPriorityTaskWoken); // 发送消息到按键消息队列
+
+ 
+  portYIELD_FROM_ISR(xHigherPriorityTaskWoken); 
+  // 如果有更高优先级的任务需要运行，立即切换到那个任务（辅助任务，因为此任务设定为最高优先级）
 }
 
 static void system_init(void) {
@@ -202,11 +270,12 @@ void setup() {
   // lv_demo_benchmark();
 
   /* 创建消息队列 */
-  // Create the queue which will have <queue_element_size> number of elements, each of size `message_t` and pass the address to <queue_handle>.
-  queue_handle = xQueueCreate(queue_element_size, sizeof(message_t));
+  // Create the queue which will have <queue_element_size> number of elements, each of size `message_t` and pass the address to <sensor_queue_handle>.
+  sensor_queue_handle = xQueueCreate(queue_element_size, sizeof(message_t));
+  button_queue_handle = xQueueCreate(2, sizeof(gpio_num_t));
 
   // Check if the queue was successfully created
-  if (queue_handle == NULL) {
+  if (sensor_queue_handle == NULL) {
     printf("Queue could not be created. Halt.");
     while (1) delay(1000);  // Halt at this point as is not possible to continue
   }
@@ -255,6 +324,26 @@ void setup() {
               NULL,
               1
             );
+
+  // // 创建二值信号量
+  // button_xBinarySemaphore = xSemaphoreCreateBinary();
+  // if (button_xBinarySemaphore != NULL) {
+  //   // Core 1 运行按键处理任务
+  //   xTaskCreatePinnedToCore(button_handler_task,
+  //             "button_task",
+  //             1024*4,
+  //             NULL,
+  //             4, // 必须是最高优先级
+  //             NULL,
+  //             1
+  //           );
+  // // 绑定 GPIO (ENCODER_1_PIN_S)中断 和中断处理函数
+  // // 注册中断服务
+  // gpio_set_intr_type((gpio_num_t)encoder1.pin_S, GPIO_INTR_ANYEDGE);
+	// gpio_install_isr_service(0);
+	// gpio_isr_handler_add((gpio_num_t)encoder1.pin_S, button_press_ISR, (void *) &encoder1.pin_S);
+  // // 设置 GPIO 中断类型
+  // }
 
 }
 

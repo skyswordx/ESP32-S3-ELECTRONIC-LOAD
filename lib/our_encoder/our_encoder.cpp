@@ -2,41 +2,31 @@
 
 encoder_handle_t::encoder_handle_t(int pin_A, int pin_B, int pin_S)
 {
-    this->pin_A = pin_A;
-    this->pin_B = pin_B;
-    this->pin_S = pin_S;
+    this->pin_A = (gpio_num_t)pin_A;
+    this->pin_B = (gpio_num_t)pin_B;
+    this->pin_S = (gpio_num_t)pin_S;
     this->total_count = 0;
     this->single_count = 0;
     this->encoder.attachFullQuad(pin_A, pin_B);
     this->encoder.setCount(0);
 
-    pinMode(pin_S, INPUT);
     //配置GPIO，下降沿和上升沿触发中断
 	gpio_config_t io_conf;
 	io_conf.intr_type = GPIO_INTR_ANYEDGE;
-	io_conf.pin_bit_mask = 1 << pin_S;
+	io_conf.pin_bit_mask = 1 << pin_S; // 为 GPIO pin_S 设置中断
 	io_conf.mode = GPIO_MODE_INPUT;
-	io_conf.pull_up_en = 1;
+	io_conf.pull_up_en = GPIO_PULLUP_ENABLE;
 	gpio_config(&io_conf);
 
-
-
-
-
-
-
-
-
-
-
     
+	// 中断注册在主函数
+	
+   
 
-	gpio_set_intr_type(key_gpio_pin, GPIO_INTR_ANYEDGE);
-	gpio_evt_queue = xQueueCreate(2, sizeof(uint32_t));
-    //注册中断服务
-	gpio_install_isr_service(0);
-	gpio_isr_handler_add(key_gpio_pin, gpio_isr_handler, (void *) key_gpio_pin);
 }
+
+
+
 
 
 int64_t encoder_handle_t::read_count_accum_clear()
@@ -59,20 +49,18 @@ void encoder_handle_t::set_mode(encoder_mode_t mode)
     this->mode = mode;
 }
 
-void encoder_handle_t::check_press_to_change_mode()
+void encoder_handle_t::switch_mode()
 {
-    if (this->is_pressed())
+
+    if (this->mode == QUAD)
     {
-        if (this->mode == QUAD)
-        {
-            this->mode = SINGLE;
-        }
-        else
-        {
-            this->mode = QUAD;
-        }
+        this->mode = SINGLE;
     }
+    else
+    {
+        this->mode = QUAD;
+    }
+}
 
     
 
-}

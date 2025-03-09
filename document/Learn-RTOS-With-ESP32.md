@@ -25,3 +25,8 @@ LVGL+RTOS
 - 消息队列
 	- [【FreeRTOS】详细讲解FreeRTOS中消息队列并通过示例讲述其用法_深入解析freertos消息队列及示例用法详解-CSDN博客](https://blog.csdn.net/qq_53960242/article/details/128795993)
 	- https://github.com/0015/ThatProject/tree/master/ESP32_LVGL/LVGL9
+
+
+- [【壹拾捌】FreeRTOS 上用一个队列接收多个来源的数据 - 知乎](https://zhuanlan.zhihu.com/p/451984348)
+- RTOS 中断
+	- [【ESP32+freeRTOS学习笔记-(七)中断管理】_esp32 freertos中断延时-CSDN博客](https://blog.csdn.net/weixin_45499326/article/details/128631454)

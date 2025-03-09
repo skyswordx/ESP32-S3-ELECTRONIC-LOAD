@@ -19,8 +19,11 @@
 
 采用核心板 + 功率板分开，中间使用排针连接
 - 核心板留有另一组排针和 tft SPI 显示屏连线
+- 泪滴
+	- [立创eda学习笔记二十一：添加、移除泪滴_立创eda泪滴-CSDN博客](https://blog.csdn.net/gutie_bartholomew/article/details/123069415)
 
-
+文档
+- [泪滴 | 嘉立创EDA专业版用户指南](https://prodocs.lceda.cn/cn/pcb/tools-teardrop/index.html)
 ## 恒流指标
 
 基本指标
@@ -72,8 +75,7 @@ LVGL + RTOS 部分（包括 TFT-ESPI 驱动）
 RTOS 快速入门相关
 - 感觉还行 [Learn_FreeRTOS_with_ESP32](https://gitee.com/yx_wang/learn_freertos_with_esp32#https://gitee.com/link?target=https%3A%2F%2Fblog.csdn.net%2Fwangyx1234%2Farticle%2Fdetails%2F127217253)
 	- 详情细分章节链接见 [Learn-RTOS-With-ESP32 细分链接文档](Learn-RTOS-With-ESP32.md)
-- [【壹拾捌】FreeRTOS 上用一个队列接收多个来源的数据 - 知乎](https://zhuanlan.zhihu.com/p/451984348)
-- 
+
  
 ### 操作时的 Trouble Shootings
 
