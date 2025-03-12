@@ -514,4 +514,8 @@
  lib/generated/gui_guider.h lib/our_encoder/our_encoder.h \
  .pio/libdeps/esp32-s3-devkitc-1/ESP32Encoder/src/ESP32Encoder.h \
  C:/Users/c1rcLEmoon/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/driver/include/driver/pcnt.h \
- C:/Users/c1rcLEmoon/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/hal/include/hal/pcnt_types.h
+ C:/Users/c1rcLEmoon/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/hal/include/hal/pcnt_types.h \
+ lib/our_ina226/our_ina226.h \
+ C:/Users/c1rcLEmoon/.platformio/packages/framework-arduinoespressif32/libraries/Wire/src/Wire.h \
+ C:/Users/c1rcLEmoon/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp32-hal.h \
+ .pio/libdeps/esp32-s3-devkitc-1/INA226/INA226.h

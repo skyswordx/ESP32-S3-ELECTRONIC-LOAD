@@ -11,25 +11,5 @@ typedef struct {
   float measured_power; // 功率值
 }ina226_data_t;
 
-class ina226_handle_t
-{
-    public:
-        INA226 ina_device(0x40);
-
-        ina226_data_t ina226_data;
-        
-        float bus_voltage;
-        float shunt_voltage_mV;
-        float current_mA;
-        float power_mW;
-
-        
-
-        ina226_handle_t();
-        void update_all_data();
-        
-};
-
-
 
 #endif // OUR_INA226

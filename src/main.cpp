@@ -21,7 +21,7 @@
 #define ENCODER_1_PIN_S 16
 encoder_handle_t encoder1(ENCODER_1_PIN_A, ENCODER_1_PIN_B, ENCODER_1_PIN_S);
 
-ina226_handle_t ina226;
+INA226 ina226_device(0x40); // INA226 电流传感器
 
 /******** LVGL-SetUP *******/
 // Use hardware SPI
@@ -157,10 +157,11 @@ void get_ina226_data_task(void *pvParameters)
 
 
     msg.device_id = DEVICE_INA226;
-    ina226.update_all_data();
-    msg.ina226_data.measured_current = ina226.current_mA;
-    msg.ina226_data.measured_voltage = ina226.bus_voltage;
-    msg.ina226_data.measured_power = ina226.power_mW;
+  
+    msg.ina226_data.measured_current = ina226_device.getCurrent_mA();
+    msg.ina226_data.measured_voltage = ina226_device.getBusVoltage();
+    msg.ina226_data.measured_power = ina226_device.getPower_mW();
+
    
     int return_value = xQueueSend(sensor_queue_handle, (void *)&msg, 0);
     if (return_value == pdTRUE) {
