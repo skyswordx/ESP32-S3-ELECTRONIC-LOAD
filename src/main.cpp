@@ -71,6 +71,19 @@ void lvgl_task(void *pvParameters)
   vTaskDelete(NULL);
 }
 
+
+static void switch_event_handler(lv_event_t* event){
+  lv_event_code_t event_code = lv_event_get_code(event);
+
+  if (event_code == LV_EVENT_VALUE_CHANGED){
+    // 任何事件都会触发回调函数，当值切换时执行
+    /* 回调函数执行 */
+    printf("xxxxxxx");
+  }
+}
+
+// lv_obj_add_event_cb(sw_obj, switch_event_handler, LV_EVENT_ALL, NULL);
+
 void encoder1_task(void *pvParameters)
 {
   message_t msg;

@@ -184,3 +184,7 @@ void lvgl_task(void *pvParameters)
 - [低成本LCD显示屏4.3、5、7英寸Arduino SPI I2C TFT触摸屏 Parasolid 3D模型下载 - 迪威模型](https://www.3dwhere.com/models/s4fv15syxuspa8om)
 - [ESP32-S3-DEVKITC-1U-N8R2 EDA | CAD 3D 模型下载| Digikey](https://www.digikey.cn/zhs/models/16162648)
 - [电池 3D模型下载,CAD图纸下载_三维模型网www.sanweimoxing.com](https://www.sanweimoxing.com/t-%E7%94%B5%E6%B1%A0-1.html)
+
+
+https://deepinout.com/lvgl-tutorials/lvgl-widgets/lvgl-lv_chart.html
+https://zhuanlan.zhihu.com/p/570310650
