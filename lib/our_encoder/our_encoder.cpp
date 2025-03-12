@@ -20,12 +20,7 @@ encoder_handle_t::encoder_handle_t(int pin_A, int pin_B, int pin_S)
 
     
 	// 中断注册在主函数
-	
-   
-
 }
-
-
 
 
 

@@ -13,12 +13,15 @@
 
 // 包含自定义的编码器类（依赖 ESP32Encoder 库）
 #include "our_encoder.h"
+#include "our_ina226.h"
+
 /******** Encoder Setup *****/
 #define ENCODER_1_PIN_A 17
 #define ENCODER_1_PIN_B 18
 #define ENCODER_1_PIN_S 16
 encoder_handle_t encoder1(ENCODER_1_PIN_A, ENCODER_1_PIN_B, ENCODER_1_PIN_S);
 
+ina226_handle_t ina226;
 
 /******** LVGL-SetUP *******/
 // Use hardware SPI
@@ -39,15 +42,18 @@ QueueHandle_t button_queue_handle; // 按键消息队列句柄
 
 
 // 定义一个枚举类型，表示发送消息的源设备 id
-enum DeviceId {
+enum DeviceId_t {
   DEVICE_DUMMY_SENSOR = 0,
   DEVICE_ENCODER = 1,
+  DEVICE_INA226 = 2,
   DEVICE_UNKNOWN = 99
 };
 
+
 typedef struct {
-  DeviceId device_id; // 设备ID
+  DeviceId_t device_id; // 设备ID
   float value; // 存放的数据（简单设置为一个值，后期有需求再改为专门的结构体
+  ina226_data_t ina226_data; // INA226 传感器数据
 } message_t;
 
 
@@ -129,6 +135,34 @@ void get_dummy_sensor_data_task(void *pvParameters)
 }
 
 
+void get_ina226_data_task(void *pvParameters)
+{
+  message_t msg;
+  while(1)
+  {
+    // printf("\n[get_ina226_data_task] running on core: %d, Free stack space: %d", xPortGetCoreID(), uxTaskGetStackHighWaterMark(NULL));
+
+
+    msg.device_id = DEVICE_INA226;
+    ina226.update_all_data();
+    msg.ina226_data.measured_current = ina226.current_mA;
+    msg.ina226_data.measured_voltage = ina226.bus_voltage;
+    msg.ina226_data.measured_power = ina226.power_mW;
+   
+    int return_value = xQueueSend(sensor_queue_handle, (void *)&msg, 0);
+    if (return_value == pdTRUE) {
+      // printf("\n[get_ina226_data_task] sent message  to the queue successfully\n");
+    } else if (return_value == errQUEUE_FULL) {
+      // printf("\n[get_ina226_data_task] failed to send message to queue, queue is full\n");
+    } else {
+      // printf("\n[get_ina226_data_task] failed to send message to queue\n");
+    }
+
+    vTaskDelay( 1000 );
+  }
+}
+
+
 void update_gui_task(void *pvParameters)
 {
   message_t msg;
@@ -153,8 +187,11 @@ void update_gui_task(void *pvParameters)
 
           switch (msg.device_id)
           {
-          case DEVICE_DUMMY_SENSOR:
-            if ( guider_ui.main_page_measure_current_label !=NULL){ lv_label_set_text_fmt(guider_ui.main_page_measure_current_label, "%.3f", msg.value); }
+          case DEVICE_INA226:
+            if ( guider_ui.main_page_measure_current_label !=NULL){ lv_label_set_text_fmt(guider_ui.main_page_measure_current_label, "%.3f", msg.ina226_data.measured_current); }
+            if ( guider_ui.main_page_measure_voltage_label !=NULL){ lv_label_set_text_fmt(guider_ui.main_page_measure_voltage_label, "%.3f", msg.ina226_data.measured_voltage); }
+            if ( guider_ui.main_page_measure_power_label !=NULL){ lv_label_set_text_fmt(guider_ui.main_page_measure_power_label, "%.3f", msg.ina226_data.measured_power); }
+            if ( guider_ui.main_page_measure_register_label !=NULL){ lv_label_set_text_fmt(guider_ui.main_page_measure_register_label, "%.3f", 666); }
             break;
           case DEVICE_ENCODER:
             if (guider_ui.main_page_set_current_label != NULL){ lv_label_set_text_fmt(guider_ui.main_page_set_current_label, "%.3f", msg.value); }
@@ -324,6 +361,8 @@ void setup() {
               NULL,
               1
             );
+
+  /* 暂时不使用这个旋转编码器的 GPIO 硬件中断*/
 
   // // 创建二值信号量
   // button_xBinarySemaphore = xSemaphoreCreateBinary();
