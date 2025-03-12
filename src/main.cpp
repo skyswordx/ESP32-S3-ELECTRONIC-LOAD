@@ -89,7 +89,7 @@ void encoder1_task(void *pvParameters)
   message_t msg;
   while(1)
   {
-    // printf("\n[encoder1_task] running on core: %d, Free stack space: %d", xPortGetCoreID(), uxTaskGetStackHighWaterMark(NULL));
+    printf("\n[encoder1_task] running on core: %d, Free stack space: %d", xPortGetCoreID(), uxTaskGetStackHighWaterMark(NULL));
     
     // 获取旋转编码器数据
     msg.device_id = DEVICE_ENCODER;
@@ -127,7 +127,7 @@ void get_dummy_sensor_data_task(void *pvParameters)
   message_t msg;
   while(1)
   {
-    // printf("\n[get_sensor_data_task] running on core: %d, Free stack space: %d", xPortGetCoreID(), uxTaskGetStackHighWaterMark(NULL));
+    printf("\n[get_sensor_data_task] running on core: %d, Free stack space: %d", xPortGetCoreID(), uxTaskGetStackHighWaterMark(NULL));
 
     // 模拟传感器数据
     msg.device_id = DEVICE_DUMMY_SENSOR;
@@ -153,7 +153,7 @@ void get_ina226_data_task(void *pvParameters)
   message_t msg;
   while(1)
   {
-    // printf("\n[get_ina226_data_task] running on core: %d, Free stack space: %d", xPortGetCoreID(), uxTaskGetStackHighWaterMark(NULL));
+    printf("\n[get_ina226_data_task] running on core: %d, Free stack space: %d", xPortGetCoreID(), uxTaskGetStackHighWaterMark(NULL));
 
 
     msg.device_id = DEVICE_INA226;
@@ -182,7 +182,7 @@ void update_gui_task(void *pvParameters)
   message_t msg;
   while(1)
   {
-    // printf("\n[update_gui_task] running on core: %d, Free stack space: %d\n", xPortGetCoreID(), uxTaskGetStackHighWaterMark(NULL));
+    printf("\n[update_gui_task] running on core: %d, Free stack space: %d\n", xPortGetCoreID(), uxTaskGetStackHighWaterMark(NULL));
 
     if( sensor_queue_handle != NULL){ // 检查消息队列是否创建成功
       if (xQueueReceive(sensor_queue_handle, &msg, portMAX_DELAY) == pdTRUE) {
@@ -205,7 +205,7 @@ void update_gui_task(void *pvParameters)
             if ( guider_ui.main_page_measure_current_label !=NULL){ lv_label_set_text_fmt(guider_ui.main_page_measure_current_label, "%.3f", msg.ina226_data.measured_current); }
             if ( guider_ui.main_page_measure_voltage_label !=NULL){ lv_label_set_text_fmt(guider_ui.main_page_measure_voltage_label, "%.3f", msg.ina226_data.measured_voltage); }
             if ( guider_ui.main_page_measure_power_label !=NULL){ lv_label_set_text_fmt(guider_ui.main_page_measure_power_label, "%.3f", msg.ina226_data.measured_power); }
-            if ( guider_ui.main_page_measure_register_label !=NULL){ lv_label_set_text_fmt(guider_ui.main_page_measure_register_label, "%.3f", 666); }
+            // if ( guider_ui.main_page_measure_register_label !=NULL){ lv_label_set_text_fmt(guider_ui.main_page_measure_register_label, "%.3f", 666); }
             break;
           case DEVICE_ENCODER:
             if (guider_ui.main_page_set_current_label != NULL){ lv_label_set_text_fmt(guider_ui.main_page_set_current_label, "%.3f", msg.value); }
@@ -216,7 +216,7 @@ void update_gui_task(void *pvParameters)
           xSemaphoreGive(gui_xMutex); // 释放互斥锁
         }
       } else {
-        // printf("\n[update_gui_task] failed to receive message from queue\n");
+        printf("\n[update_gui_task] failed to receive message from queue\n");
       }
     }
   }
@@ -313,6 +313,13 @@ void setup() {
   lv_port_disp_init(); // 初始化绑定显示接口
   lv_port_indev_init(); // 初始化和绑定触摸接口
 
+  // 初始化 INA226 电流传感器
+  Wire.begin();
+  if (!ina226_device.begin()) {
+    printf("could not connect. Fix and Reboot");
+  }
+  ina226_device.setMaxCurrentShunt(1, 0.002);
+
   setup_ui(&guider_ui); // 初始化 gui_guider
   
   /* 挂起 GUI guider 生成的页面 */
@@ -349,14 +356,14 @@ void setup() {
             );
 
   // Core 1 运行（获取传感器数据任务）+ （更新 GUI 任务）
-  xTaskCreatePinnedToCore(get_dummy_sensor_data_task,
-              "get_sensor_data_task",
-              1024*4,
-              NULL,
-              2,
-              NULL,
-              1
-            );
+  // xTaskCreatePinnedToCore(get_dummy_sensor_data_task,
+  //             "get_sensor_data_task",
+  //             1024*4,
+  //             NULL,
+  //             2,
+  //             NULL,
+  //             1
+  //           );
   
   xTaskCreatePinnedToCore(update_gui_task,
               "update_gui_task",
@@ -375,6 +382,15 @@ void setup() {
               NULL,
               1
             );
+
+  // xTaskCreatePinnedToCore(get_ina226_data_task,
+  //             "get_ina226_data_task",
+  //             1024*4,
+  //             NULL,
+  //             2,
+  //             NULL,
+  //             1
+  //           );
 
   /* 暂时不使用这个旋转编码器的 GPIO 硬件中断*/
 
