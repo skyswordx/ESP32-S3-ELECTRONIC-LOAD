@@ -25,19 +25,11 @@ typedef struct
 	lv_obj_t *main_page_btn_4;
 	lv_obj_t *main_page_btn_4_label;
 	lv_obj_t *main_page_img_4;
-	lv_obj_t *main_page_btn_3;
-	lv_obj_t *main_page_btn_3_label;
-	lv_obj_t *main_page_btn_1;
-	lv_obj_t *main_page_btn_1_label;
 	lv_obj_t *main_page_spangroup_1;
 	lv_span_t *main_page_spangroup_1_span;
 	lv_obj_t *main_page_sw_1;
 	lv_obj_t *main_page_spangroup_2;
 	lv_span_t *main_page_spangroup_2_span;
-	lv_obj_t *main_page_btn_6;
-	lv_obj_t *main_page_btn_6_label;
-	lv_obj_t *main_page_btn_5;
-	lv_obj_t *main_page_btn_5_label;
 	lv_obj_t *main_page_btn_7;
 	lv_obj_t *main_page_btn_7_label;
 	lv_obj_t *main_page_spangroup_3;
@@ -54,17 +46,17 @@ typedef struct
 	lv_obj_t *main_page_btn_10_label;
 	lv_obj_t *main_page_spangroup_5;
 	lv_span_t *main_page_spangroup_5_span;
-	lv_obj_t *main_page_measure_register_label;
-	lv_span_t *main_page_measure_register_label_span;
+	lv_obj_t *main_page_spangroup_6;
+	lv_span_t *main_page_spangroup_6_span;
 	lv_obj_t *main_page_measure_voltage_label;
-	lv_obj_t *main_page_label_3;
+	lv_obj_t *main_page_measure_register_label;
 	lv_obj_t *main_page_spangroup_7;
 	lv_span_t *main_page_spangroup_7_span;
 	lv_obj_t *main_page_spangroup_8;
 	lv_span_t *main_page_spangroup_8_span;
+	lv_obj_t *main_page_spangroup_15;
+	lv_span_t *main_page_spangroup_15_span;
 	lv_obj_t *main_page_measure_power_label;
-	lv_span_t *main_page_measure_power_label_span;
-	lv_obj_t *main_page_label_4;
 	lv_obj_t *main_page_spangroup_10;
 	lv_span_t *main_page_spangroup_10_span;
 	lv_obj_t *main_page_btn_11;
@@ -121,7 +113,6 @@ LV_FONT_DECLARE(lv_font_montserratMedium_12)
 LV_FONT_DECLARE(lv_font_montserratMedium_23)
 LV_FONT_DECLARE(lv_font_montserratMedium_20)
 LV_FONT_DECLARE(lv_font_montserratMedium_18)
-LV_FONT_DECLARE(lv_font_montserratMedium_11)
 LV_FONT_DECLARE(lv_font_montserratMedium_15)
 
 

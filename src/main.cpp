@@ -13,7 +13,7 @@
 
 // 包含自定义的编码器类（依赖 ESP32Encoder 库）
 #include "our_encoder.h"
-#include "our_ina226.h"
+
 
 /******** Encoder Setup *****/
 #define ENCODER_1_PIN_A 17
@@ -21,7 +21,10 @@
 #define ENCODER_1_PIN_S 16
 encoder_handle_t encoder1(ENCODER_1_PIN_A, ENCODER_1_PIN_B, ENCODER_1_PIN_S);
 
-INA226 ina226_device(0x40); // INA226 电流传感器
+
+#include <Wire.h>
+#include "INA226.h"
+INA226 ina226_device(0x45); // INA226 电流传感器
 
 /******** LVGL-SetUP *******/
 // Use hardware SPI
@@ -42,18 +45,23 @@ QueueHandle_t button_queue_handle; // 按键消息队列句柄
 
 
 // 定义一个枚举类型，表示发送消息的源设备 id
-enum DeviceId_t {
+enum device_id_t {
   DEVICE_DUMMY_SENSOR = 0,
   DEVICE_ENCODER = 1,
   DEVICE_INA226 = 2,
   DEVICE_UNKNOWN = 99
 };
 
+typedef struct {
+  float value1; // 传感器数据
+  float value2; // 传感器数据
+  float value3; // 传感器数据
+} device_data_t;
 
 typedef struct {
-  DeviceId_t device_id; // 设备ID
+  device_id_t device_id; // 设备ID
   float value; // 存放的数据（简单设置为一个值，后期有需求再改为专门的结构体
-  ina226_data_t ina226_data; // INA226 传感器数据
+  device_data_t device_data; // INA226 传感器数据
 } message_t;
 
 
@@ -89,7 +97,7 @@ void encoder1_task(void *pvParameters)
   message_t msg;
   while(1)
   {
-    // printf("\n[encoder1_task] running on core: %d, Free stack space: %d", xPortGetCoreID(), uxTaskGetStackHighWaterMark(NULL));
+    printf("\n[encoder1_task] running on core: %d, Free stack space: %d", xPortGetCoreID(), uxTaskGetStackHighWaterMark(NULL));
     
     // 获取旋转编码器数据
     msg.device_id = DEVICE_ENCODER;
@@ -127,7 +135,7 @@ void get_dummy_sensor_data_task(void *pvParameters)
   message_t msg;
   while(1)
   {
-    // printf("\n[get_sensor_data_task] running on core: %d, Free stack space: %d", xPortGetCoreID(), uxTaskGetStackHighWaterMark(NULL));
+    printf("\n[get_sensor_data_task] running on core: %d, Free stack space: %d", xPortGetCoreID(), uxTaskGetStackHighWaterMark(NULL));
 
     // 模拟传感器数据
     msg.device_id = DEVICE_DUMMY_SENSOR;
@@ -153,14 +161,14 @@ void get_ina226_data_task(void *pvParameters)
   message_t msg;
   while(1)
   {
-    // printf("\n[get_ina226_data_task] running on core: %d, Free stack space: %d", xPortGetCoreID(), uxTaskGetStackHighWaterMark(NULL));
+    printf("\n[get_ina226_data_task] running on core: %d, Free stack space: %d", xPortGetCoreID(), uxTaskGetStackHighWaterMark(NULL));
 
 
     msg.device_id = DEVICE_INA226;
   
-    msg.ina226_data.measured_current = ina226_device.getCurrent_mA();
-    msg.ina226_data.measured_voltage = ina226_device.getBusVoltage();
-    msg.ina226_data.measured_power = ina226_device.getPower_mW();
+    // msg.ina226_data.measured_current = ina226_device.getCurrent_mA();
+    // msg.ina226_data.measured_voltage = ina226_device.getBusVoltage();
+    // msg.ina226_data.measured_power = ina226_device.getPower_mW();
 
    
     int return_value = xQueueSend(sensor_queue_handle, (void *)&msg, 0);
@@ -182,7 +190,7 @@ void update_gui_task(void *pvParameters)
   message_t msg;
   while(1)
   {
-    // printf("\n[update_gui_task] running on core: %d, Free stack space: %d\n", xPortGetCoreID(), uxTaskGetStackHighWaterMark(NULL));
+    printf("\n[update_gui_task] running on core: %d, Free stack space: %d\n", xPortGetCoreID(), uxTaskGetStackHighWaterMark(NULL));
 
     if( sensor_queue_handle != NULL){ // 检查消息队列是否创建成功
       if (xQueueReceive(sensor_queue_handle, &msg, portMAX_DELAY) == pdTRUE) {
@@ -202,13 +210,17 @@ void update_gui_task(void *pvParameters)
           switch (msg.device_id)
           {
           case DEVICE_INA226:
-            if ( guider_ui.main_page_measure_current_label !=NULL){ lv_label_set_text_fmt(guider_ui.main_page_measure_current_label, "%.3f", msg.ina226_data.measured_current); }
-            if ( guider_ui.main_page_measure_voltage_label !=NULL){ lv_label_set_text_fmt(guider_ui.main_page_measure_voltage_label, "%.3f", msg.ina226_data.measured_voltage); }
-            if ( guider_ui.main_page_measure_power_label !=NULL){ lv_label_set_text_fmt(guider_ui.main_page_measure_power_label, "%.3f", msg.ina226_data.measured_power); }
-            if ( guider_ui.main_page_measure_register_label !=NULL){ lv_label_set_text_fmt(guider_ui.main_page_measure_register_label, "%.3f", 666); }
+            
             break;
           case DEVICE_ENCODER:
             if (guider_ui.main_page_set_current_label != NULL){ lv_label_set_text_fmt(guider_ui.main_page_set_current_label, "%.3f", msg.value); }
+            break;
+          case DEVICE_DUMMY_SENSOR:
+            if (guider_ui.main_page_measure_current_label != NULL){ lv_label_set_text_fmt(guider_ui.main_page_measure_current_label, "%.3f", msg.value); }
+            if (guider_ui.main_page_measure_voltage_label != NULL){ lv_label_set_text_fmt(guider_ui.main_page_measure_voltage_label, "%.3f", msg.value); }
+            if (guider_ui.main_page_measure_power_label != NULL){ lv_label_set_text_fmt(guider_ui.main_page_measure_power_label, "%.3f", msg.value); }
+            if (guider_ui.main_page_measure_register_label != NULL){ lv_label_set_text_fmt(guider_ui.main_page_measure_register_label, "%.3f", msg.value); }
+            break;
           default:
             break;
           }
@@ -216,7 +228,7 @@ void update_gui_task(void *pvParameters)
           xSemaphoreGive(gui_xMutex); // 释放互斥锁
         }
       } else {
-        // printf("\n[update_gui_task] failed to receive message from queue\n");
+        printf("\n[update_gui_task] failed to receive message from queue\n");
       }
     }
   }
@@ -313,6 +325,13 @@ void setup() {
   lv_port_disp_init(); // 初始化绑定显示接口
   lv_port_indev_init(); // 初始化和绑定触摸接口
 
+  // 初始化 INA226 电流传感器
+  // Wire.begin();
+  // if (!ina226_device.begin()) {
+  //   printf("could not connect. Fix and Reboot");
+  // }
+  // ina226_device.setMaxCurrentShunt(1, 0.002);
+
   setup_ui(&guider_ui); // 初始化 gui_guider
   
   /* 挂起 GUI guider 生成的页面 */
@@ -375,6 +394,15 @@ void setup() {
               NULL,
               1
             );
+
+  // xTaskCreatePinnedToCore(get_ina226_data_task,
+  //             "get_ina226_data_task",
+  //             1024*4,
+  //             NULL,
+  //             2,
+  //             NULL,
+  //             1
+  //           );
 
   /* 暂时不使用这个旋转编码器的 GPIO 硬件中断*/
 
