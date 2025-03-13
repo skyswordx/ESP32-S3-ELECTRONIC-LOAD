@@ -210,14 +210,7 @@ void update_gui_task(void *pvParameters)
           switch (msg.device_id)
           {
           case DEVICE_INA226:
-<<<<<<< HEAD
             
-=======
-            if ( guider_ui.main_page_measure_current_label !=NULL){ lv_label_set_text_fmt(guider_ui.main_page_measure_current_label, "%.3f", msg.ina226_data.measured_current); }
-            if ( guider_ui.main_page_measure_voltage_label !=NULL){ lv_label_set_text_fmt(guider_ui.main_page_measure_voltage_label, "%.3f", msg.ina226_data.measured_voltage); }
-            if ( guider_ui.main_page_measure_power_label !=NULL){ lv_label_set_text_fmt(guider_ui.main_page_measure_power_label, "%.3f", msg.ina226_data.measured_power); }
-            // if ( guider_ui.main_page_measure_register_label !=NULL){ lv_label_set_text_fmt(guider_ui.main_page_measure_register_label, "%.3f", 666); }
->>>>>>> c0561c3dcbe0de843bd60b820057afd45076dac9
             break;
           case DEVICE_ENCODER:
             if (guider_ui.main_page_set_current_label != NULL){ lv_label_set_text_fmt(guider_ui.main_page_set_current_label, "%.3f", msg.value); }
@@ -333,19 +326,11 @@ void setup() {
   lv_port_indev_init(); // 初始化和绑定触摸接口
 
   // 初始化 INA226 电流传感器
-<<<<<<< HEAD
   // Wire.begin();
   // if (!ina226_device.begin()) {
   //   printf("could not connect. Fix and Reboot");
   // }
   // ina226_device.setMaxCurrentShunt(1, 0.002);
-=======
-  Wire.begin();
-  if (!ina226_device.begin()) {
-    printf("could not connect. Fix and Reboot");
-  }
-  ina226_device.setMaxCurrentShunt(1, 0.002);
->>>>>>> c0561c3dcbe0de843bd60b820057afd45076dac9
 
   setup_ui(&guider_ui); // 初始化 gui_guider
   
