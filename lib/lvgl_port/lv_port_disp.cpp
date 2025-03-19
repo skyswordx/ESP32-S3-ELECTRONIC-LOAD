@@ -17,13 +17,14 @@
  *********************/
 #ifndef MY_DISP_HOR_RES
     #warning Please define or replace the macro MY_DISP_HOR_RES with the actual screen width, default value 320 is used for now.
-    #define MY_DISP_HOR_RES    320
+    #define MY_DISP_HOR_RES   320
 #endif
 
 #ifndef MY_DISP_VER_RES
     #warning Please define or replace the macro MY_DISP_HOR_RES with the actual screen height, default value 240 is used for now.
     #define MY_DISP_VER_RES    240
 #endif
+
 
 /**********************
  *      TYPEDEFS
@@ -148,6 +149,7 @@ static void disp_init(void)
     // 例如：tft.begin();  //初始化配置
 
     tft.begin();  //初始化配置
+    // tft.initDMA();
     tft.setRotation(1);//设置显示方向
 
 }
@@ -192,8 +194,14 @@ static void disp_flush(lv_disp_drv_t * disp_drv, const lv_area_t * area, lv_colo
         uint32_t h = ( area->y2 - area->y1 + 1 );
 
         tft.startWrite();
+        /* 使用普通的画矩形的方式刷屏 */
         tft.setAddrWindow( area->x1, area->y1, w, h );
         tft.pushColors( ( uint16_t * )&color_p->full, w * h, true );
+
+        /* 使用 DMA 方式刷屏 */
+        // tft.pushImageDMA( area->x1, area->y1, w, h, ( uint16_t * )&color_p->full );
+        
+
         tft.endWrite();
     }
 

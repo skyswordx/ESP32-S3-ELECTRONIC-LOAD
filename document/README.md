@@ -172,6 +172,31 @@ void lvgl_task(void *pvParameters)
   vTaskDelete(NULL);
 }
 ```
+## 更换屏幕尺寸
+
+在 `LVGL` 端需要更改尺寸信息，然后需要在 `tft_eSPI` 处配置对应的头文件并包含即可
+```cpp
+#ifndef MY_DISP_HOR_RES
+
+    #warning Please define or replace the macro MY_DISP_HOR_RES with the actual screen width, default value 320 is used for now.
+
+    #define MY_DISP_HOR_RES    320
+
+#endif
+
+#ifndef MY_DISP_VER_RES
+
+    #warning Please define or replace the macro MY_DISP_HOR_RES with the actual screen height, default value 240 is used for now.
+
+    #define MY_DISP_VER_RES    240
+
+#endif
+```
+
+## 连接 IIC 外设
+
+- ina 226
+- DAC
 
 ## JLC 文档
 

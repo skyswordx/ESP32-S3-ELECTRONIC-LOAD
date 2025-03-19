@@ -26,6 +26,7 @@
 
 // #include <User_Setup.h>           // Default setup is root library folder
 #include <ILI9341.h> // ILI9341 2.4寸屏
+// #include <ILI9488.h> // ILI9488 3.5寸屏
 
 
 //#include <User_Setups/Setup1_ILI9341.h>  // Setup file for ESP8266 configured for my ILI9341
