@@ -1,4 +1,5 @@
-madhephaestus/ESP32Encoder@^0.11.7
-lvgl/lvgl@8.3.10
 robtillaart/INA226@^0.6.3
+robtillaart/MCP4725@^0.4.1
+lvgl/lvgl@8.3.10
 bodmer/TFT_eSPI@^2.5.43
+madhephaestus/ESP32Encoder@^0.11.7

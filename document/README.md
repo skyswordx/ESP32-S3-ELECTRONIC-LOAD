@@ -76,7 +76,7 @@ RTOS 快速入门相关
 - 感觉还行 [Learn_FreeRTOS_with_ESP32](https://gitee.com/yx_wang/learn_freertos_with_esp32#https://gitee.com/link?target=https%3A%2F%2Fblog.csdn.net%2Fwangyx1234%2Farticle%2Fdetails%2F127217253)
 	- 详情细分章节链接见 [Learn-RTOS-With-ESP32 细分链接文档](Learn-RTOS-With-ESP32.md)
 
- 
+
 ### 操作时的 Trouble Shootings
 
 
@@ -201,8 +201,9 @@ void lvgl_task(void *pvParameters)
 `Serial.begin` 如果不设置波特率为 115200 就会卡死
 
 `Wire.begin` 如果不传入 $\displaystyle SDA$ 和 $\displaystyle SCL$ 的管脚信息，会无法发现 iic 地址
+这个用于初始化 iic 总线，如果要使用多个 iic 设备，就要把所有的 iic 设备的 $\displaystyle SDA$ 和 $\displaystyle SCL$ 都并联在一起连接（加上上拉电阻）
 
-
+- [通俗易懂谈上拉电阻与下拉电阻的作用-基础小知识（二）上拉电阻是用来解决总线驱动能力不足时提供电流的。一般说法是拉电流,下拉电阻是-CSDN博客](https://blog.csdn.net/uiojhi/article/details/107678488)
 ## JLC 文档
 
 - [🎉2025年电赛备赛资料合集—持续更新中 | 嘉立创EDA教育与开源文档中心](https://wiki.lceda.cn/zh-hans/contest/e-contests/resource/)

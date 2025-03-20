@@ -1,0 +1,116 @@
+#ifndef OUR_ADC_H
+#define OUR_ADC_H
+
+#include <Arduino.h>
+
+// 包含相关的头文件 
+#include "esp_adc_cal.h"
+#include "driver/adc.h"
+
+    // ADC1_CHANNEL_0 = 0, /*!< ADC1 channel 0 is GPIO1  */
+    // ADC1_CHANNEL_1,     /*!< ADC1 channel 1 is GPIO2  */
+    // ADC1_CHANNEL_2,     /*!< ADC1 channel 2 is GPIO3  */
+    // ADC1_CHANNEL_3,     /*!< ADC1 channel 3 is GPIO4  */
+    // ADC1_CHANNEL_4,     /*!< ADC1 channel 4 is GPIO5  */
+    // ADC1_CHANNEL_5,     /*!< ADC1 channel 5 is GPIO6  */
+    // ADC1_CHANNEL_6,     /*!< ADC1 channel 6 is GPIO7  */
+    // ADC1_CHANNEL_7,     /*!< ADC1 channel 7 is GPIO8  */
+    // ADC1_CHANNEL_8,     /*!< ADC1 channel 8 is GPIO9  */
+    // ADC1_CHANNEL_9,     /*!< ADC1 channel 9 is GPIO10 */
+
+    // S3 的 ADC2 端口是错误的，IDF-1776，暂时不要使用
+    // ADC2_CHANNEL_0 = 0, /*!< ADC2 channel 0 is GPIO4  (ESP32), GPIO11 (ESP32-S2) */
+    // ADC2_CHANNEL_1,     /*!< ADC2 channel 1 is GPIO0  (ESP32), GPIO12 (ESP32-S2) */
+    // ADC2_CHANNEL_2,     /*!< ADC2 channel 2 is GPIO2  (ESP32), GPIO13 (ESP32-S2) */
+    // ADC2_CHANNEL_3,     /*!< ADC2 channel 3 is GPIO15 (ESP32), GPIO14 (ESP32-S2) */
+    // ADC2_CHANNEL_4,     /*!< ADC2 channel 4 is GPIO13 (ESP32), GPIO15 (ESP32-S2) */
+    // ADC2_CHANNEL_5,     /*!< ADC2 channel 5 is GPIO12 (ESP32), GPIO16 (ESP32-S2) */
+    // ADC2_CHANNEL_6,     /*!< ADC2 channel 6 is GPIO14 (ESP32), GPIO17 (ESP32-S2) */
+    // ADC2_CHANNEL_7,     /*!< ADC2 channel 7 is GPIO27 (ESP32), GPIO18 (ESP32-S2) */
+    // ADC2_CHANNEL_8,     /*!< ADC2 channel 8 is GPIO25 (ESP32), GPIO19 (ESP32-S2) */
+    // ADC2_CHANNEL_9,     /*!< ADC2 channel 9 is GPIO26 (ESP32), GPIO20 (ESP32-S2) */
+
+class ADC_channel_handler_t {
+
+    private:
+        /********** ADC 初始化成员变量 **********/
+        // 选定初始化不同的 ADC (ADC1 或 ADC2) 和对应的第几个通道
+        adc1_channel_t adc1_channel;
+        adc2_channel_t adc2_channel; // 如果使用了 ADC2 就无法使用 DMA 模式
+        
+        // 配置要初始化的 ADC 单元所对应的工作模式，用于填充 adc_digi_pattern_config_t 结构体
+        adc_digi_pattern_config_t adc_digi_pattern; 
+        adc_atten_t atten; /* 设置 ADC 衰减 */
+        adc_unit_t unit; /* 设置 ADC 单元 */
+        adc_bits_width_t width; /* 设置 ADC 位宽 */
+
+        // 定义 ADC 的初始化配置结构体
+        adc_digi_configuration_t adc_digi_config;
+
+    public:
+        
+        uint32_t num_samples; // 采样次数，后期可以更改
+
+        /***************** ADC 成员函数 *****************/
+        /* 构造函数及其重载，适配 ADC1 和 ADC2 的初始化 */
+        ADC_channel_handler_t(adc1_channel_t adc1_channel, adc_atten_t atten, adc_bits_width_t width, uint32_t num_samples, adc_unit_t unit = ADC_UNIT_1) {
+            
+            this->adc1_channel = adc1_channel;
+            this->atten = atten;
+            this->width = width;
+            this->num_samples = num_samples;
+            this->unit = unit;
+
+            adc_digi_pattern.channel = adc1_channel;
+            adc_digi_pattern.atten = atten;
+            adc_digi_pattern.unit = unit;
+            adc_digi_pattern.bit_width = width;
+
+            adc_digi_config.adc_pattern = &adc_digi_pattern;
+            adc_digi_controller_configure(&adc_digi_config);
+        }
+
+        ADC_channel_handler_t(adc2_channel_t adc2_channel, adc_atten_t atten, adc_bits_width_t width, uint32_t num_samples) {
+            
+            this->adc2_channel = adc2_channel;
+            this->atten = atten;
+            this->width = width;
+            this->num_samples = num_samples;
+
+            adc_digi_pattern.channel = adc2_channel;
+            adc_digi_pattern.atten = atten;
+            adc_digi_pattern.unit = ADC_UNIT_2;
+            adc_digi_pattern.bit_width = width;
+
+            adc_digi_config.adc_pattern = &adc_digi_pattern;
+            adc_digi_controller_configure(&adc_digi_config);
+        }
+        
+
+        uint32_t get_ADC1_raw_average(){
+            uint32_t temp_value = 0; 
+
+            for (uint8_t i = 0; i < this->num_samples; i++) {
+                temp_value += adc1_get_raw(adc1_channel);
+                vTaskDelay(5); // 延时 5ms
+            }
+
+            return temp_value / this->num_samples;
+        }
+
+        uint32_t get_ADC2_raw_average(){
+            uint32_t temp_value = 0; 
+
+            int raw_out;
+            for (uint8_t i = 0; i < this->num_samples; i++) {
+                adc2_get_raw(adc2_channel, this->width, &raw_out);
+                temp_value += raw_out;
+                vTaskDelay(5); // 延时 5ms
+            }
+
+            return temp_value / this->num_samples;
+        }
+        
+};
+
+#endif

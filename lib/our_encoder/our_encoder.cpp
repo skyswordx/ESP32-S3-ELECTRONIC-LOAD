@@ -9,17 +9,6 @@ encoder_handle_t::encoder_handle_t(int pin_A, int pin_B, int pin_S)
     this->single_count = 0;
     this->encoder.attachFullQuad(pin_A, pin_B);
     this->encoder.setCount(0);
-
-    //配置GPIO，下降沿和上升沿触发中断
-	gpio_config_t io_conf;
-	io_conf.intr_type = GPIO_INTR_ANYEDGE;
-	io_conf.pin_bit_mask = 1 << pin_S; // 为 GPIO pin_S 设置中断
-	io_conf.mode = GPIO_MODE_INPUT;
-	io_conf.pull_up_en = GPIO_PULLUP_ENABLE;
-	gpio_config(&io_conf);
-
-    
-	// 中断注册在主函数
 }
 
 
