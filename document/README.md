@@ -198,6 +198,11 @@ void lvgl_task(void *pvParameters)
 - ina 226
 - DAC
 
+`Serial.begin` 如果不设置波特率为 115200 就会卡死
+
+`Wire.begin` 如果不传入 $\displaystyle SDA$ 和 $\displaystyle SCL$ 的管脚信息，会无法发现 iic 地址
+
+
 ## JLC 文档
 
 - [🎉2025年电赛备赛资料合集—持续更新中 | 嘉立创EDA教育与开源文档中心](https://wiki.lceda.cn/zh-hans/contest/e-contests/resource/)
