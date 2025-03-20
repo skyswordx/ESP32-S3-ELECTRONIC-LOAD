@@ -72,6 +72,7 @@ typedef struct {
   float value2; // 传感器数据
   float value3; // 传感器数据
   float value4; // 传感器数据
+  float value5; // 传感器数据
 } device_data_t;
 
 typedef struct {
@@ -171,6 +172,7 @@ void get_dummy_sensor_data_task(void *pvParameters)
   }
 }
 
+#define WARNING_VOLTAGE 18.0
 
 void get_ina226_data_task(void *pvParameters)
 {
@@ -182,11 +184,42 @@ void get_ina226_data_task(void *pvParameters)
 
     msg.device_id = DEVICE_INA226;
   
-    msg.device_data.value1 = ina226_device.getCurrent_mA();
-    msg.device_data.value2 = ina226_device.getBusVoltage();
-    msg.device_data.value3 = ina226_device.getPower_mW() * 1000;
-    msg.device_data.value4 = msg.device_data.value2 / (msg.device_data.value1 * 1000);
+    float measure_current_mA = ina226_device.getCurrent_mA();
+    float measure_voltage_V = ina226_device.getBusVoltage();
+    float measure_power_W = ina226_device.getPower();
+    float measure_resistance_ohm = (measure_voltage_V * 1e3)/ (measure_current_mA );
 
+    // 负载调整率？
+            /*
+              measure_current = 0A ->  记录 bus_V0
+              measure_current = 1A ->  记录 bus_V1
+              rate = (bus_V1 - bus_V0) / bus_V0
+             */
+    static float bus_V0 = 0.0;
+    static float bus_V1 = 0.0;
+    if ( abs((abs(measure_current_mA) - 0.0) < 0.1) ){
+      // 记录 bus_V0
+      bus_V0 = measure_voltage_V;
+    } else if ( abs((abs(measure_current_mA)*1e3 - 1.0) < 0.1) ){
+      // 记录 bus_V1
+      bus_V1 = measure_voltage_V;
+    }
+
+    float rate = (bus_V1 - bus_V0) / bus_V0;
+
+    msg.device_data.value1 = measure_current_mA;
+    msg.device_data.value2 = measure_voltage_V;
+    msg.device_data.value3 = measure_power_W;
+    msg.device_data.value4 = measure_resistance_ohm;
+    msg.device_data.value5 = rate;
+
+    // 检查 INA226 电压是否超过警告值，如果超过则进行过压保护
+    if(measure_voltage_V >= WARNING_VOLTAGE){
+      // 电压过高，警告
+      msg.value = WARNING_VOLTAGE;
+    }
+
+    
 
     int return_value = xQueueSend(sensor_queue_handle, (void *)&msg, 0);
     if (return_value == pdTRUE) {
@@ -227,11 +260,29 @@ void update_gui_task(void *pvParameters)
           switch (msg.device_id)
           {
           case DEVICE_INA226:
+
+            // 显示 INA226 测量的电流
             if (guider_ui.main_page_measure_current_label != NULL){ lv_label_set_text_fmt(guider_ui.main_page_measure_current_label, "%.3f", msg.device_data.value1); }
+            
+            // 显示 INA226 测量的电压
             if (guider_ui.main_page_measure_voltage_label != NULL){ lv_label_set_text_fmt(guider_ui.main_page_measure_voltage_label, "%.3f", msg.device_data.value2); }
+            
+            // 显示 INA226 测量的功率
             if (guider_ui.main_page_measure_power_label != NULL){ lv_label_set_text_fmt(guider_ui.main_page_measure_power_label, "%.3f", msg.device_data.value3); }
+            
+            // 显示 INA226 测量的等效电阻
             if (guider_ui.main_page_measure_register_label != NULL){ lv_label_set_text_fmt(guider_ui.main_page_measure_register_label, "%.3f", msg.device_data.value4); }
             
+            // 显示 INA226 测量的电源调整率
+
+            // 如果 INA226 测量的电压超过警告值，就进行过压保护
+            if (msg.value == WARNING_VOLTAGE){
+              // 这里专门设置一个控件进行展示
+
+              // 同时关闭 DAC 输出，让 MOSFET 关断，避免继续吸收功率（在中断函数中处理）
+              
+            }
+
             break;
           case DEVICE_ENCODER:
             if (guider_ui.main_page_set_current_label != NULL){ lv_label_set_text_fmt(guider_ui.main_page_set_current_label, "%.3f", msg.value); }
