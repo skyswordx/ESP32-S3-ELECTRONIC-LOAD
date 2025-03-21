@@ -90,17 +90,22 @@ void lv_port_disp_init(void)
 
     // 选择这个选项，可以实现非真双缓冲
     /* Example for 2) */
-    static lv_disp_draw_buf_t draw_buf_dsc_2;
-    static lv_color_t buf_2_1[MY_DISP_HOR_RES * 10];                        /*A buffer for 10 rows*/
-    static lv_color_t buf_2_2[MY_DISP_HOR_RES * 10];                        /*An other buffer for 10 rows*/
-    lv_disp_draw_buf_init(&draw_buf_dsc_2, buf_2_1, buf_2_2, MY_DISP_HOR_RES * 10);   /*Initialize the display buffer*/
+    // static lv_disp_draw_buf_t draw_buf_dsc_2;
+    // static lv_color_t buf_2_1[MY_DISP_HOR_RES * 10];                        /*A buffer for 10 rows*/
+    // static lv_color_t buf_2_2[MY_DISP_HOR_RES * 10];                        /*An other buffer for 10 rows*/
+    // lv_disp_draw_buf_init(&draw_buf_dsc_2, buf_2_1, buf_2_2, MY_DISP_HOR_RES * 10);   /*Initialize the display buffer*/
 
-    // /* Example for 3) also set disp_drv.full_refresh = 1 below*/
-    // static lv_disp_draw_buf_t draw_buf_dsc_3;
+    //使用 PSRAM 时启用，最大化利用 PSRAM 刷屏
+    /* Example for 3) also set disp_drv.full_refresh = 1 below*/
+    static lv_disp_draw_buf_t draw_buf_dsc_3;
+    // 不使用下面的开辟缓存区的构造函数，因为这样会使用 lv_conf 中指定的 stdlib 中的 malloc
     // static lv_color_t buf_3_1[MY_DISP_HOR_RES * MY_DISP_VER_RES];            /*A screen sized buffer*/
     // static lv_color_t buf_3_2[MY_DISP_HOR_RES * MY_DISP_VER_RES];            /*Another screen sized buffer*/
-    // lv_disp_draw_buf_init(&draw_buf_dsc_3, buf_3_1, buf_3_2,
-    //                       MY_DISP_VER_RES * LV_VER_RES_MAX);   /*Initialize the display buffer*/
+    static lv_color_t* buf_3_1 = (lv_color_t*) heap_caps_malloc(MY_DISP_HOR_RES * MY_DISP_VER_RES, MALLOC_CAP_SPIRAM);
+    static lv_color_t* buf_3_2 = (lv_color_t*) heap_caps_malloc(MY_DISP_HOR_RES * MY_DISP_VER_RES, MALLOC_CAP_SPIRAM);
+    
+    lv_disp_draw_buf_init(&draw_buf_dsc_3, buf_3_1, buf_3_2,
+                          MY_DISP_VER_RES * MY_DISP_HOR_RES);   /*Initialize the display buffer*/
 
     /*-----------------------------------
      * Register the display in LVGL
@@ -120,11 +125,11 @@ void lv_port_disp_init(void)
 
     /*Set a display buffer*/
     // disp_drv.draw_buf = &draw_buf_dsc_1;
-    disp_drv.draw_buf = &draw_buf_dsc_2;
-    // disp_drv.draw_buf = &draw_buf_dsc_3;
+    // disp_drv.draw_buf = &draw_buf_dsc_2;
+    disp_drv.draw_buf = &draw_buf_dsc_3;
 
     /*Required for Example 3)*/
-    //disp_drv.full_refresh = 1;
+    disp_drv.full_refresh = 1;
 
     /* Fill a memory array with a color if you have GPU.
      * Note that, in lv_conf.h you can enable GPUs that has built-in support in LVGL.
