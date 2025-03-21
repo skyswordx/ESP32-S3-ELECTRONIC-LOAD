@@ -193,6 +193,11 @@ void lvgl_task(void *pvParameters)
 #endif
 ```
 
+## 大屏优化 LVGL Fps
+
+- [【ESP32】Arduino+LVGL 如何使用PSRAM优化显示_arduino esp32 lvgl 全屏缓冲-CSDN博客](https://blog.csdn.net/JackieCoo/article/details/128581591)
+
+
 ## 连接 IIC 外设
 
 - ina 226

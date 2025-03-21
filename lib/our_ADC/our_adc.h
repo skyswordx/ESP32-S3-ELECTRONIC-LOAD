@@ -30,6 +30,7 @@
     // ADC2_CHANNEL_8,     /*!< ADC2 channel 8 is GPIO25 (ESP32), GPIO19 (ESP32-S2) */
     // ADC2_CHANNEL_9,     /*!< ADC2 channel 9 is GPIO26 (ESP32), GPIO20 (ESP32-S2) */
 
+# define DEFAULT_VREF    1100        // can use adc2_vref_to_gpio() to obtain a better estimate
 class ADC_channel_handler_t {
 
     private:
@@ -47,27 +48,38 @@ class ADC_channel_handler_t {
         // 定义 ADC 的初始化配置结构体
         adc_digi_configuration_t adc_digi_config;
 
+        // 定义 ADC 校准结构体
+        esp_adc_cal_characteristics_t *adc_chars;
+        esp_adc_cal_value_t val_type = ESP_ADC_CAL_VAL_EFUSE_TP;
+
     public:
         
         uint32_t num_samples; // 采样次数，后期可以更改
+        uint32_t adc_raw_value; // 保存 ADC 的值
+        float adc_voltage; // 保存 ADC 转换后的电压值
 
         /***************** ADC 成员函数 *****************/
         /* 构造函数及其重载，适配 ADC1 和 ADC2 的初始化 */
         ADC_channel_handler_t(adc1_channel_t adc1_channel, adc_atten_t atten, adc_bits_width_t width, uint32_t num_samples, adc_unit_t unit = ADC_UNIT_1) {
             
+            /* 初始化采样设置 */
             this->adc1_channel = adc1_channel;
             this->atten = atten;
             this->width = width;
             this->num_samples = num_samples;
             this->unit = unit;
 
-            adc_digi_pattern.channel = adc1_channel;
-            adc_digi_pattern.atten = atten;
-            adc_digi_pattern.unit = unit;
-            adc_digi_pattern.bit_width = width;
+            this->adc_digi_pattern.channel = adc1_channel;
+            this->adc_digi_pattern.atten = atten;
+            this->adc_digi_pattern.unit = unit;
+            this->adc_digi_pattern.bit_width = width;
 
-            adc_digi_config.adc_pattern = &adc_digi_pattern;
+            this->adc_digi_config.adc_pattern = &adc_digi_pattern;
             adc_digi_controller_configure(&adc_digi_config);
+
+            /* 创建校准方案 */
+            this->adc_chars= (esp_adc_cal_characteristics_t *) malloc(sizeof(esp_adc_cal_characteristics_t));
+            this->val_type = esp_adc_cal_characterize(this->unit, this->atten, this->width, DEFAULT_VREF, this->adc_chars);
         }
 
         ADC_channel_handler_t(adc2_channel_t adc2_channel, adc_atten_t atten, adc_bits_width_t width, uint32_t num_samples) {
@@ -77,12 +89,12 @@ class ADC_channel_handler_t {
             this->width = width;
             this->num_samples = num_samples;
 
-            adc_digi_pattern.channel = adc2_channel;
-            adc_digi_pattern.atten = atten;
-            adc_digi_pattern.unit = ADC_UNIT_2;
-            adc_digi_pattern.bit_width = width;
+            this->adc_digi_pattern.channel = adc2_channel;
+            this->adc_digi_pattern.atten = atten;
+            this->adc_digi_pattern.unit = ADC_UNIT_2;
+            this->adc_digi_pattern.bit_width = width;
 
-            adc_digi_config.adc_pattern = &adc_digi_pattern;
+            this->adc_digi_config.adc_pattern = &adc_digi_pattern;
             adc_digi_controller_configure(&adc_digi_config);
         }
         
@@ -98,6 +110,20 @@ class ADC_channel_handler_t {
             return temp_value / this->num_samples;
         }
 
+        float get_ADC1_voltage_average_mV(){
+            uint32_t temp_value = 0; 
+
+            for (uint8_t i = 0; i < this->num_samples; i++) {
+                temp_value += adc1_get_raw(adc1_channel);
+                vTaskDelay(5); // 延时 5ms
+            }
+
+            this->adc_raw_value = temp_value / this->num_samples;
+            this->adc_voltage = esp_adc_cal_raw_to_voltage(this->adc_raw_value, this->adc_chars);
+
+            return this->adc_voltage;
+        }
+
         uint32_t get_ADC2_raw_average(){
             uint32_t temp_value = 0; 
 
@@ -109,6 +135,22 @@ class ADC_channel_handler_t {
             }
 
             return temp_value / this->num_samples;
+        }
+
+        float get_ADC2_voltage_average_mV(){
+            uint32_t temp_value = 0; 
+
+            int raw_out;
+            for (uint8_t i = 0; i < this->num_samples; i++) {
+                adc2_get_raw(adc2_channel, this->width, &raw_out);
+                temp_value += raw_out;
+                vTaskDelay(5); // 延时 5ms
+            }
+
+            this->adc_raw_value = temp_value / this->num_samples;
+            this->adc_voltage = esp_adc_cal_raw_to_voltage(this->adc_raw_value, this->adc_chars);
+
+            return this->adc_voltage;
         }
         
 };
