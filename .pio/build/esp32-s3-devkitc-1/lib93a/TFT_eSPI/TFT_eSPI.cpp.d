@@ -185,8 +185,8 @@
  C:/Users/c1rcLEmoon/.platformio/packages/framework-arduinoespressif32/libraries/SPI/src/SPI.h \
  C:/Users/c1rcLEmoon/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp32-hal-spi.h \
  .pio/libdeps/esp32-s3-devkitc-1/TFT_eSPI/User_Setup_Select.h \
- .pio/libdeps/esp32-s3-devkitc-1/TFT_eSPI/ILI9341.h \
- .pio/libdeps/esp32-s3-devkitc-1/TFT_eSPI/TFT_Drivers/ILI9341_Defines.h \
+ .pio/libdeps/esp32-s3-devkitc-1/TFT_eSPI/ILI9488.h \
+ .pio/libdeps/esp32-s3-devkitc-1/TFT_eSPI/TFT_Drivers/ILI9488_Defines.h \
  .pio/libdeps/esp32-s3-devkitc-1/TFT_eSPI/Processors/TFT_eSPI_ESP32_S3.h \
  C:/Users/c1rcLEmoon/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/soc/esp32s3/include/soc/spi_reg.h \
  C:/Users/c1rcLEmoon/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/driver/include/driver/spi_master.h \
@@ -284,8 +284,8 @@
  .pio/libdeps/esp32-s3-devkitc-1/TFT_eSPI/Extensions/Button.h \
  .pio/libdeps/esp32-s3-devkitc-1/TFT_eSPI/Extensions/Sprite.h \
  .pio/libdeps/esp32-s3-devkitc-1/TFT_eSPI/Processors/TFT_eSPI_ESP32_S3.c \
- .pio/libdeps/esp32-s3-devkitc-1/TFT_eSPI/TFT_Drivers/ILI9341_Init.h \
- .pio/libdeps/esp32-s3-devkitc-1/TFT_eSPI/TFT_Drivers/ILI9341_Rotation.h \
+ .pio/libdeps/esp32-s3-devkitc-1/TFT_eSPI/TFT_Drivers/ILI9488_Init.h \
+ .pio/libdeps/esp32-s3-devkitc-1/TFT_eSPI/TFT_Drivers/ILI9488_Rotation.h \
  .pio/libdeps/esp32-s3-devkitc-1/TFT_eSPI/Extensions/Touch.cpp \
  .pio/libdeps/esp32-s3-devkitc-1/TFT_eSPI/Extensions/Button.cpp \
  .pio/libdeps/esp32-s3-devkitc-1/TFT_eSPI/Extensions/Sprite.cpp \

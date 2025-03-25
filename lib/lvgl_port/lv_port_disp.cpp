@@ -15,14 +15,17 @@
 /*********************
  *      DEFINES
  *********************/
+
+//  #define OUR_USE_DMA 1 // 我们使用 DMA 传输数据
+
 #ifndef MY_DISP_HOR_RES
     #warning Please define or replace the macro MY_DISP_HOR_RES with the actual screen width, default value 320 is used for now.
-    #define MY_DISP_HOR_RES   320
+    #define MY_DISP_HOR_RES   480
 #endif
 
 #ifndef MY_DISP_VER_RES
     #warning Please define or replace the macro MY_DISP_HOR_RES with the actual screen height, default value 240 is used for now.
-    #define MY_DISP_VER_RES    240
+    #define MY_DISP_VER_RES    320
 #endif
 
 
@@ -101,9 +104,18 @@ void lv_port_disp_init(void)
     // 不使用下面的开辟缓存区的构造函数，因为这样会使用 lv_conf 中指定的 stdlib 中的 malloc
     // static lv_color_t buf_3_1[MY_DISP_HOR_RES * MY_DISP_VER_RES];            /*A screen sized buffer*/
     // static lv_color_t buf_3_2[MY_DISP_HOR_RES * MY_DISP_VER_RES];            /*Another screen sized buffer*/
-    static lv_color_t* buf_3_1 = (lv_color_t*) heap_caps_malloc(MY_DISP_HOR_RES * MY_DISP_VER_RES, MALLOC_CAP_SPIRAM);
-    static lv_color_t* buf_3_2 = (lv_color_t*) heap_caps_malloc(MY_DISP_HOR_RES * MY_DISP_VER_RES, MALLOC_CAP_SPIRAM);
+#if OUR_USE_DMA
+    static lv_color_t* buf_3_1 = (lv_color_t*) heap_caps_malloc(MY_DISP_HOR_RES * MY_DISP_VER_RES * sizeof(lv_color_t), MALLOC_CAP_DMA | MALLOC_CAP_SPIRAM);
+    static lv_color_t* buf_3_2 = (lv_color_t*) heap_caps_malloc(MY_DISP_HOR_RES * MY_DISP_VER_RES*  sizeof(lv_color_t), MALLOC_CAP_DMA | MALLOC_CAP_SPIRAM);
     
+#else
+    static lv_color_t* buf_3_1 = (lv_color_t*) heap_caps_malloc(MY_DISP_HOR_RES * MY_DISP_VER_RES * sizeof(lv_color_t), MALLOC_CAP_SPIRAM);
+    static lv_color_t* buf_3_2 = (lv_color_t*) heap_caps_malloc(MY_DISP_HOR_RES * MY_DISP_VER_RES*  sizeof(lv_color_t), MALLOC_CAP_SPIRAM);
+#endif   
+    if(buf_3_1 == NULL || buf_3_2 == NULL)
+    {
+        ESP_LOGI("FLASH_BUFFER", "allocate memery fail--------");
+    }
     lv_disp_draw_buf_init(&draw_buf_dsc_3, buf_3_1, buf_3_2,
                           MY_DISP_VER_RES * MY_DISP_HOR_RES);   /*Initialize the display buffer*/
 
@@ -154,7 +166,11 @@ static void disp_init(void)
     // 例如：tft.begin();  //初始化配置
 
     tft.begin();  //初始化配置
-    // tft.initDMA();
+
+#ifdef OUR_USE_DMA
+    tft.initDMA();
+#endif  
+
     tft.setRotation(1);//设置显示方向
 
 }
@@ -178,6 +194,9 @@ void disp_disable_update(void)
 /*Flush the content of the internal buffer the specific area on the display
  *You can use DMA or any hardware acceleration to do this operation in the background but
  *'lv_disp_flush_ready()' has to be called when finished.*/
+
+
+
 static void disp_flush(lv_disp_drv_t * disp_drv, const lv_area_t * area, lv_color_t * color_p)
 {
     if(disp_flush_enabled) {
@@ -199,19 +218,25 @@ static void disp_flush(lv_disp_drv_t * disp_drv, const lv_area_t * area, lv_colo
         uint32_t h = ( area->y2 - area->y1 + 1 );
 
         tft.startWrite();
+
+#if OUR_USE_DMA
+        /* 使用 DMA 方式刷屏 */
+        tft.pushImageDMA( area->x1, area->y1, w, h, ( uint16_t * )&color_p->full );
+        
+#else 
         /* 使用普通的画矩形的方式刷屏 */
         tft.setAddrWindow( area->x1, area->y1, w, h );
         tft.pushColors( ( uint16_t * )&color_p->full, w * h, true );
-
-        /* 使用 DMA 方式刷屏 */
-        // tft.pushImageDMA( area->x1, area->y1, w, h, ( uint16_t * )&color_p->full );
-        
+#endif
 
         tft.endWrite();
     }
 
     /*IMPORTANT!!!
      *Inform the graphics library that you are ready with the flushing*/
+#if OUR_USE_DMA
+    tft.dmaWait();
+#endif
     lv_disp_flush_ready(disp_drv);
 }
 

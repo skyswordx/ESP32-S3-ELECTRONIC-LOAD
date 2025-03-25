@@ -3,7 +3,7 @@
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/misc/lv_timer.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/misc/../lv_conf_internal.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/misc/../lv_conf_kconfig.h \
- C:/Users/c1rcLEmoon/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/qio_qspi/include/sdkconfig.h \
+ C:/Users/c1rcLEmoon/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/qio_opi/include/sdkconfig.h \
  C:/Users/c1rcLEmoon/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/esp_common/include/esp_attr.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/lv_conf.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/misc/../hal/lv_hal_tick.h \

@@ -27,9 +27,9 @@
 
 
 /******** Encoder Setup *****/
-#define ENCODER_1_PIN_A 17
-#define ENCODER_1_PIN_B 18
-#define ENCODER_1_PIN_S 16
+#define ENCODER_1_PIN_A 12
+#define ENCODER_1_PIN_B 13
+#define ENCODER_1_PIN_S 14
 encoder_handle_t encoder1(ENCODER_1_PIN_A, ENCODER_1_PIN_B, ENCODER_1_PIN_S);
 const int BUTTON_PIN = 15;
 
@@ -48,10 +48,9 @@ MCP4725 MCP4725_device(0x62); // MCP4725 DAC 芯片
 
 /******** ADC1 Setup *********/
 #include "our_adc.h"
-ADC_channel_handler_t MY_ADC_GPIO8(ADC1_CHANNEL_7, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, 64, ADC_UNIT_1);
 ADC_channel_handler_t MY_ADC_GPIO7(ADC1_CHANNEL_6, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, 64, ADC_UNIT_1);
 ADC_channel_handler_t MY_ADC_GPIO6(ADC1_CHANNEL_5, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, 64, ADC_UNIT_1);
-
+ADC_channel_handler_t MY_ADC_GPIO5(ADC1_CHANNEL_4, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, 64, ADC_UNIT_1);
 
 /******** LVGL-SetUP *******/
 // Use hardware SPI
@@ -418,7 +417,7 @@ void ADC1_read_task(void *pvParameters)
     
     msg.device_id = DEVICE_ADC1;
 
-    float adc_value_1 = MY_ADC_GPIO8.get_ADC1_voltage_average_mV();
+    float adc_value_1 = MY_ADC_GPIO5.get_ADC1_voltage_average_mV();
     float adc_value_2 = MY_ADC_GPIO7.get_ADC1_voltage_average_mV();
     float adc_value_3 = MY_ADC_GPIO6.get_ADC1_voltage_average_mV();
 
@@ -481,14 +480,14 @@ void setup() {
 
 
   /* 设置自己的显示任务 */
-  setup_ui(&guider_ui); // 初始化 gui_guider
+  // setup_ui(&guider_ui); // 初始化 gui_guider
   
-  /* 挂起 GUI guider 生成的页面 */
-  setup_scr_main_page(&guider_ui); // gui_guider 为每一个页面生成的，这里是名字为 xxx 的页面
-  lv_scr_load(guider_ui.main_page); //每一个页面的名字都是 gui_guider 结构体的元素
+  // /* 挂起 GUI guider 生成的页面 */
+  // setup_scr_main_page(&guider_ui); // gui_guider 为每一个页面生成的，这里是名字为 xxx 的页面
+  // lv_scr_load(guider_ui.main_page); //每一个页面的名字都是 gui_guider 结构体的元素
   
   /* 或者运行 LVGL demo */
-  // lv_demo_benchmark();
+  lv_demo_benchmark();
 
   /* 创建消息队列 */
   // Create the queue which will have <queue_element_size> number of elements, each of size `message_t` and pass the address to <sensor_queue_handle>.

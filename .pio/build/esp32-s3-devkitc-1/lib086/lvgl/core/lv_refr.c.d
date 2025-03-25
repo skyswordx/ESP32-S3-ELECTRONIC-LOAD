@@ -4,7 +4,7 @@
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/core/lv_obj.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/core/../lv_conf_internal.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/core/../lv_conf_kconfig.h \
- C:/Users/c1rcLEmoon/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/qio_qspi/include/sdkconfig.h \
+ C:/Users/c1rcLEmoon/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/qio_opi/include/sdkconfig.h \
  C:/Users/c1rcLEmoon/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/esp_common/include/esp_attr.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/lv_conf.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/core/../misc/lv_style.h \
@@ -103,4 +103,11 @@
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/core/../font/lv_font.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/core/../extra/others/snapshot/lv_snapshot.h \
  .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/core/../extra/others/snapshot/../../../lv_conf_internal.h \
- .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/core/../extra/others/snapshot/../../../core/lv_obj.h
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/core/../extra/others/snapshot/../../../core/lv_obj.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/core/../widgets/lv_label.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/core/../widgets/../lv_conf_internal.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/core/../widgets/../core/lv_obj.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/core/../widgets/../font/lv_font.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/core/../widgets/../font/lv_symbol_def.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/core/../widgets/../misc/lv_txt.h \
+ .pio/libdeps/esp32-s3-devkitc-1/lvgl/src/core/../widgets/../draw/lv_draw.h

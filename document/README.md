@@ -15,6 +15,29 @@
 	- **带载功率**：长时间运行30W，短时运行100W(10S)
 	- **保护方式**：过流保护、过压保护、过温保护、反接保护
 
+
+## 控制板引脚
+
+INA226 的引脚不变
+LCD-disp 的引脚不变
+
+**旋转编码器的引脚删掉原来的**
+- 任意找 3 个即可
+
+DAC 的 SDA 和 SCL 引脚和 INA 的对应引脚并联
+- DAC 的一对 OUT 和 GND 引脚要引出来
+
+GPIO -> 按键 -> GND
+- GPIO 15
+- GPIO 16
+- GPIO 17
+- GPIO 18
+
+ADC1 的 3 个通道，并联在一起
+- GPIO 7
+- GPIO 6
+- GPIO 5
+
 ## 硬件电路设计点
 
 采用核心板 + 功率板分开，中间使用排针连接
@@ -175,6 +198,8 @@ void lvgl_task(void *pvParameters)
 ## 更换屏幕尺寸
 
 在 `LVGL` 端需要更改尺寸信息，然后需要在 `tft_eSPI` 处配置对应的头文件并包含即可
+
+在 `lv_port_disp` 端更改尺寸信息
 ```cpp
 #ifndef MY_DISP_HOR_RES
 
@@ -193,15 +218,63 @@ void lvgl_task(void *pvParameters)
 #endif
 ```
 
+在 `lv_conf.h` 端使能帧率
+```
+/*1: Show CPU usage and FPS count*/
+
+#define LV_USE_PERF_MONITOR 1
+
+#if LV_USE_PERF_MONITOR
+
+    #define LV_USE_PERF_MONITOR_POS LV_ALIGN_BOTTOM_RIGHT
+
+#endif
+
+  
+
+/*1: Show the used memory and the memory fragmentation
+
+ * Requires LV_MEM_CUSTOM = 0*/
+
+#define LV_USE_MEM_MONITOR 1
+
+#if LV_USE_MEM_MONITOR
+
+    #define LV_USE_MEM_MONITOR_POS LV_ALIGN_BOTTOM_LEFT
+
+#endif
+```
 ## 大屏优化 LVGL Fps
 
+- PSRAM 
+	- 初始化 PSRAM + 指定 SPI 速率
+		- 如果使用 `pio` 需要在 `ini` 配置文件添加对应的编译选项使能 PSRAM，并指定与之通信的 SPI 速率
+		- 如果使用 `Arduino IDE`，也要在设置那里设置
+		- 只有在编译使能 PSRAM 之后，调用 `heap_caps_malloc` 分配 PSRAM 内存才不会重启
+	- 具体参考 [VS Code+platformio配置ESP32-S3-N16R8（8MB PSRAM + 16MB FLASH）工程](https://www.cnblogs.com/macrored/p/17357581.html)
+		- [Arduino IDE中ESP32S3运行参数意义 - 哔哩哔哩](https://www.bilibili.com/opus/833077798602014787)
+		- [【ESP32 S3开发】在Arduino IDE中使用PSRAM_arduino的选项opi_psram](https://blog.csdn.net/m0_43395703/article/details/125705032)
+- DMA：S3 限定
+	- [Create buffers in psram esp32s3 - How-to - LVGL Forum](https://forum.lvgl.io/t/create-buffers-in-psram-esp32s3/11555)
+	- 需要用 `heap_caps_malloc` 分配 PSRAM 内存的时候，指定`MALLOC_CAP_DMA | MALLOC_CAP_SPIRAM`
+	- 需要修改 `lv_port_disp` 的 `disp_flush` 函数
+		- 其中的 TFTLCD 填充函数换成 DMA 传输的
+		- 并且不在专门在这个 `disp_flush` 函数的末尾之前调用 `disp_flush_ready` 函数，而是设置一个 DMA 传输完成的中断，然后在中断中调用 `disp_flush_ready` 函数
+		- 有关上述修改，需要参考 [TFT_eSPI library API](https://doc-tft-espi.readthedocs.io/fundamentals/)
+- CPU 主频最大设置 240 MHz
+- FLASH 频率提升
+
+
+
 - [【ESP32】Arduino+LVGL 如何使用PSRAM优化显示_arduino esp32 lvgl 全屏缓冲-CSDN博客](https://blog.csdn.net/JackieCoo/article/details/128581591)
+- [Create buffers in psram esp32s3 - How-to - LVGL Forum](https://forum.lvgl.io/t/create-buffers-in-psram-esp32s3/11555)
 
-
+- [ESP32S3-LVGL-Port-IDF/doc/lvgl帧率优化/lvgl帧率优化.md at main · herexiong/ESP32S3-LVGL-Port-IDF](https://github.com/herexiong/ESP32S3-LVGL-Port-IDF/blob/main/doc/lvgl%E5%B8%A7%E7%8E%87%E4%BC%98%E5%8C%96/lvgl%E5%B8%A7%E7%8E%87%E4%BC%98%E5%8C%96.md)
+- 
 ## 连接 IIC 外设
 
-- ina 226
-- DAC
+- `ina226`
+- `MCP4725：DAC`
 
 `Serial.begin` 如果不设置波特率为 115200 就会卡死
 
