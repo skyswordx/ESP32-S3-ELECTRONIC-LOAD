@@ -285,7 +285,7 @@ void update_gui_task(void *pvParameters)
             if (guider_ui.main_page_measure_power_label != NULL){ lv_label_set_text_fmt(guider_ui.main_page_measure_power_label, "%.3f", msg.device_data.value3); }
             
             // 显示 INA226 测量的等效电阻
-            if (guider_ui.main_page_measure_register_label != NULL){ lv_label_set_text_fmt(guider_ui.main_page_measure_register_label, "%.3f", msg.device_data.value4); }
+            if (guider_ui.main_page_measure_resistance_label != NULL){ lv_label_set_text_fmt(guider_ui.main_page_measure_resistance_label, "%.3f", msg.device_data.value4); }
             
             // 显示 INA226 测量的电源调整率
 
@@ -305,7 +305,7 @@ void update_gui_task(void *pvParameters)
             if (guider_ui.main_page_measure_current_label != NULL){ lv_label_set_text_fmt(guider_ui.main_page_measure_current_label, "%.3f", msg.value); }
             if (guider_ui.main_page_measure_voltage_label != NULL){ lv_label_set_text_fmt(guider_ui.main_page_measure_voltage_label, "%.3f", msg.value); }
             if (guider_ui.main_page_measure_power_label != NULL){ lv_label_set_text_fmt(guider_ui.main_page_measure_power_label, "%.3f", msg.value); }
-            if (guider_ui.main_page_measure_register_label != NULL){ lv_label_set_text_fmt(guider_ui.main_page_measure_register_label, "%.3f", msg.value); }
+            if (guider_ui.main_page_measure_resistance_label != NULL){ lv_label_set_text_fmt(guider_ui.main_page_measure_resistance_label, "%.3f", msg.value); }
             break;
           default:
             break;
@@ -482,7 +482,7 @@ void setup() {
   /* 设置自己的显示任务 */
   // setup_ui(&guider_ui); // 初始化 gui_guider
   
-  // /* 挂起 GUI guider 生成的页面 */
+  // // /* 挂起 GUI guider 生成的页面 */
   // setup_scr_main_page(&guider_ui); // gui_guider 为每一个页面生成的，这里是名字为 xxx 的页面
   // lv_scr_load(guider_ui.main_page); //每一个页面的名字都是 gui_guider 结构体的元素
   
@@ -518,14 +518,14 @@ void setup() {
             );
 
   // Core 1 运行（获取传感器数据任务）+ （更新 GUI 任务）
-  // xTaskCreatePinnedToCore(get_dummy_sensor_data_task,
-  //             "get_sensor_data_task",
-  //             1024*4,
-  //             NULL,
-  //             2,
-  //             NULL,
-  //             1
-  //           );
+  xTaskCreatePinnedToCore(get_dummy_sensor_data_task,
+              "get_sensor_data_task",
+              1024*4,
+              NULL,
+              2,
+              NULL,
+              1
+            );
   
   xTaskCreatePinnedToCore(update_gui_task,
               "update_gui_task",
@@ -536,73 +536,73 @@ void setup() {
               1
             );
 
-  xTaskCreatePinnedToCore(encoder1_task,
-              "encoder1_task",
-              1024*4,
-              NULL,
-              2,
-              NULL,
-              1
-            );
+  // xTaskCreatePinnedToCore(encoder1_task,
+  //             "encoder1_task",
+  //             1024*4,
+  //             NULL,
+  //             2,
+  //             NULL,
+  //             1
+  //           );
 
   voltage_protection_xBinarySemaphore = xSemaphoreCreateBinary();
   if (voltage_protection_xBinarySemaphore != NULL) {
     // Core 1 运行过压保护任务
-    xTaskCreatePinnedToCore(voltage_protection_task,
-              "voltage_protection_task",
-              1024*4,
-              NULL,
-              4, // 必须是最高优先级
-              NULL,
-              1
-            );
+    // xTaskCreatePinnedToCore(voltage_protection_task,
+    //           "voltage_protection_task",
+    //           1024*4,
+    //           NULL,
+    //           4, // 必须是最高优先级
+    //           NULL,
+    //           1
+    //         );
   }
 
-  xTaskCreatePinnedToCore(get_ina226_data_task,
-              "get_ina226_data_task",
-              1024*4,
-              NULL,
-              2,
-              NULL,
-              1
-            );
+  // xTaskCreatePinnedToCore(get_ina226_data_task,
+  //             "get_ina226_data_task",
+  //             1024*4,
+  //             NULL,
+  //             2,
+  //             NULL,
+  //             1
+  //           );
 
-  xTaskCreatePinnedToCore(ADC1_read_task,
-              "ADC1_read_task",
-              1024*4,
-              NULL,
-              2,
-              NULL,
-              1
-            );
+  // xTaskCreatePinnedToCore(ADC1_read_task,
+  //             "ADC1_read_task",
+  //             1024*4,
+  //             NULL,
+  //             2,
+  //             NULL,
+  //             1
+  //           );
   /* 暂时不使用这下面个旋转编码器中的按键做 GPIO 硬件中断*/
   /************** 从下面开始不使用 **************/ 
   // 创建二值信号量
   button_xBinarySemaphore = xSemaphoreCreateBinary();
   if (button_xBinarySemaphore != NULL) {
     // Core 1 运行按键处理任务
-    xTaskCreatePinnedToCore(button_handler_task,
-              "button_task",
-              1024*4,
-              NULL,
-              5, // 必须是最高优先级
-              NULL,
-              1
-            );
+    // xTaskCreatePinnedToCore(button_handler_task,
+    //           "button_task",
+    //           1024*4,
+    //           NULL,
+    //           5, // 必须是最高优先级
+    //           NULL,
+    //           1
+    //         );
 
-    // 绑定 GPIO (ENCODER_1_PIN_S)中断 和中断处理函数
-    //配置GPIO，下降沿和上升沿触发中断
-    gpio_config_t io_conf;
-    io_conf.intr_type = GPIO_INTR_ANYEDGE;
-    io_conf.pin_bit_mask = 1 << BUTTON_PIN; // 为 GPIO pin_S 设置中断
-    io_conf.mode = GPIO_MODE_INPUT;
-    io_conf.pull_up_en = GPIO_PULLUP_ENABLE;
-    gpio_config(&io_conf);
-    // 注册中断服务
-    gpio_set_intr_type((gpio_num_t)BUTTON_PIN, GPIO_INTR_ANYEDGE);
-    gpio_install_isr_service(0);
-    gpio_isr_handler_add((gpio_num_t)BUTTON_PIN, button_press_ISR, (void *) &BUTTON_PIN);
-    // 设置 GPIO 中断类型
+    // // 绑定 GPIO (ENCODER_1_PIN_S)中断 和中断处理函数
+    // //配置GPIO，下降沿和上升沿触发中断
+    // gpio_config_t io_conf;
+    // io_conf.intr_type = GPIO_INTR_ANYEDGE;
+    // io_conf.pin_bit_mask = 1 << BUTTON_PIN; // 为 GPIO pin_S 设置中断
+    // io_conf.mode = GPIO_MODE_INPUT;
+    // io_conf.pull_up_en = GPIO_PULLUP_ENABLE;
+    // gpio_config(&io_conf);
+    // // 注册中断服务
+    // gpio_set_intr_type((gpio_num_t)BUTTON_PIN, GPIO_INTR_ANYEDGE);
+    // gpio_install_isr_service(0);
+    // gpio_isr_handler_add((gpio_num_t)BUTTON_PIN, button_press_ISR, (void *) &BUTTON_PIN);
+    // // 设置 GPIO 中断类型
   }
   /************** 从上面开始不使用 **************/ 
 

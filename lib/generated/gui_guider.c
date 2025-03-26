@@ -75,8 +75,8 @@ void ui_animation(void * var, int32_t duration, int32_t delay, int32_t start_val
 void init_scr_del_flag(lv_ui *ui)
 {
 
+    ui->chart_page_del = true;
     ui->main_page_del = true;
-    ui->debug_test_del = true;
 }
 
 void setup_ui(lv_ui *ui)
