@@ -236,6 +236,8 @@ void get_ina226_data_task(void *pvParameters)
     msg.device_data.value4 = measure_resistance_Kohm;
     msg.device_data.value5 = rate;
 
+    printf("\n[get_ina226_data_task] INA226: %.3f mA, %.3f V, %.3f W, %.3f KOhm, %.3f", measure_current_mA, measure_voltage_V, measure_power_W, measure_resistance_Kohm, rate);
+
     // 检查 INA226 电压是否超过警告值，如果超过则进行过压保护
     if(measure_voltage_V >= WARNING_VOLTAGE){
       // 电压过高，警告
@@ -527,14 +529,14 @@ void setup() {
             );
 
   // Core 1 运行（获取传感器数据任务）+ （更新 GUI 任务）
-  xTaskCreatePinnedToCore(get_dummy_sensor_data_task,
-              "get_sensor_data_task",
-              1024*4,
-              NULL,
-              2,
-              NULL,
-              1
-            );
+  // xTaskCreatePinnedToCore(get_dummy_sensor_data_task,
+  //             "get_sensor_data_task",
+  //             1024*4,
+  //             NULL,
+  //             2,
+  //             NULL,
+  //             1
+  //           );
   
   xTaskCreatePinnedToCore(update_gui_task,
               "update_gui_task",
@@ -567,23 +569,23 @@ void setup() {
     //         );
   }
 
-  // xTaskCreatePinnedToCore(get_ina226_data_task,
-  //             "get_ina226_data_task",
-  //             1024*4,
-  //             NULL,
-  //             2,
-  //             NULL,
-  //             1
-  //           );
+  xTaskCreatePinnedToCore(get_ina226_data_task,
+              "get_ina226_data_task",
+              1024*4,
+              NULL,
+              2,
+              NULL,
+              1
+            );
 
-  // xTaskCreatePinnedToCore(ADC1_read_task,
-  //             "ADC1_read_task",
-  //             1024*4,
-  //             NULL,
-  //             2,
-  //             NULL,
-  //             1
-  //           );
+  xTaskCreatePinnedToCore(ADC1_read_task,
+              "ADC1_read_task",
+              1024*4,
+              NULL,
+              2,
+              NULL,
+              1
+            );
   /* 暂时不使用这下面个旋转编码器中的按键做 GPIO 硬件中断*/
   /************** 从下面开始不使用 **************/ 
   // 创建二值信号量
