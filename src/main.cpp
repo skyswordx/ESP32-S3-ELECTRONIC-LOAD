@@ -480,14 +480,14 @@ void setup() {
 
 
   /* 设置自己的显示任务 */
-  // setup_ui(&guider_ui); // 初始化 gui_guider
+  setup_ui(&guider_ui); // 初始化 gui_guider
   
-  // // /* 挂起 GUI guider 生成的页面 */
-  // setup_scr_main_page(&guider_ui); // gui_guider 为每一个页面生成的，这里是名字为 xxx 的页面
-  // lv_scr_load(guider_ui.main_page); //每一个页面的名字都是 gui_guider 结构体的元素
+  // /* 挂起 GUI guider 生成的页面 */
+  setup_scr_main_page(&guider_ui); // gui_guider 为每一个页面生成的，这里是名字为 xxx 的页面
+  lv_scr_load(guider_ui.main_page); //每一个页面的名字都是 gui_guider 结构体的元素
   
   /* 或者运行 LVGL demo */
-  lv_demo_benchmark();
+  // lv_demo_benchmark();
 
   /* 创建消息队列 */
   // Create the queue which will have <queue_element_size> number of elements, each of size `message_t` and pass the address to <sensor_queue_handle>.
