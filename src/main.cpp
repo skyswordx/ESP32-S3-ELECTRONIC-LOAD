@@ -8,11 +8,12 @@
  * 若使用 2.4 寸屏幕，请在
  *  - TFT_eSPI/User_Setup_Select.h 中包含 ILI9341.h
  *  - Lib/lvg_port/lv_port_disp.cpp 中修改尺寸为 240x320
+ *  - Lib/lvg_port/lv_port_indev.cpp 中修改校准数据
  * 
  * 若使用 3.5 寸屏幕，请在
  * - TFT_eSPI/User_Setup_Select.h 中包含 ILI9488.h
  * - Lib/lvg_port/lv_port_disp.cpp 中修改尺寸为 320x480
- * 
+ * - Lib/lvg_port/lv_port_indev.cpp 中修改校准数据
  */
 
 // 包含显示接口和触摸接口绑定部分
@@ -31,7 +32,7 @@
 #define ENCODER_1_PIN_B 13
 #define ENCODER_1_PIN_S 14
 encoder_handle_t encoder1(ENCODER_1_PIN_A, ENCODER_1_PIN_B, ENCODER_1_PIN_S);
-const int BUTTON_PIN = 15;
+
 
 /******** INA226 & MCP4725 Setup **********/
 #include <Wire.h>
@@ -51,6 +52,14 @@ MCP4725 MCP4725_device(0x62); // MCP4725 DAC 芯片
 ADC_channel_handler_t MY_ADC_GPIO7(ADC1_CHANNEL_6, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, 64, ADC_UNIT_1);
 ADC_channel_handler_t MY_ADC_GPIO6(ADC1_CHANNEL_5, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, 64, ADC_UNIT_1);
 ADC_channel_handler_t MY_ADC_GPIO5(ADC1_CHANNEL_4, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, 64, ADC_UNIT_1);
+
+/******** GPIO-button Setup *********/
+const int BUTTON_PIN = 15;
+// #define BUTTON_GPIO15 15 // GPIO 15 作为按键输入引脚
+// #define BUTTON_GPIO16 16 // GPIO 16 作为按键输入引脚
+// #define BUTTON_GPIO17 17 // GPIO 17 作为按键输入引脚
+// #define BUTTON_GPIO18 18 // GPIO 18 作为按键输入引脚
+
 
 /******** LVGL-SetUP *******/
 // Use hardware SPI
