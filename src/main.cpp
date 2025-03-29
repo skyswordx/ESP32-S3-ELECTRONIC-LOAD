@@ -246,7 +246,7 @@ void get_ina226_data_task(void *pvParameters)
       msg.value = WARNING_VOLTAGE; // LVGL 读取到这个数据就会弹出警告
 
       // 这里触发过压之后的保护程序
-      xSemaphoreGive(voltage_protection_xBinarySemaphore);
+      // xSemaphoreGive(voltage_protection_xBinarySemaphore);
     }
 
     int return_value = xQueueSend(sensor_queue_handle, (void *)&msg, 0);
@@ -572,14 +572,14 @@ void setup() {
             );
   }
 
-  xTaskCreatePinnedToCore(get_ina226_data_task,
-              "get_ina226_data_task",
-              1024*4,
-              NULL,
-              2,
-              NULL,
-              1
-            );
+  // xTaskCreatePinnedToCore(get_ina226_data_task,
+  //             "get_ina226_data_task",
+  //             1024*4,
+  //             NULL,
+  //             2,
+  //             NULL,
+  //             1
+  //           );
 
   xTaskCreatePinnedToCore(ADC1_read_task,
               "ADC1_read_task",

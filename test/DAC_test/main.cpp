@@ -27,7 +27,7 @@ void setup(){
     printf("could not connect MCP4725. Fix and Reboot");
     MCP4725_init_flag = 0; // MCP4725 初始化失败
   }
-  MCP4725_device.setMaxVoltage(3.3); // 设置最大输出电压
+  MCP4725_device.setMaxVoltage(3.2841); // 设置最大输出电压
   MCP4725_device.setVoltage(2.0); // 设置输出电压为 3.3V
 
 }
