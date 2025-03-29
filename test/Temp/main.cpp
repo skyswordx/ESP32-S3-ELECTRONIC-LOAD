@@ -44,7 +44,7 @@ encoder_handle_t encoder1(ENCODER_1_PIN_A, ENCODER_1_PIN_B, ENCODER_1_PIN_S);
 INA226 INA226_device(0x40); // INA226 电流传感器
 
 #include "MCP4725.h"
-MCP4725 MCP4725_device(0x62); // MCP4725 DAC 芯片
+MCP4725 MCP4725_device(0x60); // MCP4725 DAC 芯片
 #define WARNING_VOLTAGE 18 // 触发过压保护的电压
 
 /******** ADC1 Setup *********/
@@ -487,7 +487,7 @@ void setup() {
     printf("could not connect MCP4725. Fix and Reboot");
   }
   MCP4725_device.setMaxVoltage(5.1); // 设置最大输出电压
-  MCP4725_device.setVoltage(3.3); // 设置输出电压为 3.3V
+  MCP4725_device.setVoltage(1); // 设置输出电压为 3.3V
 
 
   /* 设置自己的显示任务 */
@@ -619,7 +619,8 @@ void setup() {
 
 }
 
-void loop() {
 
+void loop() {
+  
 
 }

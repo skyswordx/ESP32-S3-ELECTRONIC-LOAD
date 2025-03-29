@@ -31,7 +31,10 @@
 #include <Wire.h>
 
 
- 
+// 第一条 IIC 总线 Wire 的引脚
+#define IIC_SDA 4
+#define IIC_SCL 5
+
 void setup()
 {
 
@@ -39,7 +42,7 @@ void setup()
 
     Serial.begin(115200);
     // 需要指定 SDA 和 SCL 引脚
-    flag = Wire.begin(5,6);
+    flag = Wire.begin(IIC_SDA, IIC_SCL);
     Serial.println("I2C Scanner");
 
     if (flag == false)
