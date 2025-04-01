@@ -7,15 +7,18 @@
     这里仅仅完成 GPIO 按键的初始化
 */
 class GPIO_button_handler_t{
-    private:
+    public:
         gpio_num_t pin; // GPIO 引脚号
         bool button_state; // 按键状态
-       
+        GPIO_button_handler_t(gpio_num_t pin); 
+};
 
-    public:
-        GPIO_button_handler_t(gpio_num_t pin); //
-}
 
+void IRAM_ATTR button1_press_ISR(void *arg ); 
+void IRAM_ATTR button2_press_ISR(void *arg );
+void IRAM_ATTR button3_press_ISR(void *arg );
+void IRAM_ATTR button4_press_ISR(void *arg );
+void IRAM_ATTR encoder1_button_press_ISR(void *arg );
 
 
 #endif // OUR_BUTTON_H
