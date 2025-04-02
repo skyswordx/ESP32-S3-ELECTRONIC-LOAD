@@ -134,12 +134,12 @@ void lvgl_task(void *pvParameters)
 
 // lv_obj_add_event_cb(sw_obj, switch_event_handler, LV_EVENT_ALL, NULL);
 
-void encoder1_task(void *pvParameters)
+void get_encoder1_data_task(void *pvParameters)
 {
   message_t msg;
   while(1)
   {
-    // printf("\n[encoder1_task] running on core: %d, Free stack space: %d", xPortGetCoreID(), uxTaskGetStackHighWaterMark(NULL));
+    // printf("\n[get_encoder1_data_task] running on core: %d, Free stack space: %d", xPortGetCoreID(), uxTaskGetStackHighWaterMark(NULL));
     
     // 获取旋转编码器数据
     msg.device_id = DEVICE_ENCODER;
@@ -159,15 +159,15 @@ void encoder1_task(void *pvParameters)
       }
     }
     
-    // printf("\n[encoder1_task] encoder1 count: %lld", msg.value);
+    // printf("\n[get_encoder1_data_task] encoder1 count: %lld", msg.value);
 
     int return_value = xQueueSend(sensor_queue_handle, (void *)&msg, 0);
     if (return_value == pdTRUE) {
-      // printf("\n[encoder1_task] sent message  to the queue successfully\n");
+      // printf("\n[get_encoder1_data_task] sent message  to the queue successfully\n");
     } else if (return_value == errQUEUE_FULL) {
-      // printf("\n[encoder1_task] failed to send message to queue, queue is full\n");
+      // printf("\n[get_encoder1_data_task] failed to send message to queue, queue is full\n");
     } else {
-      // printf("\n[encoder1_task] failed to send message to queue\n");
+      // printf("\n[get_encoder1_data_task] failed to send message to queue\n");
     }
 
     vTaskDelay( 1000 );
@@ -536,8 +536,8 @@ void setup() {
               1
             );
 
-  // xTaskCreatePinnedToCore(encoder1_task,
-  //             "encoder1_task",
+  // xTaskCreatePinnedToCore(get_encoder1_data_task,
+  //             "get_encoder1_data_task",
   //             1024*4,
   //             NULL,
   //             2,
