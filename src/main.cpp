@@ -159,7 +159,7 @@ void get_encoder1_data_task(void *pvParameters)
       }
     }
     
-    // printf("\n[get_encoder1_data_task] encoder1 count: %lld", msg.value);
+    printf("\n[get_encoder1_data_task] encoder1 count: %lld", msg.value);
 
     int return_value = xQueueSend(sensor_queue_handle, (void *)&msg, 0);
     if (return_value == pdTRUE) {
@@ -398,10 +398,21 @@ void button_handler_task(void *pvParameters){
           }
 
           // 这里模拟过压保护的触发
-          xSemaphoreGive(voltage_protection_xBinarySemaphore);
+          // xSemaphoreGive(voltage_protection_xBinarySemaphore);
+
+          if (GPIO_PIN == encoder1_button.pin){
+            // 按下编码器俺家之后切换模式
+            if (encoder1.mode == QUAD) {
+              encoder1.mode = SINGLE;
+              printf("\n[button_handler_task] encoder1 mode changed to AB");
+            } else {
+              encoder1.mode = QUAD;
+              printf("\n[button_handler_task] encoder1 mode changed to QUAD");
+            }
+          }
         }
       } else {
-        // printf("\n[button_handler_task] failed to receive message from queue\n");
+        // printf("\n[button_handler_task] failed to receive messag e from queue\n");
       }
     }
   }
@@ -536,14 +547,14 @@ void setup() {
               1
             );
 
-  // xTaskCreatePinnedToCore(get_encoder1_data_task,
-  //             "get_encoder1_data_task",
-  //             1024*4,
-  //             NULL,
-  //             2,
-  //             NULL,
-  //             1
-  //           );
+  xTaskCreatePinnedToCore(get_encoder1_data_task,
+              "get_encoder1_data_task",
+              1024*4,
+              NULL,
+              2,
+              NULL,
+              1
+            );
 
   voltage_protection_xBinarySemaphore = xSemaphoreCreateBinary();
   if (voltage_protection_xBinarySemaphore != NULL) {
