@@ -4,21 +4,21 @@
 
 | 有效性 | 阶段              | 时间                  | 备注                         | 详细的子页面\|作者                 |
 | --- | --------------- | ------------------- | -------------------------- | -------------------------- |
-| ❌   | 准备阶段            | 2025.2.20-2025.x    | 题目选定 + GUI 显示接口            | links 部分\|yy<br>GUI 需求\|hm |
+| ❌   | 准备阶段            | 2025.2.20-2025. x    | 题目选定 + GUI 显示接口            | links 部分\|yy<br>GUI 需求\|hm |
 | ✔   | GUI + RTOS 框架建立 | 2025.2.25-2025.2.28 | 搭建 RTOS 框架 + 移植 GUI-guider | LVGL-RTOS 学习资料总结部分\|yy     |
 ## 硬件电路参考 links
 
 - [#第五届立创电子设计大赛#数控直流电子负载 - 立创开源硬件平台](https://oshwhub.com/micespring/digital-dc-elecload)
 - [触屏迷你电子负载 - 立创开源硬件平台](https://oshwhub.com/flyn/mi-ni-dian-zi-fu-zai)
-	- **采样范围**：电压0-60V，电流0-4A
-	- **负载能力**：恒流0-4A，误差<0.04A | 恒压0-48V，误差<0.2V | 恒阻1-1000R，误差<5%，恒功率0-100W，误差<5%
-	- **带载功率**：长时间运行30W，短时运行100W(10S)
+	- **采样范围**：电压 0-60 V，电流 0-4 A
+	- **负载能力**：恒流 0-4 A，误差<0.04 A | 恒压 0-48 V，误差<0.2 V | 恒阻 1-1000 R，误差<5%，恒功率 0-100 W，误差<5%
+	- **带载功率**：长时间运行 30 W，短时运行 100 W (10 S)
 	- **保护方式**：过流保护、过压保护、过温保护、反接保护
 
 
 ## 控制板引脚
 
-INA226 的引脚不变
+INA 226 的引脚不变
 LCD-disp 的引脚不变
 
 **旋转编码器的引脚删掉原来的**
@@ -33,7 +33,7 @@ GPIO -> 按键 -> GND
 - GPIO 17
 - GPIO 18
 
-ADC1 的 3 个通道，并联在一起
+ADC 1 的 3 个通道，并联在一起
 - GPIO 7
 - GPIO 6
 - GPIO 5
@@ -60,6 +60,15 @@ ADC1 的 3 个通道，并联在一起
 - 能实时测量并数字显示流过电子负载的电流，电流测量精度为士 (0.1%+0.1%FS)，分辨力为 1 mA
 - 具有直流稳压电源负载调整率自动测量功能，测量范围为 0.1%~19.9%，测量精度为土 1%。为方便，本题要求被测直流稳压电源的输出电压在 10 V 以内。
 
+## 功率板联调 debug 记录
+
+串口打印不要使用 `Serial`，使用 esp-idf 的 `printf` 
+> 如果打印的数字不对，可能是格式字符串匹配不正确，如浮点型用 `int64_t` 的 `%lld` 会出问题
+
+arduino 的时间访问接口是 esp-idf 的封装
+
+在按键检测中，我是在按键处理里面是阻塞检测的
+- 有一个隐患就是，一直按会一直阻塞
 ## GUI 需求
 
 需要显示的信息：
@@ -69,11 +78,11 @@ ADC1 的 3 个通道，并联在一起
 - [ ] 测量并显示电源负载调整率（范围 0.1%~19.9%, 10 V max, 1 A）
 - [x]  过压/不工作时显示保护信息
 
-## DAC & INA226 测试经验总结
+## DAC & INA 226 测试经验总结
 
 设备环境配置问题
 - 我的电脑不可以编译固件
-- hm的电脑打开串口会显示访问失败
+- hm 的电脑打开串口会显示访问失败
 - 插在 usb 口虽然可以和串口上位机通信，但是按下 reset 键会断开
 - 得要插在 uart 口才行
 
@@ -83,16 +92,16 @@ ADC1 的 3 个通道，并联在一起
 DebugSerial - 系统找不到指定的文件。
 ```
 
-板子丝印问题，`esp32-s3-devkitc-1`这块板子的 5V 丝印是指的 5V 输入
-- 我的开发板的丝印只有 5V
-- hm 的开发板丝印是 5Vin
+板子丝印问题，`esp32-s3-devkitc-1` 这块板子的 5 V 丝印是指的 5 V 输入
+- 我的开发板的丝印只有 5 V
+- hm 的开发板丝印是 5 Vin
 
-MCP4725 库提供的示例程序 IIC 设备地址不对
+MCP 4725 库提供的示例程序 IIC 设备地址不对
 - 官方提供的地址是 `0x62`
 - 我们实际测的是 `0x60`
-- 虽然 INA226 库提供的地址是对的，但不是所有设备库提供的是对的，下次出现问题要注意
+- 虽然 INA 226 库提供的地址是对的，但不是所有设备库提供的是对的，下次出现问题要注意
 
-MCP4725 在使用设定输出值之前，要先指定参考的最大电压才准确
+MCP 4725 在使用设定输出值之前，要先指定参考的最大电压才准确
 ```cpp
 MCP4725_device.setMaxVoltage(3.3); // 设置最大输出电压
 MCP4725_device.setVoltage(2.0); // 设置输出电压为 3.3V
@@ -136,7 +145,7 @@ RTOS 快速入门相关
 
 
 在使用 port 文件时，官方给的是 `c` 文件，而 `tft` 库是 `cpp` 库
-一种修改方法是把文件改为 `.cpp` ，并且删掉 `extern C` 避免在文件中引用 ` cpp ` 库错
+一种修改方法是把文件改为 `. cpp` ，并且删掉 `extern C` 避免在文件中引用 ` cpp ` 库错
 ```cpp
 #ifdef __cplusplus
 extern "C" {
@@ -176,7 +185,7 @@ static void disp_init(void)
 [LVGL lv_label_set_text_fmt 显示只有f_lvgl浮点-CSDN博客](https://blog.csdn.net/weixin_44684950/article/details/124426341)
 ### 移植的经验总结
 
-LVGL 框架的两个核心组件就是任务调度器 (`timer_handler` 或者 `task_handler` 旧版)和系统心跳（`lv_tick_inc`）
+LVGL 框架的两个核心组件就是任务调度器 (`timer_handler` 或者 `task_handler` 旧版) 和系统心跳（`lv_tick_inc`）
 - 一般的 LVGL 页面显示函数只需要在主循环外调用一次即可，然后在主循环中使用任务调度器进行具体的调配
 - 然后为了合理调度，需要 LVGL 被告知系统自启动后运行至今的时间，一般是选择一个固定的定时器时间触发中断（已选 ESP 硬件定时器中断了）
 
@@ -250,7 +259,7 @@ void lvgl_task(void *pvParameters)
 #endif
 ```
 
-在 `lv_conf.h` 端使能帧率
+在 `lv_conf. h` 端使能帧率
 ```
 /*1: Show CPU usage and FPS count*/
 
@@ -286,7 +295,7 @@ void lvgl_task(void *pvParameters)
 	- 具体参考 [VS Code+platformio配置ESP32-S3-N16R8（8MB PSRAM + 16MB FLASH）工程](https://www.cnblogs.com/macrored/p/17357581.html)
 		- [Arduino IDE中ESP32S3运行参数意义 - 哔哩哔哩](https://www.bilibili.com/opus/833077798602014787)
 		- [【ESP32 S3开发】在Arduino IDE中使用PSRAM_arduino的选项opi_psram](https://blog.csdn.net/m0_43395703/article/details/125705032)
-- DMA：S3 限定
+- DMA：S 3 限定
 	- [Create buffers in psram esp32s3 - How-to - LVGL Forum](https://forum.lvgl.io/t/create-buffers-in-psram-esp32s3/11555)
 	- 需要用 `heap_caps_malloc` 分配 PSRAM 内存的时候，指定`MALLOC_CAP_DMA | MALLOC_CAP_SPIRAM`
 	- 需要修改 `lv_port_disp` 的 `disp_flush` 函数
@@ -305,12 +314,12 @@ void lvgl_task(void *pvParameters)
 - 
 ## 连接 IIC 外设
 
-- `ina226`
-- `MCP4725：DAC`
+- `ina 226`
+- `MCP 4725：DAC`
 
-`Serial.begin` 如果不设置波特率为 115200 就会卡死
+`Serial. begin` 如果不设置波特率为 115200 就会卡死
 
-`Wire.begin` 如果不传入 $\displaystyle SDA$ 和 $\displaystyle SCL$ 的管脚信息，会无法发现 iic 地址
+`Wire. begin` 如果不传入 $\displaystyle SDA$ 和 $\displaystyle SCL$ 的管脚信息，会无法发现 iic 地址
 这个用于初始化 iic 总线，如果要使用多个 iic 设备，就要把所有的 iic 设备的 $\displaystyle SDA$ 和 $\displaystyle SCL$ 都并联在一起连接（加上上拉电阻）
 
 - [通俗易懂谈上拉电阻与下拉电阻的作用-基础小知识（二）上拉电阻是用来解决总线驱动能力不足时提供电流的。一般说法是拉电流,下拉电阻是-CSDN博客](https://blog.csdn.net/uiojhi/article/details/107678488)
@@ -318,7 +327,7 @@ void lvgl_task(void *pvParameters)
 
 - [🎉2025年电赛备赛资料合集—持续更新中 | 嘉立创EDA教育与开源文档中心](https://wiki.lceda.cn/zh-hans/contest/e-contests/resource/)
 - [《立创EDA硬件开发规范文档》](https://www.yuque.com/lceda_design/template/zso261/#dBBwU)，剪裁下到本地的文档在 [manual](manual.md)
-## 3d 模型获取
+## 3 d 模型获取
 
 - [▷ spi tft display 3d models 【 STLFinder 】](https://www.stlfinder.com/3dmodels/spi-tft-display/#google_vignette)
 - [DISPLAY LCD TFT 2.4" 240x320 TOUCH SPI | 3D CAD Model Library | GrabCAD](https://grabcad.com/library/display-lcd-tft-2-4-240x320-touch-spi-1)

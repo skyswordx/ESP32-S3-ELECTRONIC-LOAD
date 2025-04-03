@@ -196,7 +196,7 @@ void get_ina226_data_task(void *pvParameters)
   {
     // printf("\n[get_ina226_data_task] running on core: %d, Free stack space: %d", xPortGetCoreID(), uxTaskGetStackHighWaterMark(NULL));
 
-
+    // printf("\n[get_ina226_data_task] now_time: %d", millis());
     msg.device_id = DEVICE_INA226;
   
     float measure_current_mA = INA226_device.getCurrent_mA() * 100;
@@ -228,7 +228,7 @@ void get_ina226_data_task(void *pvParameters)
     msg.device_data.value4 = measure_resistance_Kohm;
     msg.device_data.value5 = rate;
 
-    printf("\n[get_ina226_data_task] INA226: %.3f mA, %.3f V, %.3f W, %.3f KOhm, %.3f", measure_current_mA, measure_voltage_V, measure_power_W, measure_resistance_Kohm, rate);
+    // printf("\n[get_ina226_data_task] INA226: %.3f mA, %.3f V, %.3f W, %.3f KOhm, %.3f", measure_current_mA, measure_voltage_V, measure_power_W, measure_resistance_Kohm, rate);
 
     // 检查 INA226 电压是否超过警告值，如果超过则进行过压保护
     if(measure_voltage_V >= WARNING_VOLTAGE){
@@ -344,7 +344,7 @@ void button_handler_task(void *pvParameters){
   BaseType_t button_up = pdFALSE;
   BaseType_t short_press = pdFALSE;
   BaseType_t long_press = pdFALSE;
-  int time = 0;
+  int time_ms = 0;
 
   gpio_num_t GPIO_PIN;
   while(1){
@@ -359,24 +359,27 @@ void button_handler_task(void *pvParameters){
 
         /* 收到中断数据，开始检测 */
 
-        // 记录下用户按下按键的时间点
-        if (gpio_get_level(GPIO_PIN) == LOW) {
+        // 使用 while 循环来阻塞检测
+        time_ms = millis();
+        while (gpio_get_level(GPIO_PIN) == LOW) {
+          // printf("\n[button_handler_task] button pressed");
           button_down = pdTRUE;
-          time = millis();
 
-        // 记录下用户松开按键的时间点  
-        } else if (button_down == pdTRUE) {
-          
-          button_up = pdTRUE;
-          // 如果当前GPIO口的电平已经记录为按下，则开始减去上次按下按键的时间点
-          time = millis() - time;
-        } 
+          if (millis() - time_ms > 10000) { // 10s
+            break; // 超过 10s 就退出，避免一直阻塞
+          }
+        }
+        button_up = pdTRUE;
+    
+        time_ms = millis() - time_ms;
+
+
         if (button_down == pdTRUE && button_up == pdTRUE) {
           // printf("\n[button_handler_task] button pressed for %d ms", time);
           button_down = pdFALSE;
           button_up = pdFALSE;
 
-          if (time < 1000000) { // 1s
+          if (time_ms < 1000) { // 1s
             short_press = pdTRUE;
             printf("\n[button_handler_task] GPIO %d short press", GPIO_PIN);
 
@@ -386,13 +389,13 @@ void button_handler_task(void *pvParameters){
           }
 
           // 这里模拟过压保护的触发
-          xSemaphoreGive(voltage_protection_xBinarySemaphore);
-
+          // xSemaphoreGive(voltage_protection_xBinarySemaphore);
+          printf("\n[button_handler_task] duration: %d ms", time_ms);
           if (GPIO_PIN == encoder1_button.pin){
             // 按下编码器俺家之后切换模式
             if (encoder1.mode == QUAD) {
               encoder1.mode = SINGLE;
-              printf("\n[button_handler_task] encoder1 mode changed to AB");
+              printf("\n[button_handler_task] encoder1 mode changed to SINGLE");
             } else {
               encoder1.mode = QUAD;
               printf("\n[button_handler_task] encoder1 mode changed to QUAD");
@@ -424,7 +427,7 @@ void ADC1_read_task(void *pvParameters)
 
     msg.value = adc_value_average;
     // printf("\n[ADC1_read_task] ADC1_CHANNEL_7: %d, ADC1_CHANNEL_6: %d, ADC1_CHANNEL_5: %d, Average: %d", adc_value_1, adc_value_2, adc_value_3, adc_value_average);
-    // printf("\n[ADC1_read_task] ADC1_CHANNEL_7: %d,  ADC1_CHANNEL_5: %d, Average: %d", adc_value_1, adc_value_3, adc_value_average);
+    printf("\n[ADC1_read_task] ADC1_CHANNEL_7: %d,  ADC1_CHANNEL_5: %d, Average: %d", adc_value_1, adc_value_3, adc_value_average);
     
 
     int return_value = xQueueSend(sensor_queue_handle, (void *)&msg, 0);
