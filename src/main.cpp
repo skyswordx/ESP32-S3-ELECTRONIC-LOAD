@@ -359,22 +359,35 @@ void button_handler_task(void *pvParameters){
 
         /* 收到中断数据，开始检测 */
 
-        // 使用 while 循环来阻塞检测
-        time_ms = millis();
+        // 利用 RTOS 系统时间片轮询和标志位来进行长短按检测
+        button_down = pdTRUE;
+        time_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
+
+        // 等待按键释放
         while (gpio_get_level(GPIO_PIN) == LOW) {
-          // printf("\n[button_handler_task] button pressed");
-          button_down = pdTRUE;
-
-          if (millis() - time_ms > 10000) { // 10s
-            break; // 超过 10s 就退出，避免一直阻塞
-          }
+          vTaskDelay(10 / portTICK_PERIOD_MS); // 延时 10ms，避免频繁轮询
         }
+
         button_up = pdTRUE;
+        time_ms = (xTaskGetTickCount() * portTICK_PERIOD_MS) - time_ms;
     
-        time_ms = millis() - time_ms;
+
+        // 使用 while 循环来阻塞检测
+        // time_ms = millis();
+        // while (gpio_get_level(GPIO_PIN) == LOW) {
+        //   // printf("\n[button_handler_task] button pressed");
+        //   button_down = pdTRUE;
+
+        //   if (millis() - time_ms > 10000) { // 10s
+        //     break; // 超过 10s 就退出，避免一直阻塞
+        //   }
+        // }
+        // button_up = pdTRUE;
+    
+        // time_ms = millis() - time_ms;
 
 
-        if (button_down == pdTRUE && button_up == pdTRUE) {
+        if (button_down == pdTRUE && button_up == pdTRUE && time_ms > 0) {
           // printf("\n[button_handler_task] button pressed for %d ms", time);
           button_down = pdFALSE;
           button_up = pdFALSE;
