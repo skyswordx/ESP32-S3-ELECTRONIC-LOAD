@@ -4,8 +4,12 @@
 
 | 有效性 | 阶段              | 时间                  | 备注                         | 详细的子页面\|作者                 |
 | --- | --------------- | ------------------- | -------------------------- | -------------------------- |
-| ❌   | 准备阶段            | 2025.2.20-2025. x    | 题目选定 + GUI 显示接口            | links 部分\|yy<br>GUI 需求\|hm |
+| ❌   | 准备阶段            | 2025.2.20-2025. x   | 题目选定 + GUI 显示接口            | links 部分\|yy<br>GUI 需求\|hm |
 | ✔   | GUI + RTOS 框架建立 | 2025.2.25-2025.2.28 | 搭建 RTOS 框架 + 移植 GUI-guider | LVGL-RTOS 学习资料总结部分\|yy     |
+## 总需求指引
+
+
+
 ## 硬件电路参考 links
 
 - [#第五届立创电子设计大赛#数控直流电子负载 - 立创开源硬件平台](https://oshwhub.com/micespring/digital-dc-elecload)
@@ -112,7 +116,7 @@ MCP4725_device.setVoltage(2.0); // 设置输出电压为 3.3V
 
 
 
-## LVGL-RTOS 学习资料总结
+## LVGL-RTOS 移植资料总结
 
 ### 快速入门 links
 
@@ -313,7 +317,11 @@ void lvgl_task(void *pvParameters)
 - [Create buffers in psram esp32s3 - How-to - LVGL Forum](https://forum.lvgl.io/t/create-buffers-in-psram-esp32s3/11555)
 
 - [ESP32S3-LVGL-Port-IDF/doc/lvgl帧率优化/lvgl帧率优化.md at main · herexiong/ESP32S3-LVGL-Port-IDF](https://github.com/herexiong/ESP32S3-LVGL-Port-IDF/blob/main/doc/lvgl%E5%B8%A7%E7%8E%87%E4%BC%98%E5%8C%96/lvgl%E5%B8%A7%E7%8E%87%E4%BC%98%E5%8C%96.md)
-- 
+
+## LVGL 交互：按键切换页面/对象
+
+- [LVGL V8应用——通过按键切换页面_lvgl按键切换界面-CSDN博客](https://blog.csdn.net/m0_37187962/article/details/125526292)
+
 ## 连接 IIC 外设
 
 - `ina 226`

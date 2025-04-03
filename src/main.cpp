@@ -228,7 +228,7 @@ void get_ina226_data_task(void *pvParameters)
     msg.device_data.value4 = measure_resistance_Kohm;
     msg.device_data.value5 = rate;
 
-    // printf("\n[get_ina226_data_task] INA226: %.3f mA, %.3f V, %.3f W, %.3f KOhm, %.3f", measure_current_mA, measure_voltage_V, measure_power_W, measure_resistance_Kohm, rate);
+    printf("\n[get_ina226_data_task] INA226: %.3f mA, %.3f V, %.3f W, %.3f KOhm, %.3f", measure_current_mA, measure_voltage_V, measure_power_W, measure_resistance_Kohm, rate);
 
     // 检查 INA226 电压是否超过警告值，如果超过则进行过压保护
     if(measure_voltage_V >= WARNING_VOLTAGE){
@@ -440,7 +440,7 @@ void ADC1_read_task(void *pvParameters)
 
     msg.value = adc_value_average;
     // printf("\n[ADC1_read_task] ADC1_CHANNEL_7: %d, ADC1_CHANNEL_6: %d, ADC1_CHANNEL_5: %d, Average: %d", adc_value_1, adc_value_2, adc_value_3, adc_value_average);
-    printf("\n[ADC1_read_task] ADC1_CHANNEL_7: %d,  ADC1_CHANNEL_5: %d, Average: %d", adc_value_1, adc_value_3, adc_value_average);
+    // printf("\n[ADC1_read_task] ADC1_CHANNEL_7: %d,  ADC1_CHANNEL_5: %d, Average: %d", adc_value_1, adc_value_3, adc_value_average);
     
 
     int return_value = xQueueSend(sensor_queue_handle, (void *)&msg, 0);
@@ -471,7 +471,7 @@ static void system_init(void) {
     printf("Minimum free heap size: %d bytes\n", esp_get_minimum_free_heap_size());
 }
 
-#define USE_INA226_MODULE 1
+// #define USE_INA226_MODULE 1
 
 void setup() {
 
