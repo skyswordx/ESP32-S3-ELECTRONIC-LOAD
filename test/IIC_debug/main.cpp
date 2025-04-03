@@ -40,18 +40,18 @@ void setup()
 
     bool flag;
 
-    Serial.begin(115200);
+    
     // 需要指定 SDA 和 SCL 引脚
     flag = Wire.begin(IIC_SDA, IIC_SCL);
-    Serial.println("I2C Scanner");
+    printf("I2C Scanner");
 
     if (flag == false)
     {
-        Serial.println("Wire.begin() failed");
+        printf("Wire.begin() failed");
     }
     else
     {
-        Serial.println("Wire.begin() success");
+        printf("Wire.begin() success");
     }
 
     
@@ -63,7 +63,7 @@ void loop()
   byte error, address;
   int nDevices;
  
-  Serial.println("Scanning...");
+  printf("Scanning...");
  
   nDevices = 0;
   for(address = 1; address < 127; address++ ) 
@@ -76,26 +76,26 @@ void loop()
  
     if (error == 0)
     {
-      Serial.print("I2C device found at address 0x");
+      printf("I2C device found at address 0x");
       if (address<16) 
-        Serial.print("0");
-      Serial.print(address,HEX);
-      Serial.println("  !");
+        printf("0");
+      printf("%x",address);
+      printf("  !");
  
       nDevices++;
     }
     else if (error==4) 
     {
-      Serial.print("Unknown error at address 0x");
+      printf("Unknown error at address 0x");
       if (address<16) 
-        Serial.print("0");
-      Serial.println(address,HEX);
+        printf("0");
+      printf("%x",address);
     }    
   }
   if (nDevices == 0)
-    Serial.println("No I2C devices found\n");
+    printf("No I2C devices found\n");
   else
-    Serial.println("done\n");
+    printf("done\n");
  
   delay(5000);           // wait 5 seconds for next scan
 }
@@ -116,14 +116,14 @@ void loop()
 // {
 //   Serial.begin(115200);
 //   delay(100);
-//   Serial.println(__FILE__);
-//   Serial.print("INA226_LIB_VERSION: ");
-//   Serial.println(INA226_LIB_VERSION);
+//   printf(__FILE__);
+//   printf("INA226_LIB_VERSION: ");
+//   printf(INA226_LIB_VERSION);
 
 //   Wire.begin();
 //   if (!INA.begin() )
 //   {
-//     Serial.println("could not connect. Fix and Reboot");
+//     printf("could not connect. Fix and Reboot");
 //   }
 
 //   /* STEPS TO CALIBRATE INA226
@@ -148,18 +148,18 @@ void loop()
 //   uint16_t bus_V_scaling_e4 = 10000;        /* bus_V_scaling_e4 (Bus Voltage Scaling Factor, default = 10000) */
 
 //   if(INA.configure(shunt, current_LSB_mA, current_zero_offset_mA, bus_V_scaling_e4))
-//     Serial.println("\n***** Configuration Error! Chosen values outside range *****\n");
+//     printf("\n***** Configuration Error! Chosen values outside range *****\n");
 //   else
-//     Serial.println("\n***** INA 226 CONFIGURE *****");
-//   Serial.print("Shunt:\t");
-//   Serial.print(shunt, 4);
-//   Serial.println(" Ohm");
-//   Serial.print("current_LSB_mA:\t");
-//   Serial.print(current_LSB_mA * 1e+3, 1);
-//   Serial.println(" uA / bit");
-//   Serial.print("\nMax Measurable Current:\t");
-//   Serial.print(INA.getMaxCurrent(), 3);
-//   Serial.println(" A");
+//     printf("\n***** INA 226 CONFIGURE *****");
+//   printf("Shunt:\t");
+//   printf(shunt, 4);
+//   printf(" Ohm");
+//   printf("current_LSB_mA:\t");
+//   printf(current_LSB_mA * 1e+3, 1);
+//   printf(" uA / bit");
+//   printf("\nMax Measurable Current:\t");
+//   printf(INA.getMaxCurrent(), 3);
+//   printf(" A");
 
 
 //   /* CALIBRATION */
@@ -172,65 +172,65 @@ void loop()
 //   }
 //   bv /= 10;
 //   cu /= 10;
-//   Serial.println("\nAverage Bus and Current values for use in Shunt Resistance, Bus Voltage and Current Zero Offset calibration:");
+//   printf("\nAverage Bus and Current values for use in Shunt Resistance, Bus Voltage and Current Zero Offset calibration:");
 //   bv = 0;
 //   for (int i = 0; i < 10; i++) {
 //     bv += INA.getBusVoltage();
 //     delay(100);
 //   }
 //   bv /= 10;
-//   Serial.print("\nAverage of 10 Bus Voltage values = ");
-//   Serial.print(bv, 3);
-//   Serial.println("V");
+//   printf("\nAverage of 10 Bus Voltage values = ");
+//   printf(bv, 3);
+//   printf("V");
 //   cu = 0;
 //   for (int i = 0; i < 10; i++) {
 //     cu += INA.getCurrent_mA();
 //     delay(100);
 //   }
 //   cu /= 10;
-//   Serial.print("Average of 10 Current values = ");
-//   Serial.print(cu, 3);
-//   Serial.println("mA");
+//   printf("Average of 10 Current values = ");
+//   printf(cu, 3);
+//   printf("mA");
 
-//   Serial.println("\nCALIBRATION VALUES TO USE:\t(DMM = Digital MultiMeter)");
-//   Serial.println("Step 5. Attach a power supply with voltage 5-10V to INA226 on VBUS/IN+ and GND pins, without any load.");
-//   Serial.print("\tcurrent_zero_offset_mA = ");
-//   Serial.print(current_zero_offset_mA + cu, 3);
-//   Serial.println("mA");
+//   printf("\nCALIBRATION VALUES TO USE:\t(DMM = Digital MultiMeter)");
+//   printf("Step 5. Attach a power supply with voltage 5-10V to INA226 on VBUS/IN+ and GND pins, without any load.");
+//   printf("\tcurrent_zero_offset_mA = ");
+//   printf(current_zero_offset_mA + cu, 3);
+//   printf("mA");
 //   if(cu > 5)
-//     Serial.println("********** NOTE: No resistive load needs to be present during current_zero_offset_mA calibration. **********");
-//   Serial.print("\tbus_V_scaling_e4 = ");
-//   Serial.print(bus_V_scaling_e4);
-//   Serial.print(" / ");
-//   Serial.print(bv, 3);
-//   Serial.println(" * (DMM Measured Bus Voltage)");
-//   Serial.println("Step 8. Set DMM in current measurement mode. Use a resistor that will generate around 50-100mA IOUT measurement between IN- and GND pins with DMM in series with load. Note current measured on DMM.");
-//   Serial.print("\tshunt = ");
-//   Serial.print(shunt);
-//   Serial.print(" * ");
-//   Serial.print(cu, 3);
-//   Serial.println(" / (DMM Measured IOUT)");
+//     printf("********** NOTE: No resistive load needs to be present during current_zero_offset_mA calibration. **********");
+//   printf("\tbus_V_scaling_e4 = ");
+//   printf(bus_V_scaling_e4);
+//   printf(" / ");
+//   printf(bv, 3);
+//   printf(" * (DMM Measured Bus Voltage)");
+//   printf("Step 8. Set DMM in current measurement mode. Use a resistor that will generate around 50-100mA IOUT measurement between IN- and GND pins with DMM in series with load. Note current measured on DMM.");
+//   printf("\tshunt = ");
+//   printf(shunt);
+//   printf(" * ");
+//   printf(cu, 3);
+//   printf(" / (DMM Measured IOUT)");
 //   if(cu < 40)
-//     Serial.println("********** NOTE: IOUT needs to be more than 50mA for better shunt resistance calibration. **********");
+//     printf("********** NOTE: IOUT needs to be more than 50mA for better shunt resistance calibration. **********");
 //   delay(1000);
 
 //   /* MEASUREMENTS */
 
-//   Serial.println("\nBUS(V) SHUNT(mV) CURRENT(mA) POWER(mW)");
+//   printf("\nBUS(V) SHUNT(mV) CURRENT(mA) POWER(mW)");
 //   for (int i = 0; i < 5; i++)
 //   {
 //     bv = INA.getBusVoltage();
 //     float sv = INA.getShuntVoltage_mV();
 //     cu = INA.getCurrent_mA();
 //     float po = (bv - sv / 1000) * cu;
-//     Serial.print(bv, 3);
-//     Serial.print("\t");
-//     Serial.print(sv, 3);
-//     Serial.print("\t\t");
-//     Serial.print(cu, 1);
-//     Serial.print("\t");
-//     Serial.print(po, 1);
-//     Serial.println();
+//     printf(bv, 3);
+//     printf("\t");
+//     printf(sv, 3);
+//     printf("\t\t");
+//     printf(cu, 1);
+//     printf("\t");
+//     printf(po, 1);
+//     printf();
 //     delay(1000);
 //   }
 // }

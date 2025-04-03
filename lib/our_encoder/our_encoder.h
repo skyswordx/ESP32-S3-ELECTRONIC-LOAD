@@ -19,7 +19,7 @@ class encoder_handle_t
 
         int64_t total_count;
         int64_t single_count;
-        int64_t read_count_accum_clear();
+        float read_count_accum_clear();
 
         encoder_mode_t mode = SINGLE;
 
