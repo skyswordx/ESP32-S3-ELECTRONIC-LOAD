@@ -75,16 +75,16 @@ void ui_animation(void * var, int32_t duration, int32_t delay, int32_t start_val
 void init_scr_del_flag(lv_ui *ui)
 {
 
-    ui->chart_page_del = true;
     ui->main_page_del = true;
+    ui->chart_page_del = true;
 }
 
 void setup_ui(lv_ui *ui)
 {
     init_scr_del_flag(ui);
     init_keyboard(ui);
-    setup_scr_main_page(ui);
-    lv_scr_load(ui->main_page);
+    setup_scr_chart_page(ui);
+    lv_scr_load(ui->chart_page);
 }
 
 void init_keyboard(lv_ui *ui)
