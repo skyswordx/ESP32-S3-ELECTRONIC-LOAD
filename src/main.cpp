@@ -304,6 +304,10 @@ void update_gui_task(void *pvParameters)
             break;
           case DEVICE_ENCODER:
             if (guider_ui.main_page_set_current_label != NULL){ lv_label_set_text_fmt(guider_ui.main_page_set_current_label, "%.3f", msg.value); }
+
+            // 测试波形图。编码器作为数据源
+            // guider_ui.chart_page_chart_1_0  是 series
+            lv_chart_set_next_value(guider_ui.chart_page_chart_1, guider_ui.chart_page_chart_1_0, msg.value);
             break;
           case DEVICE_DUMMY_SENSOR:
             if (guider_ui.main_page_measure_current_label != NULL){ lv_label_set_text_fmt(guider_ui.main_page_measure_current_label, "%.3f", msg.value); }
@@ -521,7 +525,9 @@ void setup() {
   
   // /* 挂起 GUI guider 生成的页面 */
   setup_scr_main_page(&guider_ui); // gui_guider 为每一个页面生成的，这里是名字为 xxx 的页面
-  lv_scr_load(guider_ui.main_page); //每一个页面的名字都是 gui_guider 结构体的元素
+  setup_scr_chart_page(&guider_ui); 
+  // lv_scr_load(guider_ui.main_page); //每一个页面的名字都是 gui_guider 结构体的元素
+  lv_scr_load(guider_ui.chart_page); 
   
   /* 或者运行 LVGL demo */
   // lv_demo_benchmark();

@@ -18,9 +18,6 @@ extern "C" {
 typedef struct
 {
   
-	lv_obj_t *chart_page;
-	bool chart_page_del;
-	lv_obj_t *chart_page_canvas_1;
 	lv_obj_t *main_page;
 	bool main_page_del;
 	lv_obj_t *main_page_measure_power_label;
@@ -29,6 +26,15 @@ typedef struct
 	lv_obj_t *main_page_measure_resistance_label;
 	lv_obj_t *main_page_set_current_label;
 	lv_obj_t *main_page_switch2chart;
+	lv_obj_t *main_page_btn_1;
+	lv_obj_t *main_page_btn_1_label;
+	lv_obj_t *chart_page;
+	bool chart_page_del;
+	lv_obj_t *chart_page_sw_1;
+	lv_obj_t *chart_page_btn_1;
+	lv_obj_t *chart_page_btn_1_label;
+	lv_obj_t *chart_page_chart_1;
+	lv_chart_series_t *chart_page_chart_1_0;
 }lv_ui;
 
 typedef void (*ui_setup_scr_t)(lv_ui * ui);
@@ -52,13 +58,11 @@ void init_keyboard(lv_ui *ui);
 extern lv_ui guider_ui;
 
 
-void setup_scr_chart_page(lv_ui *ui);
 void setup_scr_main_page(lv_ui *ui);
+void setup_scr_chart_page(lv_ui *ui);
 
-LV_FONT_DECLARE(lv_font_Acme_Regular_20)
-LV_FONT_DECLARE(lv_font_montserratMedium_12)
-LV_FONT_DECLARE(lv_font_montserratMedium_10)
 LV_FONT_DECLARE(lv_font_montserratMedium_16)
+LV_FONT_DECLARE(lv_font_montserratMedium_12)
 
 
 #ifdef __cplusplus
