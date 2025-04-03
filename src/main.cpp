@@ -143,23 +143,11 @@ void get_encoder1_data_task(void *pvParameters)
     
     // 获取旋转编码器数据
     msg.device_id = DEVICE_ENCODER;
-    int64_t count = encoder1.read_count_accum_clear();
+    msg.value = encoder1.read_count_accum_clear();
 
-    // 对旋转编码器的值进行处理
-    if (count < 0) {
-      msg.value = 0;
-    } else {
-      // 默认使用 4 倍频，这里可以根据需要进行处理
-      // 这里默认是进入 else 分支
-      if (encoder1.mode == QUAD) { // 保持默认的 4 倍频模式，自增是以 4 为单位的
-        msg.value = count;
-      } else { 
-        msg.value = count/4.0; // 软件上对 4 倍频的结果除以 4.0，这样自增的效果就是 +1
-        // 并且因为 float 的运算可以实现小数点的自增，更加精确
-      }
-    }
-    
-    printf("\n[get_encoder1_data_task] encoder1 count: %lld", msg.value);
+
+    // printf("\n[get_encoder1_data_task] encoder1 count: %lld", count);
+    // printf("\n[get_encoder1_data_task] encoder1 value: %.3f", msg.value);
 
     int return_value = xQueueSend(sensor_queue_handle, (void *)&msg, 0);
     if (return_value == pdTRUE) {
@@ -211,7 +199,7 @@ void get_ina226_data_task(void *pvParameters)
 
     msg.device_id = DEVICE_INA226;
   
-    float measure_current_mA = INA226_device.getCurrent_mA();
+    float measure_current_mA = INA226_device.getCurrent_mA() * 100;
     float measure_voltage_V = INA226_device.getBusVoltage();
     float measure_power_W = INA226_device.getPower();
     float measure_resistance_Kohm = abs((measure_voltage_V )/ (measure_current_mA ));
@@ -240,7 +228,7 @@ void get_ina226_data_task(void *pvParameters)
     msg.device_data.value4 = measure_resistance_Kohm;
     msg.device_data.value5 = rate;
 
-    // printf("\n[get_ina226_data_task] INA226: %.3f mA, %.3f V, %.3f W, %.3f KOhm, %.3f", measure_current_mA, measure_voltage_V, measure_power_W, measure_resistance_Kohm, rate);
+    printf("\n[get_ina226_data_task] INA226: %.3f mA, %.3f V, %.3f W, %.3f KOhm, %.3f", measure_current_mA, measure_voltage_V, measure_power_W, measure_resistance_Kohm, rate);
 
     // 检查 INA226 电压是否超过警告值，如果超过则进行过压保护
     if(measure_voltage_V >= WARNING_VOLTAGE){
@@ -398,7 +386,7 @@ void button_handler_task(void *pvParameters){
           }
 
           // 这里模拟过压保护的触发
-          // xSemaphoreGive(voltage_protection_xBinarySemaphore);
+          xSemaphoreGive(voltage_protection_xBinarySemaphore);
 
           if (GPIO_PIN == encoder1_button.pin){
             // 按下编码器俺家之后切换模式
@@ -436,6 +424,8 @@ void ADC1_read_task(void *pvParameters)
 
     msg.value = adc_value_average;
     // printf("\n[ADC1_read_task] ADC1_CHANNEL_7: %d, ADC1_CHANNEL_6: %d, ADC1_CHANNEL_5: %d, Average: %d", adc_value_1, adc_value_2, adc_value_3, adc_value_average);
+    // printf("\n[ADC1_read_task] ADC1_CHANNEL_7: %d,  ADC1_CHANNEL_5: %d, Average: %d", adc_value_1, adc_value_3, adc_value_average);
+    
 
     int return_value = xQueueSend(sensor_queue_handle, (void *)&msg, 0);
     if (return_value == pdTRUE) {
@@ -486,7 +476,7 @@ void setup() {
   if (!MCP4725_device.begin()) {
     printf("could not connect MCP4725. Fix and Reboot");
   }
-  MCP4725_device.setMaxVoltage(3.2841); // 设置最大输出电压
+  MCP4725_device.setMaxVoltage(5.0); // 设置最大输出电压
   MCP4725_device.setVoltage(1); // 设置输出电压为 3.3V
 
 
