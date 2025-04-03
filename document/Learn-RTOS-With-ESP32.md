@@ -30,3 +30,8 @@ LVGL+RTOS
 - [【壹拾捌】FreeRTOS 上用一个队列接收多个来源的数据 - 知乎](https://zhuanlan.zhihu.com/p/451984348)
 - RTOS 中断
 	- [【ESP32+freeRTOS学习笔记-(七)中断管理】_esp32 freertos中断延时-CSDN博客](https://blog.csdn.net/weixin_45499326/article/details/128631454)
+
+
+	LVGL page chart
+	- [page-switch](https://blog.csdn.net/tilblackout/article/details/131058317)
+	- [chart](https://zhuanlan.zhihu.com/p/8991331655)

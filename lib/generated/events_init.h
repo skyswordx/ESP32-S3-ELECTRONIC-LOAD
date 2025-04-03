@@ -18,6 +18,8 @@ extern "C" {
 
 void events_init(lv_ui *ui);
 
+void events_init_main_page(lv_ui *ui);
+void events_init_chart_page(lv_ui *ui);
 
 #ifdef __cplusplus
 }
