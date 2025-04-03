@@ -307,7 +307,10 @@ void update_gui_task(void *pvParameters)
 
             // 测试波形图。编码器作为数据源
             // guider_ui.chart_page_chart_1_0  是 series
-            lv_chart_set_next_value(guider_ui.chart_page_chart_1, guider_ui.chart_page_chart_1_0, msg.value);
+            if (guider_ui.chart_page_chart_1 != NULL && guider_ui.chart_page_chart_1_0 != NULL){
+              lv_chart_set_next_value(guider_ui.chart_page_chart_1, guider_ui.chart_page_chart_1_0, msg.value);
+            }
+            
             break;
           case DEVICE_DUMMY_SENSOR:
             if (guider_ui.main_page_measure_current_label != NULL){ lv_label_set_text_fmt(guider_ui.main_page_measure_current_label, "%.3f", msg.value); }
@@ -417,6 +420,15 @@ void button_handler_task(void *pvParameters){
               encoder1.mode = QUAD;
               printf("\n[button_handler_task] encoder1 mode changed to QUAD");
             }
+          }else if(GPIO_PIN == button1.pin){
+            
+          }else if(GPIO_PIN == button2.pin){
+            
+          }else if(GPIO_PIN == button3.pin){
+            
+          }else if(GPIO_PIN == button4.pin){
+            // 从 chart -> main sw
+            ui_load_scr_animation(&guider_ui, &guider_ui.main_page, guider_ui.main_page_del, &guider_ui.chart_page_del, setup_scr_main_page, LV_SCR_LOAD_ANIM_NONE, 200, 200, false, true);
           }
         }
       } else {
@@ -576,7 +588,7 @@ void setup() {
               NULL,
               1,
               NULL,
-              1
+              0
             );
 
   xTaskCreatePinnedToCore(get_encoder1_data_task,

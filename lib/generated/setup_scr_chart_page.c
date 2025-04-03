@@ -87,11 +87,11 @@ void setup_scr_chart_page(lv_ui *ui)
     lv_chart_set_zoom_y(ui->chart_page_chart_1, 256);
     ui->chart_page_chart_1_0 = lv_chart_add_series(ui->chart_page_chart_1, lv_color_hex(0x2F35DA), LV_CHART_AXIS_PRIMARY_Y);
 #if LV_USE_FREEMASTER == 0
-    lv_chart_set_next_value(ui->chart_page_chart_1, ui->chart_page_chart_1_0, 0);
-    lv_chart_set_next_value(ui->chart_page_chart_1, ui->chart_page_chart_1_0, 0);
-    lv_chart_set_next_value(ui->chart_page_chart_1, ui->chart_page_chart_1_0, 0);
-    lv_chart_set_next_value(ui->chart_page_chart_1, ui->chart_page_chart_1_0, 0);
-    lv_chart_set_next_value(ui->chart_page_chart_1, ui->chart_page_chart_1_0, 0);
+    lv_chart_set_next_value(ui->chart_page_chart_1, ui->chart_page_chart_1_0, 1);
+    lv_chart_set_next_value(ui->chart_page_chart_1, ui->chart_page_chart_1_0, 20);
+    lv_chart_set_next_value(ui->chart_page_chart_1, ui->chart_page_chart_1_0, 30);
+    lv_chart_set_next_value(ui->chart_page_chart_1, ui->chart_page_chart_1_0, 40);
+    lv_chart_set_next_value(ui->chart_page_chart_1, ui->chart_page_chart_1_0, 5);
 #endif
     lv_obj_set_pos(ui->chart_page_chart_1, 117, 10);
     lv_obj_set_size(ui->chart_page_chart_1, 356, 238);
@@ -125,4 +125,6 @@ void setup_scr_chart_page(lv_ui *ui)
     //Update current screen layout.
     lv_obj_update_layout(ui->chart_page);
 
+    //Init events for screen.
+    events_init_chart_page(ui);
 }
