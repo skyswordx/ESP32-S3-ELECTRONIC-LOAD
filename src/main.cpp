@@ -471,6 +471,7 @@ static void system_init(void) {
     printf("Minimum free heap size: %d bytes\n", esp_get_minimum_free_heap_size());
 }
 
+#define USE_INA226_MODULE 1
 
 void setup() {
 
@@ -483,10 +484,29 @@ void setup() {
   // 初始化 Wire IIC 总线
   Wire.begin(IIC_SDA, IIC_SCL);
   /* 初始化 INA226 */
+#ifdef USE_INA226_MODULE
+  // 下面的是校准模块上的 INA226 得到的参数
+  float shunt = 0.010;     // R010  
+  float current_LSB_mA = 0.05;
+  const float CURRENT_OFFET_mA = -0.525; // 校准程序串口输出的电流偏置
+  const float BUS_V_DMM = 6.013; // DMM 数字万用表测量的电压
+  const float BUS_V_SERIAL= 6.109; // 校准程序测量的电压
+  uint16_t bus_V_scaling_e4 = 10000 / BUS_V_SERIAL * BUS_V_DMM; 
+#else
+  // 下面的是校准功率板上的 INA226 得到的参数
+  float shunt = 0.020;     // R020  
+  float current_LSB_mA = 0.05;
+  const float CURRENT_OFFET_mA = -0.525; // 校准程序串口输出的电流偏置
+  const float BUS_V_DMM = 6.013; // DMM 数字万用表测量的电压
+  const float BUS_V_SERIAL= 6.109; // 校准程序测量的电压
+  uint16_t bus_V_scaling_e4 = 10000 / BUS_V_SERIAL * BUS_V_DMM; 
+#endif 
+         
+
   if (!INA226_device.begin()) {
     printf("could not connect INA226. Fix and Reboot");
   }
-  INA226_device.setMaxCurrentShunt(1, 0.002);
+  INA226_device.configure(shunt, current_LSB_mA, CURRENT_OFFET_mA, bus_V_scaling_e4);
 
   /* 初始化 MCP4725 */
   if (!MCP4725_device.begin()) {
