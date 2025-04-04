@@ -333,6 +333,39 @@ void lvgl_task(void *pvParameters)
 这个用于初始化 iic 总线，如果要使用多个 iic 设备，就要把所有的 iic 设备的 $\displaystyle SDA$ 和 $\displaystyle SCL$ 都并联在一起连接（加上上拉电阻）
 
 - [通俗易懂谈上拉电阻与下拉电阻的作用-基础小知识（二）上拉电阻是用来解决总线驱动能力不足时提供电流的。一般说法是拉电流,下拉电阻是-CSDN博客](https://blog.csdn.net/uiojhi/article/details/107678488)
+
+## PID 模板编程
+
+我的控制器输出成员变量是 模板类型 T，怎么进行零初始化以避免内存中有不定的值
+## 串口
+- [ESP32-S3的串口监视器Serial.println无输出_arduino ide esp32 串口打印编译正确为什么串口监视器不显示打印结果-CSDN博客](https://blog.csdn.net/m0_50360661/article/details/146286647)
+- [ESP32S3串口UART0,UART1&UART2,软件模拟串口,USB虚拟串口的使用 - 基于ArduinoIDE - 路合华 - 博客园](https://www.cnblogs.com/Luad/p/18797058)
+
+示例程序
+- [基于 esp-idf 的 UART 应用例程解读_uart asynchronous example with separate receive an-CSDN博客](https://blog.csdn.net/Marchtwentytwo/article/details/121214256)
+- [揭開 ESP32 UART Events 的隱藏技能 | 讓你的通信智慧升級 | SaludPCB](https://saludpcb.com/zh/esp32-uart-events-smarter-serial-communication/)
+
+尝试过，没用
+- [Platformio ESP32使用arduino时使用ESP_LOG打印日志的正确方式 - 简书](https://www.jianshu.com/p/8e14f233d0e7)
+- [ESP32-S3的串口监视器Serial.println无输出_arduino ide esp32 串口打印编译正确为什么串口监视器不显示打印结果-CSDN博客](https://blog.csdn.net/m0_50360661/article/details/146286647)
+## inline关键词
+在 C++ 中，`inline` 是一个关键字，用于建议编译器将函数的代码直接插入到调用该函数的地方，而不是通过常规的函数调用机制（如压栈和跳转）来执行。这种方式可以减少函数调用的开销，尤其是对于小型函数。
+
+### `inline` 的作用：
+1. **减少函数调用开销**：通过将函数代码直接嵌入调用点，避免了函数调用的栈操作和跳转。
+2. **提高性能**：对于频繁调用的小函数，`inline` 可以提高运行效率。
+3. **允许在头文件中定义函数**：`inline` 函数可以在头文件中定义，而不会导致重复定义错误。
+
+### 使用 `inline` 的注意事项：
+- **仅是建议**：编译器可能会忽略 `inline` 关键字，尤其是当函数体较大时。
+- **代码膨胀**：如果函数体较大且被频繁调用，`inline` 可能导致代码膨胀（增加可执行文件的大小）。
+- **调试困难**：由于函数被内联，调试时可能无法准确跟踪函数调用。
+
+### 在你的代码中：
+```cpp
+static inline void uart1_init(void)
+```
+这里的 `inline` 表示希望将 `uart1_init` 函数内联到调用它的地方，以减少调用开销。由于这个函数体较小且可能被频繁调用，使用 `inline` 是合理的选择。
 ## JLC 文档
 
 - [🎉2025年电赛备赛资料合集—持续更新中 | 嘉立创EDA教育与开源文档中心](https://wiki.lceda.cn/zh-hans/contest/e-contests/resource/)
