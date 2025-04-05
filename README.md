@@ -15,4 +15,4 @@
 ├── README.md
 ```
 
-## 2. [项目文档 ✨](document/README.md)
+## 2. [项目文档 ✨](document/schedule.md)
