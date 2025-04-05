@@ -337,17 +337,27 @@ void lvgl_task(void *pvParameters)
 ## PID 模板编程
 
 我的控制器输出成员变量是 模板类型 T，怎么进行零初始化以避免内存中有不定的值
-## 串口
-- [ESP32-S3的串口监视器Serial.println无输出_arduino ide esp32 串口打印编译正确为什么串口监视器不显示打印结果-CSDN博客](https://blog.csdn.net/m0_50360661/article/details/146286647)
+## 串口测试
+
+目前我的板子出现的问题
+如果使用板子自带的 `usb` 或者 `uart` 那个 `typeC` 接口
+- `Serial.print` 不出来
+- `ESP idf` 的 `uart` 相关接口打印不出来，初始化没测试，可以用 `if` 语句测试一下初始化是否成功
+- 只有 `printf` 才能重定向输出到监视器
+
+esp 串口信息
 - [ESP32S3串口UART0,UART1&UART2,软件模拟串口,USB虚拟串口的使用 - 基于ArduinoIDE - 路合华 - 博客园](https://www.cnblogs.com/Luad/p/18797058)
 
-示例程序
+
+`ESP idf` 示例程序
 - [基于 esp-idf 的 UART 应用例程解读_uart asynchronous example with separate receive an-CSDN博客](https://blog.csdn.net/Marchtwentytwo/article/details/121214256)
 - [揭開 ESP32 UART Events 的隱藏技能 | 讓你的通信智慧升級 | SaludPCB](https://saludpcb.com/zh/esp32-uart-events-smarter-serial-communication/)
 
-尝试过，没用
+尝试解决 `Serial` 问题尝试过的，没用
 - [Platformio ESP32使用arduino时使用ESP_LOG打印日志的正确方式 - 简书](https://www.jianshu.com/p/8e14f233d0e7)
 - [ESP32-S3的串口监视器Serial.println无输出_arduino ide esp32 串口打印编译正确为什么串口监视器不显示打印结果-CSDN博客](https://blog.csdn.net/m0_50360661/article/details/146286647)
+- - [ESP32-S3的串口监视器Serial.println无输出_arduino ide esp32 串口打印编译正确为什么串口监视器不显示打印结果-CSDN博客](https://blog.csdn.net/m0_50360661/article/details/146286647)
+
 ## inline关键词
 在 C++ 中，`inline` 是一个关键字，用于建议编译器将函数的代码直接插入到调用该函数的地方，而不是通过常规的函数调用机制（如压栈和跳转）来执行。这种方式可以减少函数调用的开销，尤其是对于小型函数。
 
