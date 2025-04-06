@@ -1,5 +1,14 @@
+/**
+ * @file our_pid_controller.hpp
+ * @brief 自定义 PID 控制器类的头文件
+ * @author skyswordx
+ * @details 该文件包含了自定义 PID 控制器类的定义和相关函数的声明
+ *          使用了模板类和函数指针或 std::function 来实现灵活的控制器
+ *          在 PID 的计算中预防了微分冲击的问题、还进行了合理的积分限幅处理
+ */
 #ifndef OUR_PID_CONTROLLER_HPP
 #define OUR_PID_CONTROLLER_HPP
+
 
 #include <functional> // 用于 std::function 绑定用户函数
 #include <Arduino.h> 

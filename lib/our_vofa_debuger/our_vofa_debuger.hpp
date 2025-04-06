@@ -1,3 +1,9 @@
+/**
+ * @file our_vofa_debuger.hpp
+ * @brief 包含封装好的接受 VOFA 发送的调试信息的类和相关的任务函数
+ * @author skyswordx
+ * @note 在开发中，未使用
+ */
 #ifndef OUR_VOFA_DEBUGER_HPP
 #define OUR_VOFA_DEBUGER_HPP
 
