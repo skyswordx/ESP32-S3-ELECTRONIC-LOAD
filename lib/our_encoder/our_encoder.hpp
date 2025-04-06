@@ -56,6 +56,5 @@ class encoder_handle_t
 };
 
 
-void get_encoder1_data_task(void *pvParameters); // 获取编码器数据的任务函数
 
 #endif // OUR_ENCODER

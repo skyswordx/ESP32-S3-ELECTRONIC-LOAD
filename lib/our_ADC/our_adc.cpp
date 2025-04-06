@@ -5,7 +5,7 @@
  * @details 该文件基于 ESP-IDF 接口，包含了自定义 ADC 类的定义和函数声明
  */
 #include "our_adc.hpp"
-#include "our_config.hpp"
+
 
 /**
  * @brief 自定义 ADC 类的构造函数
@@ -135,41 +135,4 @@ float ADC_channel_handler_t::get_ADC2_voltage_average_mV(){
     this->adc_voltage = esp_adc_cal_raw_to_voltage(this->adc_raw_value, this->adc_chars);
 
     return this->adc_voltage;
-}
-
-/**
- * @brief ADC1 读取任务
- * @author skyswordx
- * @details 该任务用于读取 ADC1 的电压值，并将其发送到消息队列中
- * @param pvParameters 任务参数
- * @return void* 任务返回值
- */
-void ADC1_read_task(void *pvParameters)
-{
-  message_t msg;
-  while(1)
-  {
-    // printf("\n[ADC1_read_task] running on core: %d, Free stack space: %d", xPortGetCoreID(), uxTaskGetStackHighWaterMark(NULL));
-    
-    msg.device_id = DEVICE_ADC1;
-
-    float adc_value_3 = MY_ADC_GPIO6.get_ADC1_voltage_average_mV();
-
-    float adc_value_average = adc_value_3 / 1.0;
-
-    msg.value = adc_value_average;
-
-    printf("\n[ADC1_read_task] ADC1_CHANNEL_5: %.3f", adc_value_3);
-    
-    int return_value = xQueueSend(sensor_queue_handle, (void *)&msg, 0);
-    if (return_value == pdTRUE) {
-      // printf("\n[ADC1_read_task] sent message  to the queue successfully\n");
-    } else if (return_value == errQUEUE_FULL) {
-      // printf("\n[ADC1_read_task] failed to send message to queue, queue is full\n");
-    } else {
-      // printf("\n[ADC1_read_task] failed to send message to queue\n");
-    }
-
-    vTaskDelay( 1000 );
-  }
 }

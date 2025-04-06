@@ -5,7 +5,7 @@
  */
 
 #include "our_encoder.hpp"
-#include "our_config.hpp"
+
 
 /**
  * @brief 旋转编码器类构造函数
@@ -47,40 +47,6 @@ float encoder_handle_t::read_count_accum_clear()
     }
 
     return this->total_count;
-}
-
-/**
- * @brief 获取编码器数据的任务函数
- * @author skyswordx
- * @param pvParameters 任务参数
- * @details 仅在 setup 调用一次即可，该任务会一直运行，获取编码器的数据并发送到消息队列中
- */
-void get_encoder1_data_task(void *pvParameters)
-{
-  message_t msg;
-  while(1)
-  {
-    // printf("\n[get_encoder1_data_task] running on core: %d, Free stack space: %d", xPortGetCoreID(), uxTaskGetStackHighWaterMark(NULL));
-    
-    // 获取旋转编码器数据
-    msg.device_id = DEVICE_ENCODER;
-    msg.value = encoder1.read_count_accum_clear();
-
-
-    // printf("\n[get_encoder1_data_task] encoder1 count: %lld", count);
-    // printf("\n[get_encoder1_data_task] encoder1 value: %.3f", msg.value);
-
-    int return_value = xQueueSend(sensor_queue_handle, (void *)&msg, 0);
-    if (return_value == pdTRUE) {
-      // printf("\n[get_encoder1_data_task] sent message  to the queue successfully\n");
-    } else if (return_value == errQUEUE_FULL) {
-      // printf("\n[get_encoder1_data_task] failed to send message to queue, queue is full\n");
-    } else {
-      // printf("\n[get_encoder1_data_task] failed to send message to queue\n");
-    }
-
-    vTaskDelay( 1000 );
-  }
 }
 
 

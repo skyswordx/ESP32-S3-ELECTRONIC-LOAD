@@ -8,13 +8,11 @@
  *          传感器(INA226、MCP4725)类、自定义 ADC 类和 GPIO 按键类
  */
 
-#include "our_config.hpp"
+#include "our_tasks_config.hpp"
 #include "our_lvgl_interaction.h"
 #include "our_encoder.hpp"
-#include "our_sensors.hpp"
 #include "our_adc.hpp"
 #include "our_button.hpp"
-
 
 static void system_init(void) {
     printf("Hello world!\n");
@@ -62,7 +60,6 @@ void setup() {
   uint16_t bus_V_scaling_e4 = 10000 / BUS_V_SERIAL * BUS_V_DMM; 
 #endif 
          
-
   if (!INA226_device.begin()) {
     printf("could not connect INA226. Fix and Reboot");
   }
