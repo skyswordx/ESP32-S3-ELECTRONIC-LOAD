@@ -1,18 +1,12 @@
+
 #include "our_pid_controller.hpp"
 
-
-/* 使用示例：
-    PID_controller_t<double> pid;
-    pid.read_sensor = []() -> double {
-        // 用户定义的传感器读取逻辑
-        return 42.0; // 示例值
-    };
-    pid.convert_output = [](double output) -> double {
-        // 用户定义的输出转换逻辑
-        return output * 2; // 示例转换
-    };
-*/
-
+/**
+ * @brief PID 控制器函数
+ * @author skyswordx
+ * @details 该函数应该在任务中循环调用，进行 PID 控制器的计算和输出
+ *          预防了微分冲击的问题、还进行了合理的积分限幅处理
+ */
 template<typename T>
 void PID_controller_t<T>::pid_control_service() {
     /* 确保控制器输出在计算之前默认值是 0 */
@@ -58,6 +52,13 @@ void PID_controller_t<T>::pid_control_service() {
     }
 }
 
+/**
+ * @brief PID 控制器的开环阶跃测试函数
+ * @author skyswordx
+ * @details 该函数应该在任务中循环调用，进行 PID 控制器的开环阶跃测试
+ *          主要用于获取阶跃响应中的过程变量和控制器输出的数据
+ *          以便使用 Lambda 整定法进行参数整定
+ */
 template<typename T>
 void PID_controller_t<T>::open_loop_step_test() {
   
@@ -69,3 +70,32 @@ void PID_controller_t<T>::open_loop_step_test() {
     }
     printf("\n[pid:open_loop_step_test] OP/PV:%f,%f\n", controller_output, process_variable.measure);
 }
+
+/* 使用示例：
+    PID_controller_t<double> pid;
+    void my_sensors_pid_task(void *pvParameters) {
+        PID_controller_t<double> *pid = (PID_controller_t<double> *)pvParameters;
+        pid->pid_control_service(); // 调用 PID 控制器服务函数
+    }
+
+    void setup(){
+        pid.read_sensor = []() -> double {
+            // 用户定义的传感器读取逻辑
+            return 42.0; // 示例值
+        };
+        pid.convert_output = [](double output) -> double {
+            // 用户定义的输出转换逻辑
+            return output * 2; // 示例转换
+        };
+
+        xTaskCreatePinnedToCore(
+            my_sensors_pid_task, // PID 控制器服务函数
+            "my_sensors_pid_task", // 任务名称
+            1024*4, // 堆栈大小
+            &pid, // 传递 PID 控制器对象的指针
+            2, // 任务优先级
+            NULL, // 任务句柄
+            1 // 运行在核心 1 上
+        );
+    }
+*/
