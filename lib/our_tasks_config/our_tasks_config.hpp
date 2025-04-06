@@ -21,83 +21,118 @@
  */
 
 /************************************ 条件编译选项 ***********************************/
-// #define USE_INA226_MODULE 1
+#define USE_IIC_DEVICE 1 // 是否使用 IIC 设备
+    // #define USE_INA226_MODULE 1 // 是否使用 INA226 模块
+
+// #define USE_LCD_DISPLAY 1  // 是否使用 LCD 显示屏
+// #define USE_ENCODER1 1 // 是否使用编码器 1
+// #define USE_ADC1 1 // 是否使用 ADC1 通道 5 读取电压值
+
+// #define USE_BUTTON 1 // 是否使用按键
+    // #define USE_BUTTON1 1 // 是否使用按键 1
+    // #define USE_BUTTON2 1 // 是否使用按键 2
+    // #define USE_BUTTON3 1 // 是否使用按键 3
+    // #define USE_BUTTON4 1 // 是否使用按键 4
+
+
+// #define USE_VOLTAGE_PROTECTION 1 // 是否使用过压保护功能
+// #define USE_DUMMY_SENSOR 1 // 是否使用虚拟传感器数据
 
 /*********************************** ESP32S3 Setup **********************************/
 #include <Arduino.h>
-#include <lvgl.h>
-#include <SPI.h>
-#include <TFT_eSPI.h>
-#include "demos/lv_demos.h"
-
-// 包含显示接口和触摸接口绑定部分
-#include "lv_port_disp.h"
-#include "lv_port_indev.h"
-
-// 包含使用 GUI guider 生成的 GUI 部分
-#include "gui_guider.h"
-#include "our_lvgl_interaction.h"
 
 // 包含自定义的编码器类（依赖 ESP32Encoder 库）
-#include "our_encoder.hpp"
+
 
 // 包含自定义的 PID 控制器类和 VOFA 下位机
 #include "our_pid_controller.hpp"
 #include "our_vofa_debuger.hpp"
 
 /*************************************** Encoder Setup *****************************/
-#define ENCODER_1_PIN_A 18
-#define ENCODER_1_PIN_B 17
-extern encoder_handle_t encoder1; // 旋转编码器对象
+#ifdef USE_ENCODER1
+    #include "our_encoder.hpp"
+    #define ENCODER_1_PIN_A 18
+    #define ENCODER_1_PIN_B 17
+    extern encoder_handle_t encoder1; // 旋转编码器对象
 
+    void get_encoder1_data_task(void *pvParameters); // 获取编码器数据的任务函数
+#endif // USE_ENCODER1
 
 /*********************************** INA226 & MCP4725 Setup *************************/
-#include <Wire.h>
-// 第一条 IIC 总线 Wire 的引脚
-#define IIC_SDA 4
-#define IIC_SCL 5
+#ifdef USE_IIC_DEVICE
+    #include <Wire.h>
+    // 第一条 IIC 总线 Wire 的引脚
+    #define IIC_SDA 4
+    #define IIC_SCL 5
 
-#include "INA226.h"
-extern INA226 INA226_device; // INA226 电流传感器对象
-#include "MCP4725.h"
-extern MCP4725 MCP4725_device; // MCP4725 DAC 芯片对象
+    #include "INA226.h"
+    extern INA226 INA226_device; // INA226 电流传感器对象
+    #include "MCP4725.h"
+    extern MCP4725 MCP4725_device; // MCP4725 DAC 芯片对象
 
+    void get_ina226_data_task(void *pvParameters); // 获取 INA226 数据的任务函数
+#endif // USE_IIC_DEVICE
 
 
 /***************************************** ADC1 Setup *******************************/
-#include "our_adc.hpp"
-extern ADC_channel_handler_t MY_ADC_GPIO6; // ADC1 通道 5 对应 GPIO 6
-
+#ifdef USE_ADC1
+    #include "our_adc.hpp"
+    extern ADC_channel_handler_t MY_ADC_GPIO6; // ADC1 通道 5 对应 GPIO 6
+    void ADC1_read_task(void *pvParameters); // ADC1 读取任务
+#endif // USE_ADC1
 /************************************* GPIO-button Setup ****************************/
+#ifdef USE_BUTTON
 #include "our_button.hpp"
-extern GPIO_button_handler_t button1; 
-extern GPIO_button_handler_t button2; 
-extern GPIO_button_handler_t button3;
-extern GPIO_button_handler_t button4;
+    extern GPIO_button_handler_t button1; 
+    extern GPIO_button_handler_t button2; 
+    extern GPIO_button_handler_t button3;
+    extern GPIO_button_handler_t button4;
 
-extern GPIO_button_handler_t encoder1_button; // 旋转编码器的按键引脚
+    extern GPIO_button_handler_t encoder1_button; // 旋转编码器的按键引脚
+
+    extern SemaphoreHandle_t button_xBinarySemaphore; // 按键二值信号量
+    extern QueueHandle_t button_queue_handle; // 按键消息队列句柄
+
+    void button_handler_task(void *pvParameters); // 按键处理任务
+#endif // USE_BUTTON
 
 /************************************* LVGL-SetUP ***********************************/
-extern TFT_eSPI tft; // TFT_eSPI 对象
-extern lv_ui guider_ui; // GUI guider 对象
+#include "our_lvgl_interaction.h"
+#ifdef USE_LCD_DISPLAY
+    #include <lvgl.h>
+    #include <SPI.h>
+    #include <TFT_eSPI.h>
+    #include "demos/lv_demos.h"
 
+    // 包含显示接口和触摸接口绑定部分
+    #include "lv_port_disp.h"
+    #include "lv_port_indev.h"
+
+    // 包含使用 GUI guider 生成的 GUI 部分
+    #include "gui_guider.h"
+    extern TFT_eSPI tft; // TFT_eSPI 对象
+    extern lv_ui guider_ui; // GUI guider 对象
+
+    extern TaskHandle_t lvgl_task_handle; // LVGL 任务结构句柄
+    extern SemaphoreHandle_t gui_xMutex;  // gui 互斥锁句柄，LVGL 线程不安全，需要加锁
+#endif // USE_LCD_DISPLAY
 /************************************* RTOS-SetUP ***********************************/
-extern TaskHandle_t lvgl_task_handle; // LVGL 任务结构句柄
-extern SemaphoreHandle_t gui_xMutex;  // gui 互斥锁句柄，LVGL 线程不安全，需要加锁
-extern SemaphoreHandle_t button_xBinarySemaphore; // 按键二值信号量
-extern SemaphoreHandle_t voltage_protection_xBinarySemaphore; // 过压保护二值信号量
+
+#ifdef USE_VOLTAGE_PROTECTION
+    extern SemaphoreHandle_t voltage_protection_xBinarySemaphore; // 过压保护二值信号量
+    void voltage_protection_task(void *pvParameters); // 过压保护任务函数
+#endif // USE_VOLTAGE_PROTECTION
 
 // GUI 更新使用的消息队列
 extern QueueHandle_t sensor_queue_handle; // 消息队列句柄
 extern const int queue_element_size; // 消息队列元素大小
-extern QueueHandle_t button_queue_handle; // 按键消息队列句柄
+
 
 /************************************** tasks ***************************************/
-void button_handler_task(void *pvParameters); // 按键处理任务
-void ADC1_read_task(void *pvParameters); // ADC1 读取任务
-void get_encoder1_data_task(void *pvParameters); // 获取编码器数据的任务函数
-void get_dummy_sensor_data_task(void *pvParameters); // 模拟获得传感器数据的任务函数
-void get_ina226_data_task(void *pvParameters); // 获取 INA226 数据的任务函数
-void voltage_protection_task(void *pvParameters); // 过压保护任务函数
+#ifdef USE_DUMMY_SENSOR
+    void get_dummy_sensor_data_task(void *pvParameters); // 模拟获得传感器数据的任务函数
+#endif // USE_DUMMY_SENSOR
+
+
 
 #endif // OUR_CONFIG_HPP
