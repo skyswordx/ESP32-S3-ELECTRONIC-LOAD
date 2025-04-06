@@ -11,7 +11,18 @@
 #include "our_adc.hpp"
 #include "our_button.hpp"
 
+/*********************************** PID Setup ***********************************/
+// 包含自定义的 PID 控制器类和 VOFA 下位机
+#ifdef USE_PID_CONTROLLER
+    PID_controller_t<double> current_ctrl;
 
+    void open_loop_test_task(void *pvParameters) {
+      while (1) {
+          printf("[open_loop_test_task] I(mA) / DAC(V) /: %.3f, %.3f\n", current_ctrl.read_sensor(), MCP4725_device.getVoltage());
+          // vTaskDelay(1/portTICK_PERIOD_MS); // 延时 10 ms
+      }
+    }
+#endif
 /*************************************** Encoder Setup *****************************/
 #ifdef USE_ENCODER1 
   encoder_handle_t encoder1(ENCODER_1_PIN_A, ENCODER_1_PIN_B);
@@ -152,7 +163,7 @@ void get_ina226_data_task(void *pvParameters)
     msg.device_data.value5 = rate;
 
     // printf("\n[get_ina226_data_task] INA226: %.3f mA, %.3f V, %.3f W, %.3f KOhm, %.3f", measure_current_mA, measure_voltage_V, measure_power_W, measure_resistance_Kohm, rate);
-    printf("[get_ina226_data_task] INA226 V/mA: %.3f,%.3f\n", measure_voltage_V, measure_current_mA); 
+    // printf("[get_ina226_data_task] INA226 V/mA: %.3f,%.3f\n", measure_voltage_V, measure_current_mA); 
 
     // 检查 INA226 电压是否超过警告值，如果超过则进行过压保护
     if(measure_voltage_V >= WARNING_VOLTAGE){
@@ -239,6 +250,8 @@ void ADC1_read_task(void *pvParameters)
 }
 #endif // USE_ADC1
 
+
+
 #ifdef USE_BUTTON
 /**
  * @brief 按键中断辅助处理任务
@@ -312,6 +325,7 @@ void button_handler_task(void *pvParameters){
             // 这里模拟过压保护的触发
             // xSemaphoreGive(voltage_protection_xBinarySemaphore);
             printf("\n[button_handler_task] duration: %d ms", time_ms);
+          #ifdef USE_ENCODER1
             if (GPIO_PIN == encoder1_button.pin){
               // 按下编码器俺家之后切换模式
               if (encoder1.mode == QUAD) {
@@ -321,17 +335,33 @@ void button_handler_task(void *pvParameters){
                 encoder1.mode = QUAD;
                 printf("\n[button_handler_task] encoder1 mode changed to QUAD");
               }
-            }else if(GPIO_PIN == button1.pin){
+            }
+          #endif // USE_ENCODER1
+          #ifdef USE_BUTTON1
+            if(GPIO_PIN == button1.pin){
               
-            }else if(GPIO_PIN == button2.pin){
+            }
+          #endif // USE_BUTTON1
+          #ifdef USE_BUTTON2
+            if(GPIO_PIN == button2.pin){
               
-            }else if(GPIO_PIN == button3.pin){
-              
-            }else if(GPIO_PIN == button4.pin){
+            }
+          #endif // USE_BUTTON2
+          #ifdef USE_BUTTON3
+            if(GPIO_PIN == button3.pin){
+              MCP4725_device.setVoltage(0.0); // 设置输出电压为 0V
+            }
+          #endif // USE_BUTTON3
+          #ifdef USE_BUTTON4
+            if(GPIO_PIN == button4.pin){
               /* 页面切换 */
               // 从 chart -> main sw
               // ui_load_scr_animation(&guider_ui, &guider_ui.main_page, guider_ui.main_page_del, &guider_ui.chart_page_del, setup_scr_main_page, LV_SCR_LOAD_ANIM_NONE, 200, 200, false, true);
+
+              MCP4725_device.setVoltage(2.5); // 设置输出电压为 3.3V
+            
             }
+          #endif // USE_BUTTON4
           }
         } else {
           // printf("\n[button_handler_task] failed to receive messag e from queue\n");

@@ -30,6 +30,7 @@ void setup() {
   /* 系统和一系列初始化 */
   system_print(); // 打印系统信息
 
+
 #ifdef USE_LCD_DISPLAY
   lv_init(); // 初始化 LVGL 必须运行的
   lv_port_disp_init(); // 初始化绑定显示接口
@@ -68,7 +69,7 @@ void setup() {
     printf("could not connect MCP4725. Fix and Reboot");
   }
   MCP4725_device.setMaxVoltage(5.0); // 设置最大输出电压
-  MCP4725_device.setVoltage(1); // 设置输出电压为 3.3V
+  MCP4725_device.setVoltage(0.0); // 设置输出电压为 3.3V
 #endif
 
 #ifdef USE_LCD_DISPLAY
@@ -164,14 +165,14 @@ void setup() {
 #endif
 
 #ifdef USE_IIC_DEVICE
-  xTaskCreatePinnedToCore(get_ina226_data_task,
-              "get_ina226_data_task",
-              1024*4,
-              NULL,
-              2,
-              NULL,
-              1
-            );
+  // xTaskCreatePinnedToCore(get_ina226_data_task,
+  //             "get_ina226_data_task",
+  //             1024*4,
+  //             NULL,
+  //             2,
+  //             NULL,
+  //             1
+  //           );
 #endif
 
 #ifdef USE_ADC1
@@ -221,6 +222,20 @@ void setup() {
   }
 #endif
 
+#ifdef USE_PID_CONTROLLER
+  current_ctrl.read_sensor = []() -> double {
+    return INA226_device.getCurrent_mA(); 
+  };
+
+  xTaskCreatePinnedToCore(open_loop_test_task,
+              "my_sensors_pid_task",
+              1024*4,
+              NULL, 
+              2,
+              NULL,
+              1
+            );
+#endif  
 
 }
 

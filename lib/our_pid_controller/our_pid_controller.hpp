@@ -9,6 +9,35 @@
 #ifndef OUR_PID_CONTROLLER_HPP
 #define OUR_PID_CONTROLLER_HPP
 
+/* 使用示例：
+    PID_controller_t<double> pid;
+    
+    void my_sensors_pid_task(void *pvParameters) {
+        PID_controller_t<double> *pid = (PID_controller_t<double> *)pvParameters;
+        pid->pid_control_service(); // 调用 PID 控制器服务函数
+    }
+
+    void setup(){
+        pid.read_sensor = []() -> double {
+            // 用户定义的传感器读取逻辑
+            return 42.0; // 示例值
+        };
+        pid.convert_output = [](double output) -> double {
+            // 用户定义的输出转换逻辑
+            return output * 2; // 示例转换
+        };
+
+        xTaskCreatePinnedToCore(
+            my_sensors_pid_task, // PID 控制器服务函数
+            "my_sensors_pid_task", // 任务名称
+            1024*4, // 堆栈大小
+            &pid, // 传递 PID 控制器对象的指针
+            2, // 任务优先级
+            NULL, // 任务句柄
+            1 // 运行在核心 1 上
+        );
+    }
+*/
 
 #include <functional> // 用于 std::function 绑定用户函数
 #include <Arduino.h> 
