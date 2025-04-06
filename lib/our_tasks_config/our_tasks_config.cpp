@@ -1,3 +1,10 @@
+/**
+ * @file our_config.cpp
+ * @brief ESP32S3 配置文件，包含了工程用到的所有配置和全局变量的声明
+ * @author skyswordx
+ * @details 全局变量在源文件中定义，头文件中声明 extern 这样可以避免重复定义
+ */
+
 #include "our_tasks_config.hpp"
 #include "our_lvgl_interaction.h"
 #include "our_encoder.hpp"
@@ -6,45 +13,69 @@
 
 
 /*************************************** Encoder Setup *****************************/
-
-encoder_handle_t encoder1(ENCODER_1_PIN_A, ENCODER_1_PIN_B);
-
+#ifdef USE_ENCODER1 
+  encoder_handle_t encoder1(ENCODER_1_PIN_A, ENCODER_1_PIN_B);
+#endif
 /*********************************** INA226 & MCP4725 Setup *************************/
-INA226 INA226_device(0x40); // INA226 电流传感器
-MCP4725 MCP4725_device(0x60); // MCP4725 DAC 芯片
-
+#ifdef USE_IIC_DEVICE
+  INA226 INA226_device(0x40); // INA226 电流传感器
+  MCP4725 MCP4725_device(0x60); // MCP4725 DAC 芯片
+#endif
 
 /***************************************** ADC1 Setup *******************************/
-ADC_channel_handler_t MY_ADC_GPIO6(ADC1_CHANNEL_5, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, 64, ADC_UNIT_1);
-
+#ifdef USE_ADC1
+  ADC_channel_handler_t MY_ADC_GPIO6(ADC1_CHANNEL_5, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, 64, ADC_UNIT_1);
+#endif
 /************************************* GPIO-button Setup ****************************/
+#ifdef USE_BUTTON1
+  GPIO_button_handler_t button1(GPIO_NUM_2); // GPIO 2 作为按键输入引脚
+#endif
+#ifdef USE_BUTTON2
+  GPIO_button_handler_t button2(GPIO_NUM_1);
+#endif
+#ifdef USE_BUTTON3
+  GPIO_button_handler_t button3(GPIO_NUM_7);
+#endif
+#ifdef USE_BUTTON4
+  GPIO_button_handler_t button4(GPIO_NUM_15); 
+#endif
+#ifdef USE_ENCODER1
+  GPIO_button_handler_t encoder1_button(GPIO_NUM_16); // 旋转编码器的按键引脚
+#endif
 
-GPIO_button_handler_t button1(GPIO_NUM_2); // GPIO 2 作为按键输入引脚
-GPIO_button_handler_t button2(GPIO_NUM_1);
-GPIO_button_handler_t button3(GPIO_NUM_7);
-GPIO_button_handler_t button4(GPIO_NUM_15); 
-
-GPIO_button_handler_t encoder1_button(GPIO_NUM_16); // 旋转编码器的按键引脚
 
 /************************************* LVGL-SetUP ***********************************/
-// Use hardware SPI
-TFT_eSPI tft = TFT_eSPI();
-
-// GUI guider
-lv_ui guider_ui;
+#ifdef USE_LCD_DISPLAY
+  // Use hardware SPI
+  TFT_eSPI tft = TFT_eSPI();
+  // GUI guider
+  lv_ui guider_ui;
+#endif
 
 /************************************* RTOS-SetUP ***********************************/
-TaskHandle_t lvgl_task_handle; // LVGL 任务结构句柄
-SemaphoreHandle_t gui_xMutex;  // gui 互斥锁句柄，LVGL 线程不安全，需要加锁
-SemaphoreHandle_t button_xBinarySemaphore; // 按键二值信号量
-SemaphoreHandle_t voltage_protection_xBinarySemaphore; // 过压保护二值信号量
+#ifdef USE_LCD_DISPLAY
+  TaskHandle_t lvgl_task_handle; // LVGL 任务结构句柄
+  SemaphoreHandle_t gui_xMutex;  // gui 互斥锁句柄，LVGL 线程不安全，需要加锁
+#endif
+
+#ifdef USE_BUTTON
+  SemaphoreHandle_t button_xBinarySemaphore; // 按键二值信号量
+  QueueHandle_t button_queue_handle; // 按键消息队列句柄
+#endif
+
+#ifdef USE_VOLTAGE_PROTECTION
+  SemaphoreHandle_t voltage_protection_xBinarySemaphore; // 过压保护二值信号量
+#endif
+
 
 // GUI 更新使用的消息队列
 QueueHandle_t sensor_queue_handle; // 消息队列句柄
 const int queue_element_size = 10; // 消息队列元素大小
-QueueHandle_t button_queue_handle; // 按键消息队列句柄
+
 
 /************************************** tasks ***************************************/
+
+#ifdef USE_DUMMY_SENSOR
 /**
  * @brief 模拟获得传感器数据的任务函数
  * @author skyswordx
@@ -73,7 +104,9 @@ void get_dummy_sensor_data_task(void *pvParameters)
     vTaskDelay( 1000 );
   }
 }
+#endif // USE_DUMMY_SENSOR
 
+#ifdef USE_IIC_DEVICE
 /**
  * @brief 获取 INA226 数据的任务函数
  * @author skyswordx
@@ -142,7 +175,9 @@ void get_ina226_data_task(void *pvParameters)
     vTaskDelay( 1000 );
   }
 }
+#endif // USE_IIC_DEVICE
 
+#ifdef USE_VOLTAGE_PROTECTION
 /**
  * @brief 过压保护任务函数
  * @author skyswordx
@@ -162,7 +197,7 @@ void voltage_protection_task(void *pvParameters){
       printf("\n[voltage_protection_task] DAC output voltage set to 0V");
     }
   } 
-
+#endif // USE_VOLTAGE_PROTECTION
   
 /**
  * @brief ADC1 读取任务
@@ -171,6 +206,8 @@ void voltage_protection_task(void *pvParameters){
  * @param pvParameters 任务参数
  * @return void* 任务返回值
  */
+
+#ifdef USE_ADC1
 void ADC1_read_task(void *pvParameters)
 {
   message_t msg;
@@ -200,7 +237,9 @@ void ADC1_read_task(void *pvParameters)
     vTaskDelay( 1000 );
   }
 }
+#endif // USE_ADC1
 
+#ifdef USE_BUTTON
 /**
  * @brief 按键中断辅助处理任务
  * @author skyswordx
@@ -300,7 +339,9 @@ void button_handler_task(void *pvParameters){
       }
     }
   }
-  
+#endif // USE_BUTTON
+
+#ifdef USE_ENCODER1
 /**
  * @brief 获取编码器数据的任务函数
  * @author skyswordx
@@ -335,3 +376,4 @@ void get_encoder1_data_task(void *pvParameters)
   }
 }
 
+#endif // USE_ENCODER1
