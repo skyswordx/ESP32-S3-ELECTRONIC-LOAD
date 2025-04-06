@@ -21,6 +21,8 @@
  */
 
 /************************************ 条件编译选项 ***********************************/
+#define USE_PID_CONTROLLER 1
+    #define USE_CURRENT_OPEN_LOOP_TEST 1
 #define USE_IIC_DEVICE 1 // 是否使用 IIC 设备
     // #define USE_INA226_MODULE 1 // 是否使用 INA226 模块
 
@@ -41,12 +43,25 @@
 /*********************************** ESP32S3 Setup **********************************/
 #include <Arduino.h>
 
-// 包含自定义的编码器类（依赖 ESP32Encoder 库）
 
-
+/*********************************** PID Setup ***********************************/
 // 包含自定义的 PID 控制器类和 VOFA 下位机
-#include "our_pid_controller.hpp"
-#include "our_vofa_debuger.hpp"
+#ifdef USE_PID_CONTROLLER
+    #include "our_pid_controller.hpp"
+    // #include "our_vofa_debuger.hpp"
+    extern PID_controller_t<double> current_ctrl;
+
+    #ifdef USE_CURRENT_OPEN_LOOP_TEST
+        void open_loop_test_task(void *pvParameters); // 开环测试任务函数
+
+        #define USE_BUTTON
+        #define USE_BUTTON4 1 // DAC OUTPUT MAX
+        #define USE_BUTTON3 1 // DAC OUTPUT MIN
+    #endif // USE_CURRENT_OPEN_LOOP_TEST
+#endif
+
+
+
 
 /*************************************** Encoder Setup *****************************/
 #ifdef USE_ENCODER1
@@ -83,12 +98,22 @@
 /************************************* GPIO-button Setup ****************************/
 #ifdef USE_BUTTON
 #include "our_button.hpp"
-    extern GPIO_button_handler_t button1; 
-    extern GPIO_button_handler_t button2; 
-    extern GPIO_button_handler_t button3;
-    extern GPIO_button_handler_t button4;
+    #ifdef USE_BUTTON1
+        extern GPIO_button_handler_t button1; 
+    #endif // USE_BUTTON1
+    #ifdef USE_BUTTON2
+        extern GPIO_button_handler_t button2;
+    #endif // USE_BUTTON2
+    #ifdef USE_BUTTON3
+        extern GPIO_button_handler_t button3;
+    #endif // USE_BUTTON3
+    #ifdef USE_BUTTON4
+        extern GPIO_button_handler_t button4;
+    #endif // USE_BUTTON4
+    #ifdef USE_ENCODER1
+        extern GPIO_button_handler_t encoder1_button; // 旋转编码器的按键引脚
+    #endif // USE_ENCODER1
 
-    extern GPIO_button_handler_t encoder1_button; // 旋转编码器的按键引脚
 
     extern SemaphoreHandle_t button_xBinarySemaphore; // 按键二值信号量
     extern QueueHandle_t button_queue_handle; // 按键消息队列句柄
