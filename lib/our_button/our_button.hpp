@@ -36,6 +36,5 @@ void IRAM_ATTR button3_press_ISR(void *arg );
 void IRAM_ATTR button4_press_ISR(void *arg );
 void IRAM_ATTR encoder1_button_press_ISR(void *arg );
 
-void button_handler_task(void *pvParameters); // 按键处理任务
 
 #endif // OUR_BUTTON_H

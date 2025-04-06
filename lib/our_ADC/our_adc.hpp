@@ -86,6 +86,4 @@ class ADC_channel_handler_t {
         
 };
 
-void ADC1_read_task(void *pvParameters); // ADC1 读取任务
-
 #endif

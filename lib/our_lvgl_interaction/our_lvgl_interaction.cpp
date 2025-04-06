@@ -5,7 +5,7 @@
  */
 
 #include "our_lvgl_interaction.h"
-#include "our_config.hpp"
+
 
 /**
  * @brief LVGL 任务调度函数，在一个 CPU 中运行即可调度所有的 LVGL 页面显示
