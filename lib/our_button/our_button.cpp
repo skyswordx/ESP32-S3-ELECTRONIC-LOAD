@@ -1,14 +1,19 @@
+/**
+ * @file our_button.cpp
+ * @brief GPIO 按键类的实现文件
+ * @author skyswordx
+ * @details 该文件包含了 GPIO 按键类的实现文件，包含了 GPIO 按键的初始化和中断处理函数
+ *          这里使用 RTOS 规范的中断处理流程，仅仅在中断函数中释放信号量，标记触发中断的 GPIO 引脚号
+ *          具体的按键处理逻辑在辅助任务中进行
+ */
 #include "our_button.hpp"
+#include "our_config.hpp"
 
-extern SemaphoreHandle_t button_xBinarySemaphore; // 按键二值信号量
-extern QueueHandle_t button_queue_handle; // 按键消息队列句柄
-extern GPIO_button_handler_t button1; // 按键对象
-extern GPIO_button_handler_t button2; // 按键对象  
-extern GPIO_button_handler_t button3; // 按键对象
-extern GPIO_button_handler_t button4; // 按键对象
-extern GPIO_button_handler_t encoder1_button; // 旋转编码器的按键对象
-
-
+/**
+ * @brief GPIO 按键类的构造函数
+ * @author skyswordx
+ * @param pin GPIO 引脚号
+ */
 GPIO_button_handler_t::GPIO_button_handler_t(gpio_num_t pin) {
     this->pin = pin;
     this->button_state = false;
@@ -27,7 +32,104 @@ GPIO_button_handler_t::GPIO_button_handler_t(gpio_num_t pin) {
     // 安装中断服务函数和中断函数 在 main 函数中进行
 }
 
+/**
+ * @brief 按键中断辅助处理任务
+ * @author skyswordx
+ * @details 该任务日常被阻塞在二值信号量上，必须等待中断函数释放信号量才会被唤醒
+ *          该任务的优先级必须高于其他函数的优先级，否则会导致中断处理逻辑无法正常工作
+ */
+void button_handler_task(void *pvParameters){
 
+  BaseType_t button_down = pdFALSE;
+  BaseType_t button_up = pdFALSE;
+  BaseType_t short_press = pdFALSE;
+  BaseType_t long_press = pdFALSE;
+  int time_ms = 0;
+
+  gpio_num_t GPIO_PIN;
+  while(1){
+    // printf("\n[button_handler_task] waiting");
+    xSemaphoreTake(button_xBinarySemaphore, portMAX_DELAY); // 总是保持阻塞等待二值信号量
+
+
+    // printf("\n[button_handler_task] running on core: %d, Free stack space: %d", xPortGetCoreID(), uxTaskGetStackHighWaterMark(NULL));
+    if ( button_queue_handle != NULL){ // 检查消息队列是否创建成功
+      if (xQueueReceive(button_queue_handle, &GPIO_PIN, portMAX_DELAY) == pdTRUE) {
+        // printf("\n[button_handler_task] received message from queue");
+
+        /* 收到中断数据，开始检测 */
+
+        // 利用 RTOS 系统时间片轮询和标志位来进行长短按检测
+        button_down = pdTRUE;
+        time_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
+
+        // 等待按键释放
+        while (gpio_get_level(GPIO_PIN) == LOW) {
+          vTaskDelay(10 / portTICK_PERIOD_MS); // 延时 10ms，避免频繁轮询
+        }
+
+        button_up = pdTRUE;
+        time_ms = (xTaskGetTickCount() * portTICK_PERIOD_MS) - time_ms;
+    
+
+        // 使用 while 循环来阻塞检测
+        // time_ms = millis();
+        // while (gpio_get_level(GPIO_PIN) == LOW) {
+        //   // printf("\n[button_handler_task] button pressed");
+        //   button_down = pdTRUE;
+
+        //   if (millis() - time_ms > 10000) { // 10s
+        //     break; // 超过 10s 就退出，避免一直阻塞
+        //   }
+        // }
+        // button_up = pdTRUE;
+    
+        // time_ms = millis() - time_ms;
+
+
+        if (button_down == pdTRUE && button_up == pdTRUE && time_ms > 0) {
+          // printf("\n[button_handler_task] button pressed for %d ms", time);
+          button_down = pdFALSE;
+          button_up = pdFALSE;
+
+          if (time_ms < 1000) { // 1s
+            short_press = pdTRUE;
+            printf("\n[button_handler_task] GPIO %d short press", GPIO_PIN);
+
+          } else {
+            long_press = pdTRUE;
+            printf("\n[button_handler_task] GPIO %d long press", GPIO_PIN);
+          }
+
+          // 这里模拟过压保护的触发
+          // xSemaphoreGive(voltage_protection_xBinarySemaphore);
+          printf("\n[button_handler_task] duration: %d ms", time_ms);
+          if (GPIO_PIN == encoder1_button.pin){
+            // 按下编码器俺家之后切换模式
+            if (encoder1.mode == QUAD) {
+              encoder1.mode = SINGLE;
+              printf("\n[button_handler_task] encoder1 mode changed to SINGLE");
+            } else {
+              encoder1.mode = QUAD;
+              printf("\n[button_handler_task] encoder1 mode changed to QUAD");
+            }
+          }else if(GPIO_PIN == button1.pin){
+            
+          }else if(GPIO_PIN == button2.pin){
+            
+          }else if(GPIO_PIN == button3.pin){
+            
+          }else if(GPIO_PIN == button4.pin){
+            // 从 chart -> main sw
+            ui_load_scr_animation(&guider_ui, &guider_ui.main_page, guider_ui.main_page_del, &guider_ui.chart_page_del, setup_scr_main_page, LV_SCR_LOAD_ANIM_NONE, 200, 200, false, true);
+          }
+        }
+      } else {
+        // printf("\n[button_handler_task] failed to receive messag e from queue\n");
+      }
+    }
+  }
+}
 
 
 void IRAM_ATTR button1_press_ISR(void *arg ){ // 产生 GPIO 中断时调用

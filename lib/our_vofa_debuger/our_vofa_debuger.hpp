@@ -21,21 +21,6 @@ class VOFA_serial_salve_t {
 // #define CONFIG_VOFA_DEBUGER_UART1 1 // 选择使用的串口
 // #define CONFOG_VOFA_DEBUGER_UART0 1 // 选择使用的串口
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     /**
      * 枚举uart_event_type_t 环形缓冲区中使用的UART事件类型
         UART_DATA                UART 数据事件
@@ -48,10 +33,6 @@ class VOFA_serial_salve_t {
         UART_PATTERN_DET         检测到 UART 模式
         UART_EVENT_MAX           UART 事件最大索引
     */
-
-
-
-
 
 #ifdef CONFIG_VOFA_DEBUGER_UART0
 /*

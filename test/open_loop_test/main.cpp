@@ -53,9 +53,7 @@ MCP4725 MCP4725_device(0x60); // MCP4725 DAC 芯片
 
 /******** ADC1 Setup *********/
 #include "our_adc.h"
-// ADC_channel_handler_t MY_ADC_GPIO7(ADC1_CHANNEL_6, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, 64, ADC_UNIT_1);
 ADC_channel_handler_t MY_ADC_GPIO6(ADC1_CHANNEL_5, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, 64, ADC_UNIT_1);
-ADC_channel_handler_t MY_ADC_GPIO5(ADC1_CHANNEL_4, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, 64, ADC_UNIT_1);
 
 /******** GPIO-button Setup *********/
 #include "our_button.hpp"
@@ -125,18 +123,6 @@ void lvgl_task(void *pvParameters)
 }
 
 
-/* LVGL 切换页面 */
-// static void switch_event_handler(lv_event_t* event){
-//   lv_event_code_t event_code = lv_event_get_code(event);
-
-//   if (event_code == LV_EVENT_VALUE_CHANGED){
-//     // 任何事件都会触发回调函数，当值切换时执行
-//     /* 回调函数执行 */
-//     printf("xxxxxxx");
-//   }
-// }
-
-// lv_obj_add_event_cb(sw_obj, switch_event_handler, LV_EVENT_ALL, NULL);
 
 void get_encoder1_data_task(void *pvParameters)
 {
@@ -203,7 +189,7 @@ void get_ina226_data_task(void *pvParameters)
     // printf("\n[get_ina226_data_task] now_time: %d", millis());
     msg.device_id = DEVICE_INA226;
   
-    float measure_current_mA = INA226_device.getCurrent_mA() * 100;
+    float measure_current_mA = INA226_device.getCurrent_mA();
     float measure_voltage_V = INA226_device.getBusVoltage();
     float measure_power_W = INA226_device.getPower();
     float measure_resistance_Kohm = abs((measure_voltage_V )/ (measure_current_mA ));
@@ -232,7 +218,8 @@ void get_ina226_data_task(void *pvParameters)
     msg.device_data.value4 = measure_resistance_Kohm;
     msg.device_data.value5 = rate;
 
-    printf("\n[get_ina226_data_task] INA226: %.3f mA, %.3f V, %.3f W, %.3f KOhm, %.3f", measure_current_mA, measure_voltage_V, measure_power_W, measure_resistance_Kohm, rate);
+    // printf("\n[get_ina226_data_task] INA226: %.3f mA, %.3f V, %.3f W, %.3f KOhm, %.3f", measure_current_mA, measure_voltage_V, measure_power_W, measure_resistance_Kohm, rate);
+    printf("[get_ina226_data_task] INA226 V/mA: %.3f,%.3f\n", measure_voltage_V, measure_current_mA); 
 
     // 检查 INA226 电压是否超过警告值，如果超过则进行过压保护
     if(measure_voltage_V >= WARNING_VOLTAGE){
@@ -452,16 +439,13 @@ void ADC1_read_task(void *pvParameters)
     
     msg.device_id = DEVICE_ADC1;
 
-    float adc_value_1 = MY_ADC_GPIO5.get_ADC1_voltage_average_mV();
-    // float adc_value_2 = MY_ADC_GPIO7.get_ADC1_voltage_average_mV();
     float adc_value_3 = MY_ADC_GPIO6.get_ADC1_voltage_average_mV();
 
-    float adc_value_average = (adc_value_1 + adc_value_3) / 2.0;
+    float adc_value_average = (adc_value_3) / 1.0;
 
     msg.value = adc_value_average;
-    // printf("\n[ADC1_read_task] ADC1_CHANNEL_7: %d, ADC1_CHANNEL_6: %d, ADC1_CHANNEL_5: %d, Average: %d", adc_value_1, adc_value_2, adc_value_3, adc_value_average);
-    // printf("\n[ADC1_read_task] ADC1_CHANNEL_7: %d,  ADC1_CHANNEL_5: %d, Average: %d", adc_value_1, adc_value_3, adc_value_average);
-    
+   
+    // printf("[ADC1_read_task] ADC1_CHANNEL_5:%.3f\n", adc_value_3);
 
     int return_value = xQueueSend(sensor_queue_handle, (void *)&msg, 0);
     if (return_value == pdTRUE) {
@@ -491,18 +475,17 @@ static void system_init(void) {
     printf("Minimum free heap size: %d bytes\n", esp_get_minimum_free_heap_size());
 }
 
-// #define USE_INA226_MODULE 1
+#define USE_INA226_MODULE 1
 
 void setup() {
 
   /* 系统和一系列初始化 */
   system_init(); // 打印系统信息
-  uart0_init();
-  lv_init(); // 初始化 LVGL 必须运行的
-  lv_port_disp_init(); // 初始化绑定显示接口
-  lv_port_indev_init(); // 初始化和绑定触摸接口
 
-  
+
+  // lv_init(); // 初始化 LVGL 必须运行的
+  // lv_port_disp_init(); // 初始化绑定显示接口
+  // lv_port_indev_init(); // 初始化和绑定触摸接口
 
   // 初始化 Wire IIC 总线
   Wire.begin(IIC_SDA, IIC_SCL);
@@ -535,18 +518,18 @@ void setup() {
   if (!MCP4725_device.begin()) {
     printf("could not connect MCP4725. Fix and Reboot");
   }
-  MCP4725_device.setMaxVoltage(5.0); // 设置最大输出电压
-  MCP4725_device.setVoltage(1); // 设置输出电压为 3.3V
+  MCP4725_device.setMaxVoltage(3.3); // 设置最大输出电压
+  MCP4725_device.setVoltage(3.0); // 设置输出电压为 3.3V
 
 
   /* 设置自己的显示任务 */
-  setup_ui(&guider_ui); // 初始化 gui_guider
+  // setup_ui(&guider_ui); // 初始化 gui_guider
   
-  // /* 挂起 GUI guider 生成的页面 */
-  setup_scr_main_page(&guider_ui); // gui_guider 为每一个页面生成的，这里是名字为 xxx 的页面
-  setup_scr_chart_page(&guider_ui); 
-  // lv_scr_load(guider_ui.main_page); //每一个页面的名字都是 gui_guider 结构体的元素
-  lv_scr_load(guider_ui.chart_page); 
+  // // /* 挂起 GUI guider 生成的页面 */
+  // setup_scr_main_page(&guider_ui); // gui_guider 为每一个页面生成的，这里是名字为 xxx 的页面
+  // setup_scr_chart_page(&guider_ui); 
+  // // lv_scr_load(guider_ui.main_page); //每一个页面的名字都是 gui_guider 结构体的元素
+  // lv_scr_load(guider_ui.chart_page); 
   
   /* 或者运行 LVGL demo */
   // lv_demo_benchmark();
@@ -562,22 +545,22 @@ void setup() {
     while (1) delay(1000);  // Halt at this point as is not possible to continue
   }
 
-  gui_xMutex = xSemaphoreCreateMutex(); // 创建一个互斥信号量
-  if (gui_xMutex == NULL) {
-    // Handle semaphore creation failure
-    printf("semaphore creation failure");
-    return;
-  }
+  // gui_xMutex = xSemaphoreCreateMutex(); // 创建一个互斥信号量
+  // if (gui_xMutex == NULL) {
+  //   // Handle semaphore creation failure
+  //   printf("semaphore creation failure");
+  //   return;
+  // }
 
   // Core 0 运行 LVGL main task handler
-  xTaskCreatePinnedToCore(lvgl_task,
-              "demo_test",
-              1024*10,
-              NULL,
-              3,
-              &lvgl_task_handle,
-              0
-            );
+  // xTaskCreatePinnedToCore(lvgl_task,
+  //             "demo_test",
+  //             1024*10,
+  //             NULL,
+  //             3,
+  //             &lvgl_task_handle,
+  //             0
+  //           );
 
   // Core 1 运行（获取传感器数据任务）+ （更新 GUI 任务）
   // xTaskCreatePinnedToCore(get_dummy_sensor_data_task,
@@ -588,33 +571,33 @@ void setup() {
   //             NULL,
   //             1
   //           );
-  xTaskCreatePinnedToCore(uart0_event_task, 
-              "uart1_event_task", 
-              1024*4, 
-              NULL, 
-              2, 
-              NULL,
-              1
-          );
+  // xTaskCreatePinnedToCore(uart0_event_task, 
+  //             "uart1_event_task", 
+  //             1024*4, 
+  //             NULL, 
+  //             2, 
+  //             NULL,
+  //             1
+  //         );
 
   
-  xTaskCreatePinnedToCore(update_gui_task,
-              "update_gui_task",
-              1024*4,
-              NULL,
-              1,
-              NULL,
-              0
-            );
+  // xTaskCreatePinnedToCore(update_gui_task,
+  //             "update_gui_task",
+  //             1024*4,
+  //             NULL,
+  //             1,
+  //             NULL,
+  //             0
+  //           );
 
-  xTaskCreatePinnedToCore(get_encoder1_data_task,
-              "get_encoder1_data_task",
-              1024*4,
-              NULL,
-              2,
-              NULL,
-              1
-            );
+  // xTaskCreatePinnedToCore(get_encoder1_data_task,
+  //             "get_encoder1_data_task",
+  //             1024*4,
+  //             NULL,
+  //             2,
+  //             NULL,
+  //             1
+  //           );
 
   // voltage_protection_xBinarySemaphore = xSemaphoreCreateBinary();
   // if (voltage_protection_xBinarySemaphore != NULL) {
@@ -629,47 +612,47 @@ void setup() {
   //           );
   // }
 
-  // xTaskCreatePinnedToCore(get_ina226_data_task,
-  //             "get_ina226_data_task",
-  //             1024*4,
-  //             NULL,
-  //             2,
-  //             NULL,
-  //             1
-  //           );
-
-  // xTaskCreatePinnedToCore(ADC1_read_task,
-  //             "ADC1_read_task",
-  //             1024*4,
-  //             NULL,
-  //             2,
-  //             NULL,
-  //             1
-  //           );
-
-  /* 使用这下面的按键做 GPIO 硬件中断*/
-  // 创建二值信号量
-  button_xBinarySemaphore = xSemaphoreCreateBinary();
-  if (button_xBinarySemaphore != NULL) {
-    // Core 1 运行按键处理任务
-    xTaskCreatePinnedToCore(button_handler_task,
-              "button_task",
+  xTaskCreatePinnedToCore(get_ina226_data_task,
+              "get_ina226_data_task",
               1024*4,
               NULL,
-              5, // 必须是最高优先级
+              2,
               NULL,
               1
             );
 
-    gpio_install_isr_service(0); // 不能放到 button 类里面，因为本次安装会安装到所有的 GPIO 中断服务函数，只需要安装一次即可。否则看门狗跑丢
-    gpio_isr_handler_add(button1.pin, button1_press_ISR, (void *) &button1.pin); // 绑定 GPIO 中断处理函数
-    gpio_isr_handler_add(button2.pin, button2_press_ISR, (void *) &button2.pin); // 绑定 GPIO 中断处理函数
-    gpio_isr_handler_add(button3.pin, button3_press_ISR, (void *) &button3.pin); // 绑定 GPIO 中断处理函数
-    gpio_isr_handler_add(button4.pin, button4_press_ISR, (void *) &button4.pin); // 绑定 GPIO 中断处理函数
-    gpio_isr_handler_add(encoder1_button.pin, encoder1_button_press_ISR, (void *) &encoder1_button.pin); // 绑定 GPIO 中断处理函数
+  xTaskCreatePinnedToCore(ADC1_read_task,
+              "ADC1_read_task",
+              1024*4,
+              NULL,
+              2,
+              NULL,
+              1
+            );
+
+  /* 使用这下面的按键做 GPIO 硬件中断*/
+  // 创建二值信号量
+  // button_xBinarySemaphore = xSemaphoreCreateBinary();
+  // if (button_xBinarySemaphore != NULL) {
+  //   // Core 1 运行按键处理任务
+  //   xTaskCreatePinnedToCore(button_handler_task,
+  //             "button_task",
+  //             1024*4,
+  //             NULL,
+  //             5, // 必须是最高优先级
+  //             NULL,
+  //             1
+  //           );
+
+  //   gpio_install_isr_service(0); // 不能放到 button 类里面，因为本次安装会安装到所有的 GPIO 中断服务函数，只需要安装一次即可。否则看门狗跑丢
+  //   gpio_isr_handler_add(button1.pin, button1_press_ISR, (void *) &button1.pin); // 绑定 GPIO 中断处理函数
+  //   gpio_isr_handler_add(button2.pin, button2_press_ISR, (void *) &button2.pin); // 绑定 GPIO 中断处理函数
+  //   gpio_isr_handler_add(button3.pin, button3_press_ISR, (void *) &button3.pin); // 绑定 GPIO 中断处理函数
+  //   gpio_isr_handler_add(button4.pin, button4_press_ISR, (void *) &button4.pin); // 绑定 GPIO 中断处理函数
+  //   gpio_isr_handler_add(encoder1_button.pin, encoder1_button_press_ISR, (void *) &encoder1_button.pin); // 绑定 GPIO 中断处理函数
     
-    // 设置 GPIO 中断类型
-  }
+  //   // 设置 GPIO 中断类型
+  // }
   /************** 从上面开始不使用 **************/ 
 
 }
