@@ -27,13 +27,18 @@
 #ifdef USE_ENCODER1 
   encoder_handle_t encoder1(ENCODER_1_PIN_A, ENCODER_1_PIN_B);
 #endif
+
+
+
 /*********************************** INA226 & MCP4725 Setup *************************/
 #ifdef USE_IIC_DEVICE
   INA226 INA226_device(0x40); // INA226 电流传感器
   MCP4725 MCP4725_device(0x60); // MCP4725 DAC 芯片
 
+  /*********************************** Current Measurement Setup *************************/
   SemaphoreHandle_t  load_testing_xBinarySemaphore;
-#endif
+  BaseType_t testing_load_flag = pdFALSE; // 测试负载标志位
+  #endif
 
 /***************************************** ADC1 Setup *******************************/
 #ifdef USE_ADC1
@@ -174,14 +179,15 @@ void get_ina226_data_task(void *pvParameters)
 
 
 void get_load_changing_rate_task(void *pvParameters){
-  // 负载调整率？
-            /*
-              到达 check_current1 = ->  记录 bus_voltage1
-              到达 check_current2 = ->  记录 bus_voltage2
-              rate = (bus_V1 - bus_V0) / bus_V0
-             */
+  /* 负载调整率计算
+   *  到达 check_current1 = ->  记录 bus_voltage1
+   *  到达 check_current2 = ->  记录 bus_voltage2
+   * rate = (bus_V1 - bus_V0) / bus_V0
+   */
   static double check_voltage_L_V = 0.0;
   static double check_voltage_H_V = 0.0;
+  static double check_current_L_A = 0.0;
+  static double check_current_H_A = 0.0; 
   BaseType_t check_L = pdFALSE;
   BaseType_t check_H = pdFALSE;
   static double rate = 0.0;
@@ -191,39 +197,51 @@ void get_load_changing_rate_task(void *pvParameters){
   while(1){
     #ifdef USE_IIC_DEVICE
       xSemaphoreTake(load_testing_xBinarySemaphore, portMAX_DELAY); // 总是保持阻塞等待二值信号量
+      testing_load_flag = pdTRUE; // 设置测试负载标志位
       
   
       MCP4725_device.setVoltage(from_set_current2voltage_V(TESING_MIN_CURRENT_A)); // 设置输出电压为第一个电流值
       vTaskDelay(10 / portTICK_PERIOD_MS); // 延时 10 ms
-      printf("setpoint L: DAC: %.3f", MCP4725_device.getVoltage());
 
-       double check_current_L = INA226_device.getCurrent(); // 读取电流值
-      if (abs(check_current_L - TESING_MIN_CURRENT_A) < THRESHOLD_A){
-        check_voltage_L_V = MCP4725_device.getVoltage(); // 读取电压值
-        printf("\n[get_load_changing_rate_task] check_voltage_L_V, check_current_L: %.3f, %.3f", check_voltage_L_V, check_current_L);
+      printf("\nFrom TEST_MIN_CURRENT to set DAC: %.3f(V)", MCP4725_device.getVoltage());
+
+      check_current_L_A = INA226_device.getCurrent(); // 读取电流值
+      if (abs(check_current_L_A - TESING_MIN_CURRENT_A) < THRESHOLD_A){
+        check_voltage_L_V = INA226_device.getBusVoltage(); // 读取电压值
+        printf("\n[get_load_changing_rate_task] check_voltage_L: %.3f (V), check_current_L: %.3f (A)", check_voltage_L_V, check_current_L_A);
         check_L = pdTRUE;
       }
 
-      vTaskDelay(10 / portTICK_PERIOD_MS); // 延时 10 ms
+      
       MCP4725_device.setVoltage(from_set_current2voltage_V(TESING_MAX_CURRENT_A)); // 设置输出电压为第二个电流值
-      printf("setpoint H: DAC: %.3f", MCP4725_device.getVoltage());
+      vTaskDelay(10 / portTICK_PERIOD_MS); // 延时 10 ms
+      printf("\n From TEST_MAX_CURRENT to set DAC: %.3f (V)", MCP4725_device.getVoltage());
 
-      if ( abs(INA226_device.getCurrent() - TESING_MAX_CURRENT_A) < THRESHOLD_A){
-        check_voltage_H_V = MCP4725_device.getVoltage(); // 读取电压值
-        printf("\n[get_load_changing_rate_task] check_voltage_H_V, check_current_H: %.3f, %.3f", check_voltage_H_V, check_current_L);
+      check_current_H_A = INA226_device.getCurrent(); // 读取电流值
+      if ( abs(check_current_H_A - TESING_MAX_CURRENT_A) < THRESHOLD_A){
+        check_voltage_H_V = INA226_device.getBusVoltage(); // 读取电压值
+        printf("\n[get_load_changing_rate_task] check_voltage_H: %.3f (V), check_current_H: %.3f (A)", check_voltage_H_V, check_current_H_A);
         check_H = pdTRUE;
-      }
 
+      }
+      
+
+      MCP4725_device.setVoltage(0.0); // 设置输出电压为 0V
+      printf("\n[get_load_changing_rate_task] DAC output voltage set to 0V");
+
+      
       if (check_L == pdTRUE && check_H == pdTRUE){
         // 计算负载变化率
-        rate = (check_voltage_H_V - check_voltage_L_V) / check_voltage_L_V;
-        printf("\n[get_load_changing_rate_task] load changing rate: %.3f", rate);
+        rate =(check_voltage_L_V - check_voltage_H_V ) / check_voltage_L_V;
+        printf("\n[get_load_changing_rate_task] load changing rate: %.3f\n", rate);
         check_L = pdFALSE;
         check_H = pdFALSE;
 
         msg.device_id = EVENT_TESING_LOAD_RATE;
 
         msg.value = rate; // 发送负载变化率到消息队列
+
+        testing_load_flag = pdFALSE; // 清除测试负载标志位
   
         int return_value = xQueueSend(sensor_queue_handle, (void *)&msg, 0);
         if (return_value == pdTRUE) {
@@ -450,19 +468,34 @@ void get_encoder1_data_task(void *pvParameters)
     // 获取旋转编码器数据
     msg.device_id = DEVICE_ENCODER;
 
-    msg.value = encoder1.read_count_accum_clear(); // 获取编码器的总计数值
+    msg.value = encoder1.read_count_accum_clear()/100.0; // 获取编码器的总计数值
     // printf("\n[get_encoder1_data_task] encoder1 value: %.3f", msg.value);
 
-    // 进行电流调节映射，把编码器线性映射成 0~2
-    msg.value = map(msg.value, 0, 10000, 0, 2); // 映射到 0~2V 的范围内 
+    // 进行电流调节映射，把编码器的值进行限幅
+    if (msg.value > 2.0) {
+      msg.value = 2.0;
+      // printf("\n[get_encoder1_data_task] upper limit is %.3f A", msg.value);
+    } else if (msg.value < 0.0) {
+      msg.value = 0.0;
+      // printf("\n[get_encoder1_data_task] lower limit is %.3f A", msg.value);
+    }
+  
     // printf("\n[get_encoder1_data_task] encoder1 value: %.3f", msg.value);
     /* 实现电流调节 */
     #ifdef USE_IIC_DEVICE
       // 计算设置电压
-      MCP4725_device.setVoltage(from_set_current2voltage_V(msg.value)); // 设置输出电压为 3.3V
-      printf("\n[get_encoder1_data_task] setpoint current(A): %.3f", msg.value);
-      printf("\n[get_encoder1_data_task] setpoint voltage(V): %.3f", MCP4725_device.getVoltage());
-     
+    
+      if (testing_load_flag == pdTRUE){
+        // 这里是测试负载的电流值
+        
+      }else{
+        MCP4725_device.setVoltage(from_set_current2voltage_V(msg.value)); // 设置输出电压为 3.3V
+      }
+
+      
+      // printf("\n[get_encoder1_data_task] setpoint current(A): %.3f", msg.value);
+      // printf("\n[get_encoder1_data_task] setpoint voltage(V): %.3f", MCP4725_device.getVoltage());
+    
     #endif
     
 

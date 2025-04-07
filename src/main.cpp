@@ -165,12 +165,12 @@ void setup() {
             );
 
   load_testing_xBinarySemaphore = xSemaphoreCreateBinary();
-  if (voltage_protection_xBinarySemaphore != NULL) {
+  if (load_testing_xBinarySemaphore != NULL) {
     xTaskCreatePinnedToCore(get_load_changing_rate_task,
             "get_load_changing_rate_task",
             1024*4,
             NULL,
-            2,
+            4,
             NULL,
             1
           );       

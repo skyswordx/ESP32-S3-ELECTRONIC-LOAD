@@ -64,9 +64,10 @@
 
 #ifdef USE_IIC_DEVICE // 启用电子负载测试
     // #define DAC_BIAS_CURRENT_mA 40  
-    #define TESING_MAX_CURRENT_A 1
+    #define TESING_MAX_CURRENT_A 1.00
     #define TESING_MIN_CURRENT_A 0.1
     #define THRESHOLD_A 0.5
+    extern BaseType_t testing_load_flag;
     double from_set_current2voltage_V( double set_current_A); // 在旋转编码器任务 (get_encoder1_data_task) 中使用
 
     extern SemaphoreHandle_t  load_testing_xBinarySemaphore;
