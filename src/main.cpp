@@ -43,7 +43,7 @@ void setup() {
   /* 初始化 INA226 */
 
     float shunt = RSHUNT;     // R020  
-    float current_LSB_mA = CURRENT_LSB_mA;
+    float current_LSB_mA = CURRENT_LSB_mA * 2;
     const float current_offset_mA = CURRENT_OFFSET_mA; // 校准程序串口输出的电流偏置
     const float bus_voltage_DMM = BUS_V_DMM; // DMM 数字万用表测量的电压
     const float bus_voltage_SERIAL= BUS_V_SERIAL; // 校准程序测量的电压
@@ -98,22 +98,22 @@ void setup() {
 
 #ifdef USE_LCD_DISPLAY
   // Core 0 运行 LVGL main task handler
-  xTaskCreatePinnedToCore(lvgl_task,
-              "demo_test",
-              1024*10,
-              NULL,
-              3,
-              &lvgl_task_handle,
-              0
-            );
-  xTaskCreatePinnedToCore(update_gui_task,
-              "update_gui_task",
-              1024*4,
-              NULL,
-              1,
-              NULL,
-              0
-            );
+  // xTaskCreatePinnedToCore(lvgl_task,
+  //             "demo_test",
+  //             1024*10,
+  //             NULL,
+  //             3,
+  //             &lvgl_task_handle,
+  //             0
+  //           );
+  // xTaskCreatePinnedToCore(update_gui_task,
+  //             "update_gui_task",
+  //             1024*4,
+  //             NULL,
+  //             1,
+  //             NULL,
+  //             0
+  //           );
 #endif
 
 #ifdef USE_DUMMY_SENSOR
@@ -129,14 +129,14 @@ void setup() {
 #endif
 
 #ifdef USE_ENCODER1
-  xTaskCreatePinnedToCore(get_encoder1_data_task,
-              "get_encoder1_data_task",
-              1024*4,
-              NULL,
-              2,
-              NULL,
-              1
-            );
+  // xTaskCreatePinnedToCore(get_encoder1_data_task,
+  //             "get_encoder1_data_task",
+  //             1024*4,
+  //             NULL,
+  //             2,
+  //             NULL,
+  //             1
+  //           );
 #endif
 
 #ifdef USE_VOLTAGE_PROTECTION
@@ -155,26 +155,26 @@ void setup() {
 #endif
 
 #ifdef USE_IIC_DEVICE
-  xTaskCreatePinnedToCore(get_ina226_data_task,
-              "get_ina226_data_task",
-              1024*4,
-              NULL,
-              2,
-              NULL,
-              1
-            );
+  // xTaskCreatePinnedToCore(get_ina226_data_task,
+  //             "get_ina226_data_task",
+  //             1024*4,
+  //             NULL,
+  //             2,
+  //             NULL,
+  //             1
+  //           );
 
-  load_testing_xBinarySemaphore = xSemaphoreCreateBinary();
-  if (load_testing_xBinarySemaphore != NULL) {
-    xTaskCreatePinnedToCore(get_load_changing_rate_task,
-            "get_load_changing_rate_task",
-            1024*4,
-            NULL,
-            4,
-            NULL,
-            1
-          );       
-  }
+  // load_testing_xBinarySemaphore = xSemaphoreCreateBinary();
+  // if (load_testing_xBinarySemaphore != NULL) {
+  //   xTaskCreatePinnedToCore(get_load_changing_rate_task,
+  //           "get_load_changing_rate_task",
+  //           1024*4,
+  //           NULL,
+  //           4,
+  //           NULL,
+  //           1
+  //         );       
+  // }
   
 #endif
 
@@ -229,15 +229,18 @@ void setup() {
   current_ctrl.read_sensor = []() -> double {
     return INA226_device.getCurrent_mA(); 
   };
-
-  xTaskCreatePinnedToCore(open_loop_test_task,
-              "my_sensors_pid_task",
+  
+  open_loop_test_xBinarySemaphore = xSemaphoreCreateBinary();
+  if (open_loop_test_xBinarySemaphore != NULL) {
+    xTaskCreatePinnedToCore(open_loop_data_collection_task,
+              "open_loop_data_collection_task",
               1024*4,
-              NULL, 
+              NULL,
               2,
               NULL,
               1
             );
+  }
 #endif  
 
 }
