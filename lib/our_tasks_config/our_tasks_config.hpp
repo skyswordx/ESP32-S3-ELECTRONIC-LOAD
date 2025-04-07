@@ -21,8 +21,8 @@
  */
 
 /************************************ 条件编译选项 ***********************************/
-// #define USE_PID_CONTROLLER 1
-    // #define USE_CURRENT_OPEN_LOOP_TEST 1
+#define USE_PID_CONTROLLER 1
+    #define USE_CURRENT_OPEN_LOOP_TEST 1
 #define USE_IIC_DEVICE 1 // 是否使用 IIC 设备
     // #define USE_INA226_MODULE 1 // 是否使用 INA226 模块
 
@@ -37,7 +37,7 @@
     #define USE_BUTTON4 1 // 是否使用按键 4
 
 
-#define USE_VOLTAGE_PROTECTION 1 // 是否使用过压保护功能
+// #define USE_VOLTAGE_PROTECTION 1 // 是否使用过压保护功能
 // #define USE_DUMMY_SENSOR 1 // 是否使用虚拟传感器数据
 
 
@@ -85,6 +85,16 @@
 
     #ifdef USE_CURRENT_OPEN_LOOP_TEST
         void open_loop_test_task(void *pvParameters); // 开环测试任务函数
+        void open_loop_data_collection_task(void *pvParameters); // 开环数据采集任务函数
+
+        #define OPEN_LOOP_TEST_LENGTH  1000 // 开环测试数据长度
+
+        extern SemaphoreHandle_t open_loop_test_xBinarySemaphore; // 开环测试二值信号量
+        extern double pv_data[OPEN_LOOP_TEST_LENGTH]; // 开环测试数据
+        extern double op_data[OPEN_LOOP_TEST_LENGTH]; // 开环测试数据
+        
+        #define OPEN_LOOP_T1_ms  400
+        #define OPEN_LOOP_T2_ms  600  
 
         #define USE_BUTTON
         #define USE_BUTTON4 1 // DAC OUTPUT MAX
