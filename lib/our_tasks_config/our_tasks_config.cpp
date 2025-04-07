@@ -31,6 +31,8 @@
 #ifdef USE_IIC_DEVICE
   INA226 INA226_device(0x40); // INA226 电流传感器
   MCP4725 MCP4725_device(0x60); // MCP4725 DAC 芯片
+
+  SemaphoreHandle_t  load_testing_xBinarySemaphore;
 #endif
 
 /***************************************** ADC1 Setup *******************************/
@@ -112,7 +114,7 @@ void get_dummy_sensor_data_task(void *pvParameters)
       // printf("\n[get_sensor_data_task] failed to send message to queue\n");
     }
 
-    vTaskDelay( 1000 );
+    vTaskDelay( 1000 / portTICK_PERIOD_MS );
   }
 }
 #endif // USE_DUMMY_SENSOR
@@ -133,36 +135,19 @@ void get_ina226_data_task(void *pvParameters)
     // printf("\n[get_ina226_data_task] now_time: %d", millis());
     msg.device_id = DEVICE_INA226;
   
-    float measure_current_mA = INA226_device.getCurrent_mA();
-    float measure_voltage_V = INA226_device.getBusVoltage();
-    float measure_power_W = INA226_device.getPower();
-    float measure_resistance_Kohm = abs((measure_voltage_V )/ (measure_current_mA ));
+    double measure_current_mA = INA226_device.getCurrent_mA();
+    double measure_voltage_V = INA226_device.getBusVoltage();
+    double measure_power_W = INA226_device.getPower();
+    double measure_resistance_Kohm = abs((measure_voltage_V )/ (measure_current_mA ));
 
-    // 负载调整率？
-            /*
-              measure_current = 0A ->  记录 bus_V0
-              measure_current = 1A ->  记录 bus_V1
-              rate = (bus_V1 - bus_V0) / bus_V0
-             */
-    static float bus_V0 = 0.0;
-    static float bus_V1 = 0.0;
-    if ( abs((abs(measure_current_mA) - 0.0) < 0.1) ){
-      // 记录 bus_V0
-      bus_V0 = measure_voltage_V;
-    } else if ( abs((abs(measure_current_mA)*1e3 - 1.0) < 0.1) ){
-      // 记录 bus_V1
-      bus_V1 = measure_voltage_V;
-    }
-
-    float rate = (bus_V1 - bus_V0) / bus_V0;
+    
 
     msg.device_data.value1 = measure_current_mA;
     msg.device_data.value2 = measure_voltage_V;
     msg.device_data.value3 = measure_power_W;
     msg.device_data.value4 = measure_resistance_Kohm;
-    msg.device_data.value5 = rate;
 
-    // printf("\n[get_ina226_data_task] INA226: %.3f mA, %.3f V, %.3f W, %.3f KOhm, %.3f", measure_current_mA, measure_voltage_V, measure_power_W, measure_resistance_Kohm, rate);
+    printf("\n[get_ina226_data_task] INA226: %.3f mA, %.3f V, %.3f W, %.3f KOhm", measure_current_mA, measure_voltage_V, measure_power_W, measure_resistance_Kohm);
     // printf("[get_ina226_data_task] INA226 V/mA: %.3f,%.3f\n", measure_voltage_V, measure_current_mA); 
 
     // 检查 INA226 电压是否超过警告值，如果超过则进行过压保护
@@ -186,6 +171,77 @@ void get_ina226_data_task(void *pvParameters)
     vTaskDelay( 1000 );
   }
 }
+
+
+void get_load_changing_rate_task(void *pvParameters){
+  // 负载调整率？
+            /*
+              到达 check_current1 = ->  记录 bus_voltage1
+              到达 check_current2 = ->  记录 bus_voltage2
+              rate = (bus_V1 - bus_V0) / bus_V0
+             */
+  static double check_voltage_L_V = 0.0;
+  static double check_voltage_H_V = 0.0;
+  BaseType_t check_L = pdFALSE;
+  BaseType_t check_H = pdFALSE;
+  static double rate = 0.0;
+
+  message_t msg;
+
+  while(1){
+    #ifdef USE_IIC_DEVICE
+      xSemaphoreTake(load_testing_xBinarySemaphore, portMAX_DELAY); // 总是保持阻塞等待二值信号量
+      
+  
+      MCP4725_device.setVoltage(from_set_current2voltage_V(TESING_MIN_CURRENT_A)); // 设置输出电压为第一个电流值
+      vTaskDelay(10 / portTICK_PERIOD_MS); // 延时 10 ms
+      printf("setpoint L: DAC: %.3f", MCP4725_device.getVoltage());
+
+       double check_current_L = INA226_device.getCurrent(); // 读取电流值
+      if (abs(check_current_L - TESING_MIN_CURRENT_A) < THRESHOLD_A){
+        check_voltage_L_V = MCP4725_device.getVoltage(); // 读取电压值
+        printf("\n[get_load_changing_rate_task] check_voltage_L_V, check_current_L: %.3f, %.3f", check_voltage_L_V, check_current_L);
+        check_L = pdTRUE;
+      }
+
+      vTaskDelay(10 / portTICK_PERIOD_MS); // 延时 10 ms
+      MCP4725_device.setVoltage(from_set_current2voltage_V(TESING_MAX_CURRENT_A)); // 设置输出电压为第二个电流值
+      printf("setpoint H: DAC: %.3f", MCP4725_device.getVoltage());
+
+      if ( abs(INA226_device.getCurrent() - TESING_MAX_CURRENT_A) < THRESHOLD_A){
+        check_voltage_H_V = MCP4725_device.getVoltage(); // 读取电压值
+        printf("\n[get_load_changing_rate_task] check_voltage_H_V, check_current_H: %.3f, %.3f", check_voltage_H_V, check_current_L);
+        check_H = pdTRUE;
+      }
+
+      if (check_L == pdTRUE && check_H == pdTRUE){
+        // 计算负载变化率
+        rate = (check_voltage_H_V - check_voltage_L_V) / check_voltage_L_V;
+        printf("\n[get_load_changing_rate_task] load changing rate: %.3f", rate);
+        check_L = pdFALSE;
+        check_H = pdFALSE;
+
+        msg.device_id = EVENT_TESING_LOAD_RATE;
+
+        msg.value = rate; // 发送负载变化率到消息队列
+  
+        int return_value = xQueueSend(sensor_queue_handle, (void *)&msg, 0);
+        if (return_value == pdTRUE) {
+          // printf("\n[get_load_changing_rate_task] sent message  to the queue successfully\n");
+        } else if (return_value == errQUEUE_FULL) {
+          // printf("\n[get_load_changing_rate_task] failed to send message to queue, queue is full\n");
+        } else {
+          // printf("\n[get_load_changing_rate_task] failed to send message to queue\n");
+        }
+      }
+
+      
+    #endif // USE_IIC_DEVICE
+    
+  }
+}
+
+
 #endif // USE_IIC_DEVICE
 
 #ifdef USE_VOLTAGE_PROTECTION
@@ -228,9 +284,9 @@ void ADC1_read_task(void *pvParameters)
     
     msg.device_id = DEVICE_ADC1;
 
-    float adc_value_3 = MY_ADC_GPIO6.get_ADC1_voltage_average_mV();
+    double adc_value_3 = MY_ADC_GPIO6.get_ADC1_voltage_average_mV();
 
-    float adc_value_average = adc_value_3 / 1.0;
+    double adc_value_average = adc_value_3 / 1.0;
 
     msg.value = adc_value_average;
 
@@ -344,6 +400,9 @@ void button_handler_task(void *pvParameters){
           #endif // USE_BUTTON1
           #ifdef USE_BUTTON2
             if(GPIO_PIN == button2.pin){
+              #ifdef USE_IIC_DEVICE
+                xSemaphoreGive(load_testing_xBinarySemaphore); // 释放二值信号量，触发负载测试
+              #endif // IIC_DEVICE
               
             }
           #endif // USE_BUTTON2
@@ -373,14 +432,19 @@ void button_handler_task(void *pvParameters){
 
 #ifdef USE_ENCODER1
 /**
- * @brief 获取编码器数据的任务函数
+ * @brief 获取编码器数据的任务函数，用来设置电流
  * @author skyswordx
  * @param pvParameters 任务参数
- * @details 仅在 setup 调用一次即可，该任务会一直运行，获取编码器的数据并发送到消息队列中
+ * @details 仅在 setup 调用一次即可，该任务会一直运行，获取编码器的数据（期望电流）转换所需相应的 DAC 电压输出
+ *          并把期望电流数据发送到消息队列中给 LVGL 更新
  */
 void get_encoder1_data_task(void *pvParameters)
 {
   message_t msg;
+  // #ifdef USE_IIC_DEVICE
+  //   static double set_voltage = 0.0; // 设置电压
+  // #endif
+  
   while(1)
   {
     // printf("\n[get_encoder1_data_task] running on core: %d, Free stack space: %d", xPortGetCoreID(), uxTaskGetStackHighWaterMark(NULL));
@@ -389,6 +453,13 @@ void get_encoder1_data_task(void *pvParameters)
     msg.device_id = DEVICE_ENCODER;
     msg.value = encoder1.read_count_accum_clear();
 
+    /* 实现电流调节 */
+    #ifdef USE_IIC_DEVICE
+      // 计算设置电压
+      MCP4725_device.setVoltage(from_set_current2voltage_V(msg.value)); // 设置输出电压为 3.3V
+      // printf("\n[get_encoder1_data_task] set voltage: %.3f", set_voltage);
+    #endif
+    
 
     // printf("\n[get_encoder1_data_task] encoder1 count: %lld", count);
     // printf("\n[get_encoder1_data_task] encoder1 value: %.3f", msg.value);
@@ -405,5 +476,15 @@ void get_encoder1_data_task(void *pvParameters)
     vTaskDelay( 1000 );
   }
 }
+
+/*********************** 辅助函数 ***********************/
+#ifdef USE_IIC_DEVICE
+double from_set_current2voltage_V(double set_current_A){
+  return set_current_A * 125 * RSHUNT;
+}
+
+
+#endif
+
 
 #endif // USE_ENCODER1

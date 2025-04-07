@@ -30,6 +30,7 @@ enum device_id_t {
     DEVICE_ENCODER = 1,
     DEVICE_INA226 = 2,
     DEVICE_ADC1 = 3,
+    EVENT_TESING_LOAD_RATE = 4,
     DEVICE_UNKNOWN = 99
   };
   
@@ -43,7 +44,7 @@ enum device_id_t {
   
   typedef struct {
     device_id_t device_id; // 设备ID
-    float value; // 存放的数据（简单设置为一个值，后期有需求再改为专门的结构体
+    double value; // 存放的数据（简单设置为一个值，后期有需求再改为专门的结构体
     device_data_t device_data; // INA226 传感器数据
   } message_t;
 

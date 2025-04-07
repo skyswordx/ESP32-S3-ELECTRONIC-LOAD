@@ -21,27 +21,58 @@
  */
 
 /************************************ 条件编译选项 ***********************************/
-#define USE_PID_CONTROLLER 1
-    #define USE_CURRENT_OPEN_LOOP_TEST 1
+// #define USE_PID_CONTROLLER 1
+    // #define USE_CURRENT_OPEN_LOOP_TEST 1
 #define USE_IIC_DEVICE 1 // 是否使用 IIC 设备
     // #define USE_INA226_MODULE 1 // 是否使用 INA226 模块
 
-// #define USE_LCD_DISPLAY 1  // 是否使用 LCD 显示屏
-// #define USE_ENCODER1 1 // 是否使用编码器 1
+#define USE_LCD_DISPLAY 1  // 是否使用 LCD 显示屏
+#define USE_ENCODER1 1 // 是否使用编码器 1
 // #define USE_ADC1 1 // 是否使用 ADC1 通道 5 读取电压值
 
-// #define USE_BUTTON 1 // 是否使用按键
-    // #define USE_BUTTON1 1 // 是否使用按键 1
-    // #define USE_BUTTON2 1 // 是否使用按键 2
-    // #define USE_BUTTON3 1 // 是否使用按键 3
-    // #define USE_BUTTON4 1 // 是否使用按键 4
+#define USE_BUTTON 1 // 是否使用按键
+    #define USE_BUTTON1 1 // 是否使用按键 1
+    #define USE_BUTTON2 1 // 是否使用按键 2
+    #define USE_BUTTON3 1 // 是否使用按键 3
+    #define USE_BUTTON4 1 // 是否使用按键 4
 
 
-// #define USE_VOLTAGE_PROTECTION 1 // 是否使用过压保护功能
+#define USE_VOLTAGE_PROTECTION 1 // 是否使用过压保护功能
 // #define USE_DUMMY_SENSOR 1 // 是否使用虚拟传感器数据
+
 
 /*********************************** ESP32S3 Setup **********************************/
 #include <Arduino.h>
+
+
+/*********************************** Current Measurement Setup *********************/
+#ifdef USE_INA226_MODULE
+    #define RSHUNT 0.010 // 10mΩ 电阻
+    #define CURRENT_LSB_mA 0.05 // 电流 LSB 值
+    #define CURRENT_OFFSET_mA -0.525 // 校准程序串口输出的电流偏置
+    #define BUS_V_DMM 6.013 // DMM 数字万用表测量的电压
+    #define BUS_V_SERIAL 6.109 // 校准程序测量的电压
+    #define BUS_V_SCALING_E4 (10000 / BUS_V_SERIAL * BUS_V_DMM) // 电压缩放系数
+#else // 启用功率板
+    #define RSHUNT 0.020 // 20mΩ 电阻
+    #define CURRENT_LSB_mA 0.05 // 电流 LSB 值
+    #define CURRENT_OFFSET_mA -0.525 // 校准程序串口输出的电流偏置
+    #define BUS_V_DMM 6.013 // DMM 数字万用表测量的电压
+    #define BUS_V_SERIAL 6.109 // 校准程序测量的电压
+    #define BUS_V_SCALING_E4 (10000 / BUS_V_SERIAL * BUS_V_DMM) // 电压缩放系数
+#endif // USE_INA226_MODULE
+
+#ifdef USE_IIC_DEVICE // 启用电子负载测试
+    // #define DAC_BIAS_CURRENT_mA 40  
+    #define TESING_MAX_CURRENT_A 1
+    #define TESING_MIN_CURRENT_A 0.1
+    #define THRESHOLD_A 0.5
+    double from_set_current2voltage_V( double set_current_A); // 在旋转编码器任务 (get_encoder1_data_task) 中使用
+
+    extern SemaphoreHandle_t  load_testing_xBinarySemaphore;
+    void get_load_changing_rate_task(void *pvParameters); // 测量负载调整率任务函数
+
+#endif 
 
 
 /*********************************** PID Setup ***********************************/
