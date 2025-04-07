@@ -69,7 +69,7 @@ void update_gui_task(void *pvParameters)
             if (guider_ui.main_page_measure_power_label != NULL){ lv_label_set_text_fmt(guider_ui.main_page_measure_power_label, "%.3f", msg.device_data.value3); }
             
             // 显示 INA226 测量的等效电阻
-            if (guider_ui.main_page_measure_resistance_label != NULL){ lv_label_set_text_fmt(guider_ui.main_page_measure_resistance_label, "%.3f", msg.device_data.value4); }
+            // if (guider_ui.main_page_measure_resistance_label != NULL){ lv_label_set_text_fmt(guider_ui.main_page_measure_resistance_label, "%.3f", msg.device_data.value4); }
             
             // 显示 INA226 测量的电源调整率
 
@@ -97,6 +97,13 @@ void update_gui_task(void *pvParameters)
             if (guider_ui.main_page_measure_voltage_label != NULL){ lv_label_set_text_fmt(guider_ui.main_page_measure_voltage_label, "%.3f", msg.value); }
             if (guider_ui.main_page_measure_power_label != NULL){ lv_label_set_text_fmt(guider_ui.main_page_measure_power_label, "%.3f", msg.value); }
             if (guider_ui.main_page_measure_resistance_label != NULL){ lv_label_set_text_fmt(guider_ui.main_page_measure_resistance_label, "%.3f", msg.value); }
+            break;
+
+
+          case EVENT_TESING_LOAD_RATE:
+            // 测试负载调整率
+            if (guider_ui.main_page_measure_resistance_label != NULL){ lv_label_set_text_fmt(guider_ui.main_page_measure_resistance_label, "%.3f", msg.value); }
+           
             break;
           default:
             break;

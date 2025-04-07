@@ -41,28 +41,19 @@ void setup() {
   // 初始化 Wire IIC 总线
   Wire.begin(IIC_SDA, IIC_SCL);
   /* 初始化 INA226 */
-  #ifdef USE_INA226_MODULE
-    // 下面的是校准模块上的 INA226 得到的参数
-    float shunt = 0.010;     // R010  
-    float current_LSB_mA = 0.05;
-    const float CURRENT_OFFET_mA = -0.525; // 校准程序串口输出的电流偏置
-    const float BUS_V_DMM = 6.013; // DMM 数字万用表测量的电压
-    const float BUS_V_SERIAL= 6.109; // 校准程序测量的电压
-    uint16_t bus_V_scaling_e4 = 10000 / BUS_V_SERIAL * BUS_V_DMM; 
-  #else
-    // 下面的是校准功率板上的 INA226 得到的参数
-    float shunt = 0.020;     // R020  
-    float current_LSB_mA = 0.05;
-    const float CURRENT_OFFET_mA = -0.525; // 校准程序串口输出的电流偏置
-    const float BUS_V_DMM = 6.013; // DMM 数字万用表测量的电压
-    const float BUS_V_SERIAL= 6.109; // 校准程序测量的电压
+
+    float shunt = RSHUNT;     // R020  
+    float current_LSB_mA = CURRENT_LSB_mA;
+    const float current_offset_mA = CURRENT_OFFSET_mA; // 校准程序串口输出的电流偏置
+    const float bus_voltage_DMM = BUS_V_DMM; // DMM 数字万用表测量的电压
+    const float bus_voltage_SERIAL= BUS_V_SERIAL; // 校准程序测量的电压
     uint16_t bus_V_scaling_e4 = 10000 / BUS_V_SERIAL * BUS_V_DMM; 
   #endif 
          
   if (!INA226_device.begin()) {
     printf("could not connect INA226. Fix and Reboot");
   }
-  INA226_device.configure(shunt, current_LSB_mA, CURRENT_OFFET_mA, bus_V_scaling_e4);
+  INA226_device.configure(shunt, current_LSB_mA, current_offset_mA, bus_V_scaling_e4);
 
   /* 初始化 MCP4725 */
   if (!MCP4725_device.begin()) {
@@ -70,7 +61,6 @@ void setup() {
   }
   MCP4725_device.setMaxVoltage(5.0); // 设置最大输出电压
   MCP4725_device.setVoltage(0.0); // 设置输出电压为 3.3V
-#endif
 
 #ifdef USE_LCD_DISPLAY
   /* 设置自己的显示任务 */
@@ -79,8 +69,8 @@ void setup() {
   // /* 挂起 GUI guider 生成的页面 */
   setup_scr_main_page(&guider_ui); // gui_guider 为每一个页面生成的，这里是名字为 xxx 的页面
   setup_scr_chart_page(&guider_ui); 
-  // lv_scr_load(guider_ui.main_page); //每一个页面的名字都是 gui_guider 结构体的元素
-  lv_scr_load(guider_ui.chart_page); 
+  lv_scr_load(guider_ui.main_page); //每一个页面的名字都是 gui_guider 结构体的元素
+  // lv_scr_load(guider_ui.chart_page); 
   
   /* 或者运行 LVGL demo */
   // lv_demo_benchmark();
@@ -165,14 +155,27 @@ void setup() {
 #endif
 
 #ifdef USE_IIC_DEVICE
-  // xTaskCreatePinnedToCore(get_ina226_data_task,
-  //             "get_ina226_data_task",
-  //             1024*4,
-  //             NULL,
-  //             2,
-  //             NULL,
-  //             1
-  //           );
+  xTaskCreatePinnedToCore(get_ina226_data_task,
+              "get_ina226_data_task",
+              1024*4,
+              NULL,
+              2,
+              NULL,
+              1
+            );
+
+  load_testing_xBinarySemaphore = xSemaphoreCreateBinary();
+  if (voltage_protection_xBinarySemaphore != NULL) {
+    xTaskCreatePinnedToCore(get_load_changing_rate_task,
+            "get_load_changing_rate_task",
+            1024*4,
+            NULL,
+            2,
+            NULL,
+            1
+          );       
+  }
+  
 #endif
 
 #ifdef USE_ADC1
