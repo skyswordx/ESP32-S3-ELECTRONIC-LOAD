@@ -441,9 +441,7 @@ void button_handler_task(void *pvParameters){
 void get_encoder1_data_task(void *pvParameters)
 {
   message_t msg;
-  // #ifdef USE_IIC_DEVICE
-  //   static double set_voltage = 0.0; // 设置电压
-  // #endif
+
   
   while(1)
   {
@@ -451,18 +449,25 @@ void get_encoder1_data_task(void *pvParameters)
     
     // 获取旋转编码器数据
     msg.device_id = DEVICE_ENCODER;
-    msg.value = encoder1.read_count_accum_clear();
 
+    msg.value = encoder1.read_count_accum_clear(); // 获取编码器的总计数值
+    // printf("\n[get_encoder1_data_task] encoder1 value: %.3f", msg.value);
+
+    // 进行电流调节映射，把编码器线性映射成 0~2
+    msg.value = map(msg.value, 0, 10000, 0, 2); // 映射到 0~2V 的范围内 
+    // printf("\n[get_encoder1_data_task] encoder1 value: %.3f", msg.value);
     /* 实现电流调节 */
     #ifdef USE_IIC_DEVICE
       // 计算设置电压
       MCP4725_device.setVoltage(from_set_current2voltage_V(msg.value)); // 设置输出电压为 3.3V
-      // printf("\n[get_encoder1_data_task] set voltage: %.3f", set_voltage);
+      printf("\n[get_encoder1_data_task] setpoint current(A): %.3f", msg.value);
+      printf("\n[get_encoder1_data_task] setpoint voltage(V): %.3f", MCP4725_device.getVoltage());
+     
     #endif
     
 
     // printf("\n[get_encoder1_data_task] encoder1 count: %lld", count);
-    // printf("\n[get_encoder1_data_task] encoder1 value: %.3f", msg.value);
+    
 
     int return_value = xQueueSend(sensor_queue_handle, (void *)&msg, 0);
     if (return_value == pdTRUE) {
