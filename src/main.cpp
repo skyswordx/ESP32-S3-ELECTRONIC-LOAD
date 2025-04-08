@@ -64,23 +64,23 @@ void setup() {
 
 #ifdef USE_LCD_DISPLAY
   /* 设置自己的显示任务 */
-  setup_ui(&guider_ui); // 初始化 gui_guider
+  // setup_ui(&guider_ui); // 初始化 gui_guider
   
-  // /* 挂起 GUI guider 生成的页面 */
-  setup_scr_main_page(&guider_ui); // gui_guider 为每一个页面生成的，这里是名字为 xxx 的页面
-  setup_scr_chart_page(&guider_ui); 
-  lv_scr_load(guider_ui.main_page); //每一个页面的名字都是 gui_guider 结构体的元素
+  // // /* 挂起 GUI guider 生成的页面 */
+  // setup_scr_main_page(&guider_ui); // gui_guider 为每一个页面生成的，这里是名字为 xxx 的页面
+  // setup_scr_chart_page(&guider_ui); 
+  // lv_scr_load(guider_ui.main_page); //每一个页面的名字都是 gui_guider 结构体的元素
   // lv_scr_load(guider_ui.chart_page); 
   
   /* 或者运行 LVGL demo */
   // lv_demo_benchmark();
 
-  gui_xMutex = xSemaphoreCreateMutex(); // 创建一个互斥信号量
-  if (gui_xMutex == NULL) {
-    // Handle semaphore creation failure
-    printf("semaphore creation failure");
-    return;
-  }
+  // gui_xMutex = xSemaphoreCreateMutex(); // 创建一个互斥信号量
+  // if (gui_xMutex == NULL) {
+  //   // Handle semaphore creation failure
+  //   printf("semaphore creation failure");
+  //   return;
+  // }
 #endif
   /* 创建消息队列 */
   // Create the queue which will have <queue_element_size> number of elements, each of size `message_t` and pass the address to <sensor_queue_handle>.
@@ -129,14 +129,14 @@ void setup() {
 #endif
 
 #ifdef USE_ENCODER1
-  // xTaskCreatePinnedToCore(get_encoder1_data_task,
-  //             "get_encoder1_data_task",
-  //             1024*4,
-  //             NULL,
-  //             2,
-  //             NULL,
-  //             1
-  //           );
+  xTaskCreatePinnedToCore(get_encoder1_data_task,
+              "get_encoder1_data_task",
+              1024*4,
+              NULL,
+              2,
+              NULL,
+              1
+            );
 #endif
 
 #ifdef USE_VOLTAGE_PROTECTION
@@ -229,18 +229,34 @@ void setup() {
   current_ctrl.read_sensor = []() -> double {
     return INA226_device.getCurrent_mA(); 
   };
-  
-  open_loop_test_xBinarySemaphore = xSemaphoreCreateBinary();
-  if (open_loop_test_xBinarySemaphore != NULL) {
-    xTaskCreatePinnedToCore(open_loop_data_collection_task,
-              "open_loop_data_collection_task",
+
+  current_ctrl.convert_output = [](double output) -> double {
+    MCP4725_device.setVoltage(output);
+    return output; // 整定时，使用的 OP 是 DAC 输出，所以这里直接返回即可 
+  };
+
+  xTaskCreatePinnedToCore(set_current_task,
+              "set_current_task",
               1024*4,
-              NULL,
-              2,
+              NULL,   
+              3,
               NULL,
               1
             );
-  }
+  
+  #ifdef USE_CURRENT_OPEN_LOOP_TEST
+    open_loop_test_xBinarySemaphore = xSemaphoreCreateBinary();
+    if (open_loop_test_xBinarySemaphore != NULL) {
+      xTaskCreatePinnedToCore(open_loop_data_collection_task,
+                "open_loop_data_collection_task",
+                1024*4,
+                NULL,
+                2,
+                NULL,
+                1
+              );
+    }
+  #endif
 #endif  
 
 }

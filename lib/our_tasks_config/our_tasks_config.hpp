@@ -22,7 +22,7 @@
 
 /************************************ 条件编译选项 ***********************************/
 #define USE_PID_CONTROLLER 1
-    #define USE_CURRENT_OPEN_LOOP_TEST 1
+    // #define USE_CURRENT_OPEN_LOOP_TEST 1
 #define USE_IIC_DEVICE 1 // 是否使用 IIC 设备
     // #define USE_INA226_MODULE 1 // 是否使用 INA226 模块
 
@@ -43,6 +43,8 @@
 
 /*********************************** ESP32S3 Setup **********************************/
 #include <Arduino.h>
+extern BaseType_t debug_flag1;
+extern BaseType_t debug_flag2;
 
 
 /*********************************** Current Measurement Setup *********************/
@@ -83,9 +85,17 @@
     // #include "our_vofa_debuger.hpp"
     extern PID_controller_t<double> current_ctrl;
 
+    #define DAC_OUTPUT_V_MAX 5.0 
+    #define DAC_OUTPUT_V_MIN 0.0
+    #define CURRENT_TASK_KP 0.0022226816 // 电流控制器比例系数
+    #define CURRENT_TASK_KI 0.001 // 电流控制器积分系数
+    #define CURRENT_TASK_KD 0.0 // 电流控制器微分系数
+
+    void set_current_task(void *pvParameters); // 设置电流任务函数
+
     #ifdef USE_CURRENT_OPEN_LOOP_TEST
-        void open_loop_test_task(void *pvParameters); // 开环测试任务函数
         void open_loop_data_collection_task(void *pvParameters); // 开环数据采集任务函数
+        
 
         #define OPEN_LOOP_TEST_LENGTH  1000 // 开环测试数据长度
 
@@ -96,7 +106,7 @@
         #define OPEN_LOOP_T1_ms  400
         #define OPEN_LOOP_T2_ms  600  
 
-        #define USE_BUTTON
+        #define USE_BUTTON 1
         #define USE_BUTTON4 1 // DAC OUTPUT MAX
         #define USE_BUTTON3 1 // DAC OUTPUT MIN
     #endif // USE_CURRENT_OPEN_LOOP_TEST
