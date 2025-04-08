@@ -21,8 +21,8 @@
  */
 
 /************************************ 条件编译选项 ***********************************/
-#define USE_PID_CONTROLLER 1
-    // #define USE_CURRENT_OPEN_LOOP_TEST 1
+// #define USE_PID_CONTROLLER 1
+//     #define USE_CURRENT_OPEN_LOOP_TEST 1
 #define USE_IIC_DEVICE 1 // 是否使用 IIC 设备
     // #define USE_INA226_MODULE 1 // 是否使用 INA226 模块
 
@@ -77,6 +77,23 @@ extern BaseType_t debug_flag2;
 
 #endif 
 
+/****************************** OUTPUT CAlibration *******************************/
+
+#ifdef USE_OUTPUT_CALIBRATION // 启用输出校准
+        void output_data_collection_task(void *pvParameters); // 输出校准采集任务函数
+        
+        #define OUTPUT_CALIBRATION  50 // 输出校准测试数据长度
+
+        extern SemaphoreHandle_t output_calibration_xBinarySemaphore; // 输出测试二值信号量
+        extern double targ_data[OUTPUT_CALIBRATION]; // 输出测试数据-目标值
+        extern double real_data[OUTPUT_CALIBRATION]; // 输出测试数据-实际值
+        
+        #define OUTPUT_CALIB_TIME_ms  10000
+
+        #define USE_BUTTON 1
+        #define USE_BUTTON4 1 // DAC OUTPUT MAX
+        #define USE_BUTTON3 1 // DAC OUTPUT MIN
+    #endif // USE_OUTPUT_CALIBRATION 
 
 /*********************************** PID Setup ***********************************/
 // 包含自定义的 PID 控制器类和 VOFA 下位机
@@ -87,8 +104,12 @@ extern BaseType_t debug_flag2;
 
     #define DAC_OUTPUT_V_MAX 5.0 
     #define DAC_OUTPUT_V_MIN 0.0
-    #define CURRENT_TASK_KP 0.0022226816 // 电流控制器比例系数
-    #define CURRENT_TASK_KI 0.001 // 电流控制器积分系数
+    // #define CURRENT_TASK_KP 0.0022226816 // 电流控制器比例系数
+    // #define CURRENT_TASK_KI 0.00 // 电流控制器积分系数
+
+    #define CURRENT_TASK_KP 1.473 // 电流控制器比例系数
+    #define CURRENT_TASK_KI 0.530 // 电流控制器积分系数
+
     #define CURRENT_TASK_KD 0.0 // 电流控制器微分系数
 
     void set_current_task(void *pvParameters); // 设置电流任务函数
@@ -97,14 +118,14 @@ extern BaseType_t debug_flag2;
         void open_loop_data_collection_task(void *pvParameters); // 开环数据采集任务函数
         
 
-        #define OPEN_LOOP_TEST_LENGTH  1000 // 开环测试数据长度
+        #define OPEN_LOOP_TEST_LENGTH  50 // 开环测试数据长度
 
         extern SemaphoreHandle_t open_loop_test_xBinarySemaphore; // 开环测试二值信号量
         extern double pv_data[OPEN_LOOP_TEST_LENGTH]; // 开环测试数据
         extern double op_data[OPEN_LOOP_TEST_LENGTH]; // 开环测试数据
         
-        #define OPEN_LOOP_T1_ms  400
-        #define OPEN_LOOP_T2_ms  600  
+        #define OPEN_LOOP_T1_ms  10
+        #define OPEN_LOOP_T2_ms  40
 
         #define USE_BUTTON 1
         #define USE_BUTTON4 1 // DAC OUTPUT MAX
@@ -137,6 +158,10 @@ extern BaseType_t debug_flag2;
     #include "MCP4725.h"
     extern MCP4725 MCP4725_device; // MCP4725 DAC 芯片对象
 
+    extern const double current_calibration_A; // 电流校准系数A
+    extern const double current_calibration_B; // 电流校准系数B
+    extern const double voltage_calibration_A; // 电压校准系数A
+    extern const double voltage_calibration_B; // 电压校准系数B
     void get_ina226_data_task(void *pvParameters); // 获取 INA226 数据的任务函数
 #endif // USE_IIC_DEVICE
 

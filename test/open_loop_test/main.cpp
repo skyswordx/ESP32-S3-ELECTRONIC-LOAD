@@ -189,8 +189,8 @@ void get_ina226_data_task(void *pvParameters)
     // printf("\n[get_ina226_data_task] now_time: %d", millis());
     msg.device_id = DEVICE_INA226;
   
-    float measure_current_mA = INA226_device.getCurrent_mA();
-    float measure_voltage_V = INA226_device.getBusVoltage();
+    float measure_current_mA = INA226_device.getCurrent_mA_plus();
+    float measure_voltage_V = INA226_device.getBusVoltage_plus();
     float measure_power_W = INA226_device.getPower();
     float measure_resistance_Kohm = abs((measure_voltage_V )/ (measure_current_mA ));
 
