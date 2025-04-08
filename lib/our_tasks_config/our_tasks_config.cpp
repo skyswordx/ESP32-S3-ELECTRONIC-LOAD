@@ -11,87 +11,105 @@
 #include "our_adc.hpp"
 #include "our_button.hpp"
 
+BaseType_t debug_flag1 = pdFALSE;
+BaseType_t debug_flag2 = pdFALSE;
+
 /*********************************** PID Setup ***********************************/
 // 包含自定义的 PID 控制器类和 VOFA 下位机
 #ifdef USE_PID_CONTROLLER
-    PID_controller_t<double> current_ctrl;
+    #include "our_pid_controller.hpp"
+    PID_controller_t<double> current_ctrl(DAC_OUTPUT_V_MAX, DAC_OUTPUT_V_MIN, CURRENT_TASK_KP, CURRENT_TASK_KI, CURRENT_TASK_KD);  
 
-    SemaphoreHandle_t open_loop_test_xBinarySemaphore; // 开环测试二值信号量
-    double pv_data[OPEN_LOOP_TEST_LENGTH] = {}; // 开环测试数据
-    double op_data[OPEN_LOOP_TEST_LENGTH] = {}; // 开环测试数据
-
-    void open_loop_test_task(void *pvParameters) {
-      while (1) {
-          printf("[open_loop_test_task] I(mA) / DAC(V) /: %.3f, %.3f\n", current_ctrl.read_sensor(), MCP4725_device.getVoltage());
-          // vTaskDelay(1/portTICK_PERIOD_MS); // 延时 10 ms
-      }
-    }
-
-    void open_loop_data_collection_task(void *pvParameters) {
-
-      // 采样间隔计算(以毫秒为单位)
-      const int sample_interval_ms = (OPEN_LOOP_T1_ms + OPEN_LOOP_T2_ms) / OPEN_LOOP_TEST_LENGTH;
-      
+    void set_current_task(void *pvParameters) {
+      // 该任务用于设置电流值
       while (1) {
         // 等待二值信号量触发任务开始
-        xSemaphoreTake(open_loop_test_xBinarySemaphore, portMAX_DELAY);
-        printf("[open_loop_data_collection_task] 开始采集开环测试数据\n");
+        // printf("[set_current_task] 闭环控制设置电流值中\n");
         
-        // 将数组清零
-        memset(pv_data, 0, sizeof(pv_data));
-        memset(op_data, 0, sizeof(op_data));
-        
-        // 第一阶段：MCP输出0V
-        MCP4725_device.setVoltage(0.0);
-        printf("[open_loop_data_collection_task] MCP输出电压设置为0V\n");
-        
-        // 采集第一阶段数据
-        int sample_count = 0;
-        int max_samples_phase1 = OPEN_LOOP_T1_ms / sample_interval_ms;
-        
-        for (int i = 0; i < max_samples_phase1 && sample_count < OPEN_LOOP_TEST_LENGTH; i++, sample_count++) {
-          // 记录当前输出电压到op_data
-          op_data[sample_count] = 0.0;
-          // 读取并记录INA226电流值到pv_data
-          pv_data[sample_count] = INA226_device.getCurrent_mA();
-          
-          // 等待采样间隔
-          vTaskDelay(sample_interval_ms / portTICK_PERIOD_MS);
-        }
-        
-        // 第二阶段：MCP输出5.0V
-        MCP4725_device.setVoltage(5.0);
-        printf("[open_loop_data_collection_task] MCP输出电压设置为5.0V\n");
-        
-        // 采集第二阶段数据
-        int max_samples_phase2 = OPEN_LOOP_T2_ms / sample_interval_ms;
-        
-        for (int i = 0; i < max_samples_phase2 && sample_count < OPEN_LOOP_TEST_LENGTH; i++, sample_count++) {
-          // 记录当前输出电压到op_data
-          op_data[sample_count] = 5.0;
-          // 读取并记录INA226电流值到pv_data
-          pv_data[sample_count] = INA226_device.getCurrent_mA();
-          
-          // 等待采样间隔
-          vTaskDelay(sample_interval_ms / portTICK_PERIOD_MS);
-        }
-        
-        // 测试结束后将MCP输出电压设置回0V
-        MCP4725_device.setVoltage(0.0);
-        printf("[open_loop_data_collection_task] 测试完成，MCP输出电压设置为0V\n");
-        
-        // 输出采集到的数据
-        printf("[open_loop_data_collection_task] 共采集数据 %d 个\n", sample_count);
-        printf("序号,输出电压(V),测量电流(mA)\n");
-        
-        printf("op,pv\n");
-        for (int i = 0; i < sample_count; i++) {
-          // printf("[%d]:%.3f,%.3f\n", i, op_data[i], pv_data[i]);
-          printf("%.3f,%.3f\n", op_data[i], pv_data[i]);
-        }
+        current_ctrl.pid_control_service();
+        vTaskDelay(100 / portTICK_PERIOD_MS); // 延时 100 ms
+        printf("Actual DAC output: %.3f(V)\n", MCP4725_device.getVoltage()); 
       }
-      vTaskDelete(NULL); // 删除任务
     }
+
+    #ifdef USE_CURRENT_OPEN_LOOP_TEST
+      SemaphoreHandle_t open_loop_test_xBinarySemaphore; // 开环测试二值信号量
+      double pv_data[OPEN_LOOP_TEST_LENGTH] = {}; // 开环测试数据
+      double op_data[OPEN_LOOP_TEST_LENGTH] = {}; // 开环测试数据
+
+      /**
+       * @brief PID 控制器的开环阶跃测试函数
+       * @author skyswordx
+       * @details 该函数应该在任务中循环调用，进行 PID 控制器的开环阶跃测试
+       *          主要用于获取阶跃响应中的过程变量和控制器输出的数据
+       *          以便使用 Lambda 整定法进行参数整定
+       */
+      void open_loop_data_collection_task(void *pvParameters) {
+
+        // 采样间隔计算(以毫秒为单位)
+        const int sample_interval_ms = (OPEN_LOOP_T1_ms + OPEN_LOOP_T2_ms) / OPEN_LOOP_TEST_LENGTH;
+        
+        while (1) {
+          // 等待二值信号量触发任务开始
+          xSemaphoreTake(open_loop_test_xBinarySemaphore, portMAX_DELAY);
+          printf("[open_loop_data_collection_task] 开始采集开环测试数据\n");
+          
+          // 将数组清零
+          memset(pv_data, 0, sizeof(pv_data));
+          memset(op_data, 0, sizeof(op_data));
+          
+          // 第一阶段：MCP输出0V
+          MCP4725_device.setVoltage(0.0);
+          printf("[open_loop_data_collection_task] MCP输出电压设置为0V\n");
+          
+          // 采集第一阶段数据
+          int sample_count = 0;
+          int max_samples_phase1 = OPEN_LOOP_T1_ms / sample_interval_ms;
+          
+          for (int i = 0; i < max_samples_phase1 && sample_count < OPEN_LOOP_TEST_LENGTH; i++, sample_count++) {
+            // 记录当前输出电压到op_data
+            op_data[sample_count] = 0.0;
+            // 读取并记录INA226电流值到pv_data
+            pv_data[sample_count] = INA226_device.getCurrent_mA();
+            
+            // 等待采样间隔
+            vTaskDelay(sample_interval_ms / portTICK_PERIOD_MS);
+          }
+          
+          // 第二阶段：MCP输出5.0V
+          MCP4725_device.setVoltage(5.0);
+          printf("[open_loop_data_collection_task] MCP输出电压设置为5.0V\n");
+          
+          // 采集第二阶段数据
+          int max_samples_phase2 = OPEN_LOOP_T2_ms / sample_interval_ms;
+          
+          for (int i = 0; i < max_samples_phase2 && sample_count < OPEN_LOOP_TEST_LENGTH; i++, sample_count++) {
+            // 记录当前输出电压到op_data
+            op_data[sample_count] = 5.0;
+            // 读取并记录INA226电流值到pv_data
+            pv_data[sample_count] = INA226_device.getCurrent_mA();
+            
+            // 等待采样间隔
+            vTaskDelay(sample_interval_ms / portTICK_PERIOD_MS);
+          }
+          
+          // 测试结束后将MCP输出电压设置回0V
+          MCP4725_device.setVoltage(0.0);
+          printf("[open_loop_data_collection_task] 测试完成，MCP输出电压设置为0V\n");
+          
+          // 输出采集到的数据
+          printf("[open_loop_data_collection_task] 共采集数据 %d 个\n", sample_count);
+          printf("序号,输出电压(V),测量电流(mA)\n");
+          
+          printf("op,pv\n");
+          for (int i = 0; i < sample_count; i++) {
+            // printf("[%d]:%.3f,%.3f\n", i, op_data[i], pv_data[i]);
+            printf("%.3f,%.3f\n", op_data[i], pv_data[i]);
+          }
+        }
+        vTaskDelete(NULL); // 删除任务
+      }
+    #endif
 #endif
 /*************************************** Encoder Setup *****************************/
 #ifdef USE_ENCODER1 
@@ -108,7 +126,7 @@
   /*********************************** Current Measurement Setup *************************/
   SemaphoreHandle_t  load_testing_xBinarySemaphore;
   BaseType_t testing_load_flag = pdFALSE; // 测试负载标志位
-  #endif
+#endif
 
 /***************************************** ADC1 Setup *******************************/
 #ifdef USE_ADC1
@@ -222,7 +240,8 @@ void get_ina226_data_task(void *pvParameters)
     msg.device_data.value3 = measure_power_W;
     msg.device_data.value4 = measure_resistance_Kohm;
 
-    printf("\n[get_ina226_data_task] INA226: %.3f mA, %.3f V, %.3f W, %.3f KOhm", measure_current_mA, measure_voltage_V, measure_power_W, measure_resistance_Kohm);
+    double DAC_output_V = MCP4725_device.getVoltage();
+    // printf("\n[get_sensors_task] INA226: %.3f mA, %.3f V, DAC set: %.3f V, I_target: %.3f A", measure_current_mA, measure_voltage_V, DAC_output_V, (DAC_output_V/(125 * RSHUNT)));
     // printf("[get_ina226_data_task] INA226 V/mA: %.3f,%.3f\n", measure_voltage_V, measure_current_mA); 
 
     // 检查 INA226 电压是否超过警告值，如果超过则进行过压保护
@@ -436,22 +455,6 @@ void button_handler_task(void *pvParameters){
           button_up = pdTRUE;
           time_ms = (xTaskGetTickCount() * portTICK_PERIOD_MS) - time_ms;
       
-  
-          // 使用 while 循环来阻塞检测
-          // time_ms = millis();
-          // while (gpio_get_level(GPIO_PIN) == LOW) {
-          //   // printf("\n[button_handler_task] button pressed");
-          //   button_down = pdTRUE;
-  
-          //   if (millis() - time_ms > 10000) { // 10s
-          //     break; // 超过 10s 就退出，避免一直阻塞
-          //   }
-          // }
-          // button_up = pdTRUE;
-      
-          // time_ms = millis() - time_ms;
-  
-  
           if (button_down == pdTRUE && button_up == pdTRUE && time_ms > 0) {
             // printf("\n[button_handler_task] button pressed for %d ms", time);
             button_down = pdFALSE;
@@ -483,7 +486,9 @@ void button_handler_task(void *pvParameters){
           #endif // USE_ENCODER1
           #ifdef USE_BUTTON1
             if(GPIO_PIN == button1.pin){
-              xSemaphoreGive(open_loop_test_xBinarySemaphore); // 释放二值信号量，触发开环测试
+              #ifdef USE_CURRENT_OPEN_LOOP_TEST
+                xSemaphoreGive(open_loop_test_xBinarySemaphore); // 释放二值信号量，触发开环测试
+              #endif
             }
           #endif // USE_BUTTON1
           #ifdef USE_BUTTON2
@@ -496,7 +501,10 @@ void button_handler_task(void *pvParameters){
           #endif // USE_BUTTON2
           #ifdef USE_BUTTON3
             if(GPIO_PIN == button3.pin){
-              MCP4725_device.setVoltage(0.0); // 设置输出电压为 0V
+              #ifdef USE_IIC_DEVICE
+                MCP4725_device.setVoltage(0.0); // 设置输出电压为 0V
+              #endif // IIC_DEVICE
+              
             }
           #endif // USE_BUTTON3
           #ifdef USE_BUTTON4
@@ -505,7 +513,9 @@ void button_handler_task(void *pvParameters){
               // 从 chart -> main sw
               // ui_load_scr_animation(&guider_ui, &guider_ui.main_page, guider_ui.main_page_del, &guider_ui.chart_page_del, setup_scr_main_page, LV_SCR_LOAD_ANIM_NONE, 200, 200, false, true);
 
-              MCP4725_device.setVoltage(2.5); // 设置输出电压为 3.3V
+              #ifdef USE_IIC_DEVICE
+                MCP4725_device.setVoltage(2.5); // 设置输出电压为 0V
+              #endif // IIC_DEVICE
             
             }
           #endif // USE_BUTTON4
@@ -542,11 +552,11 @@ void get_encoder1_data_task(void *pvParameters)
     // printf("\n[get_encoder1_data_task] encoder1 value: %.3f", msg.value);
 
     // 进行电流调节映射，把编码器的值进行限幅
-    if (msg.value > 2.0) {
-      msg.value = 2.0;
+    if (msg.value > 2000.0) {
+      msg.value = 2000.0;
       // printf("\n[get_encoder1_data_task] upper limit is %.3f A", msg.value);
-    } else if (msg.value < 0.0) {
-      msg.value = 0.0;
+    } else if (msg.value < 500.0) {
+      msg.value = 500.0;
       // printf("\n[get_encoder1_data_task] lower limit is %.3f A", msg.value);
     }
   
@@ -559,7 +569,9 @@ void get_encoder1_data_task(void *pvParameters)
         // 这里是测试负载的电流值
         
       }else{
-        MCP4725_device.setVoltage(from_set_current2voltage_V(msg.value)); // 设置输出电压为 3.3V
+        // MCP4725_device.setVoltage(from_set_current2voltage_V(msg.value/1000.0)); // 设置输出电压为 3.3V
+    
+        current_ctrl.process_variable.target = msg.value; 
       }
 
       
