@@ -49,11 +49,13 @@ void setup() {
     const float bus_voltage_SERIAL= BUS_V_SERIAL; // 校准程序测量的电压
     uint16_t bus_V_scaling_e4 = 10000 / BUS_V_SERIAL * BUS_V_DMM; 
   #endif 
-         
+
   if (!INA226_device.begin()) {
     printf("could not connect INA226. Fix and Reboot");
   }
   INA226_device.configure(shunt, current_LSB_mA, current_offset_mA, bus_V_scaling_e4);
+  INA226_device.setShuntVoltageConversionTime(INA226_140_us); // 设置电流转换时间为8.3ms
+  INA226_device.setBusVoltageConversionTime(INA226_140_us); // 设置电压转换时间为8.3ms
 
   /* 初始化 MCP4725 */
   if (!MCP4725_device.begin()) {
@@ -64,23 +66,23 @@ void setup() {
 
 #ifdef USE_LCD_DISPLAY
   /* 设置自己的显示任务 */
-  // setup_ui(&guider_ui); // 初始化 gui_guider
+  setup_ui(&guider_ui); // 初始化 gui_guider
   
-  // // /* 挂起 GUI guider 生成的页面 */
-  // setup_scr_main_page(&guider_ui); // gui_guider 为每一个页面生成的，这里是名字为 xxx 的页面
-  // setup_scr_chart_page(&guider_ui); 
-  // lv_scr_load(guider_ui.main_page); //每一个页面的名字都是 gui_guider 结构体的元素
+  /* 挂起 GUI guider 生成的页面 */
+  setup_scr_main_page(&guider_ui); // gui_guider 为每一个页面生成的，这里是名字为 xxx 的页面
+  setup_scr_chart_page(&guider_ui); 
+  lv_scr_load(guider_ui.main_page); //每一个页面的名字都是 gui_guider 结构体的元素
   // lv_scr_load(guider_ui.chart_page); 
   
   /* 或者运行 LVGL demo */
   // lv_demo_benchmark();
 
-  // gui_xMutex = xSemaphoreCreateMutex(); // 创建一个互斥信号量
-  // if (gui_xMutex == NULL) {
-  //   // Handle semaphore creation failure
-  //   printf("semaphore creation failure");
-  //   return;
-  // }
+  gui_xMutex = xSemaphoreCreateMutex(); // 创建一个互斥信号量
+  if (gui_xMutex == NULL) {
+    // Handle semaphore creation failure
+    printf("semaphore creation failure");
+    return;
+  }
 #endif
   /* 创建消息队列 */
   // Create the queue which will have <queue_element_size> number of elements, each of size `message_t` and pass the address to <sensor_queue_handle>.
@@ -98,22 +100,22 @@ void setup() {
 
 #ifdef USE_LCD_DISPLAY
   // Core 0 运行 LVGL main task handler
-  // xTaskCreatePinnedToCore(lvgl_task,
-  //             "demo_test",
-  //             1024*10,
-  //             NULL,
-  //             3,
-  //             &lvgl_task_handle,
-  //             0
-  //           );
-  // xTaskCreatePinnedToCore(update_gui_task,
-  //             "update_gui_task",
-  //             1024*4,
-  //             NULL,
-  //             1,
-  //             NULL,
-  //             0
-  //           );
+  xTaskCreatePinnedToCore(lvgl_task,
+              "demo_test",
+              1024*10,
+              NULL,
+              3,
+              &lvgl_task_handle,
+              0
+            );
+  xTaskCreatePinnedToCore(update_gui_task,
+              "update_gui_task",
+              1024*4,
+              NULL,
+              1,
+              NULL,
+              0
+            );
 #endif
 
 #ifdef USE_DUMMY_SENSOR
@@ -155,14 +157,14 @@ void setup() {
 #endif
 
 #ifdef USE_IIC_DEVICE
-  // xTaskCreatePinnedToCore(get_ina226_data_task,
-  //             "get_ina226_data_task",
-  //             1024*4,
-  //             NULL,
-  //             2,
-  //             NULL,
-  //             1
-  //           );
+  xTaskCreatePinnedToCore(get_ina226_data_task,
+              "get_ina226_data_task",
+              1024*4,
+              NULL,
+              2,
+              NULL,
+              1
+            );
 
   // load_testing_xBinarySemaphore = xSemaphoreCreateBinary();
   // if (load_testing_xBinarySemaphore != NULL) {
@@ -177,6 +179,8 @@ void setup() {
   // }
   
 #endif
+
+
 
 #ifdef USE_ADC1
   xTaskCreatePinnedToCore(ADC1_read_task,
@@ -227,11 +231,12 @@ void setup() {
 
 #ifdef USE_PID_CONTROLLER
   current_ctrl.read_sensor = []() -> double {
-    return INA226_device.getCurrent_mA(); 
+    return INA226_device.getCurrent_mA_plus(); 
   };
 
   current_ctrl.convert_output = [](double output) -> double {
     MCP4725_device.setVoltage(output);
+    vTaskDelay(10 / portTICK_PERIOD_MS); // 等待 10ms
     return output; // 整定时，使用的 OP 是 DAC 输出，所以这里直接返回即可 
   };
 

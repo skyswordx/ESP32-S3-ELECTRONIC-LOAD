@@ -153,7 +153,7 @@ void PID_controller_t<T>::pid_control_service() {
     /* 转换控制器输出 */
     if (convert_output) { // 检查输出转换函数是否存在
         controller_output = convert_output(controller_output); // 调用用户提供的输出转换函数
-        printf("[PID_controller_t]DAC_OP/I_tagret/I_measure:%.3f,%.3f,%.3f\n", controller_output, process_variable.target, process_variable.measure);
+        printf("DAC_OP/I_t/I_m:%.3f,%.3f,%.3f\n", controller_output, process_variable.target, process_variable.measure);
     }
 }
 

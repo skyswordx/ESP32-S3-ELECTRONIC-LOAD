@@ -106,6 +106,16 @@ public:
   float    getCurrent_uA()      { return getCurrent()      * 1e6; };
   float    getPower_uW()        { return getPower()        * 1e6; };
 
+  
+  const double current_calibration_A = 0.97270047847776; // 电流校准系数A
+  const double current_calibration_B = -0.0127991189954173; // 电流校准系数B
+  const double voltage_calibration_A = 1.01509505246458; // 电压校准系数A
+  const double voltage_calibration_B = 0.00254773054846081; // 电压校准系数B
+
+  // 经过校准的采样函数
+  // 电流电压打表校准式：实际值 = A * 测量值 + B
+  double getCurrent_mA_plus() { return current_calibration_A * getCurrent_mA() + current_calibration_B; };
+  double getBusVoltage_plus() { return voltage_calibration_A * getBusVoltage() + voltage_calibration_B; };
 
   //  Configuration
   bool     reset();

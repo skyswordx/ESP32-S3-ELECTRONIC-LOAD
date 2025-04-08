@@ -14,6 +14,23 @@
 BaseType_t debug_flag1 = pdFALSE;
 BaseType_t debug_flag2 = pdFALSE;
 
+/****************************** OUTPUT CAlibration *******************************/
+
+#ifdef USE_OUTPUT_CALIBRATION // 启用输出校准
+SemaphoreHandle_t output_calibration_xBinarySemaphore; // 输出校准二值信号量
+extern double targ_data[OUTPUT_CALIBRATION]; // 输出测试数据-目标值
+extern double real_data[OUTPUT_CALIBRATION]; // 输出测试数据-实际值
+
+/**
+ * @brief 开环输出的校准测试函数
+ * @author Triwalt
+ * @details 该函数应该在任务中循环调用，进行输出校准测试
+ */
+void output_data_collection_task(void *pvParameters) {
+
+}
+#endif
+
 /*********************************** PID Setup ***********************************/
 // 包含自定义的 PID 控制器类和 VOFA 下位机
 #ifdef USE_PID_CONTROLLER
@@ -27,7 +44,7 @@ BaseType_t debug_flag2 = pdFALSE;
         // printf("[set_current_task] 闭环控制设置电流值中\n");
         
         current_ctrl.pid_control_service();
-        vTaskDelay(100 / portTICK_PERIOD_MS); // 延时 100 ms
+        // vTaskDelay(100 / portTICK_PERIOD_MS); // 延时 100 ms
         printf("Actual DAC output: %.3f(V)\n", MCP4725_device.getVoltage()); 
       }
     }
@@ -52,6 +69,8 @@ BaseType_t debug_flag2 = pdFALSE;
         while (1) {
           // 等待二值信号量触发任务开始
           xSemaphoreTake(open_loop_test_xBinarySemaphore, portMAX_DELAY);
+          INA226_device.setShuntVoltageConversionTime(0);
+          printf ("\n[open_loop_data_collection_task] 当前ina226电流转换时间: %dus\n", INA226_device.getShuntVoltageConversionTime());
           printf("[open_loop_data_collection_task] 开始采集开环测试数据\n");
           
           // 将数组清零
@@ -73,7 +92,7 @@ BaseType_t debug_flag2 = pdFALSE;
             pv_data[sample_count] = INA226_device.getCurrent_mA();
             
             // 等待采样间隔
-            vTaskDelay(sample_interval_ms / portTICK_PERIOD_MS);
+            vTaskDelay(sample_interval_ms / portTICK_PERIOD_MS / 4);
           }
           
           // 第二阶段：MCP输出5.0V
@@ -90,7 +109,7 @@ BaseType_t debug_flag2 = pdFALSE;
             pv_data[sample_count] = INA226_device.getCurrent_mA();
             
             // 等待采样间隔
-            vTaskDelay(sample_interval_ms / portTICK_PERIOD_MS);
+            vTaskDelay(sample_interval_ms / portTICK_PERIOD_MS / 4);
           }
           
           // 测试结束后将MCP输出电压设置回0V
@@ -213,6 +232,8 @@ void get_dummy_sensor_data_task(void *pvParameters)
 #endif // USE_DUMMY_SENSOR
 
 #ifdef USE_IIC_DEVICE
+
+
 /**
  * @brief 获取 INA226 数据的任务函数
  * @author skyswordx
@@ -227,13 +248,14 @@ void get_ina226_data_task(void *pvParameters)
 
     // printf("\n[get_ina226_data_task] now_time: %d", millis());
     msg.device_id = DEVICE_INA226;
-  
-    double measure_current_mA = INA226_device.getCurrent_mA();
-    double measure_voltage_V = INA226_device.getBusVoltage();
-    double measure_power_W = INA226_device.getPower();
-    double measure_resistance_Kohm = abs((measure_voltage_V )/ (measure_current_mA ));
-
     
+    // 读取 INA226 的数据(修正后)
+    // 使用 plus 版本
+
+    double measure_current_mA = INA226_device.getCurrent_mA_plus(); // 读取电流值（plus版）
+    double measure_voltage_V = INA226_device.getBusVoltage_plus(); // 读取电压值（plus版）
+    double measure_power_W = abs((measure_current_mA * measure_voltage_V) / 1000); // 功率值
+    double measure_resistance_Kohm = abs((measure_voltage_V )/ (measure_current_mA ));
 
     msg.device_data.value1 = measure_current_mA;
     msg.device_data.value2 = measure_voltage_V;
@@ -296,7 +318,7 @@ void get_load_changing_rate_task(void *pvParameters){
 
       check_current_L_A = INA226_device.getCurrent(); // 读取电流值
       if (abs(check_current_L_A - TESING_MIN_CURRENT_A) < THRESHOLD_A){
-        check_voltage_L_V = INA226_device.getBusVoltage(); // 读取电压值
+        check_voltage_L_V = INA226_device.getBusVoltage_plus(); // 读取电压值
         printf("\n[get_load_changing_rate_task] check_voltage_L: %.3f (V), check_current_L: %.3f (A)", check_voltage_L_V, check_current_L_A);
         check_L = pdTRUE;
       }
@@ -308,7 +330,7 @@ void get_load_changing_rate_task(void *pvParameters){
 
       check_current_H_A = INA226_device.getCurrent(); // 读取电流值
       if ( abs(check_current_H_A - TESING_MAX_CURRENT_A) < THRESHOLD_A){
-        check_voltage_H_V = INA226_device.getBusVoltage(); // 读取电压值
+        check_voltage_H_V = INA226_device.getBusVoltage_plus(); // 读取电压值
         printf("\n[get_load_changing_rate_task] check_voltage_H: %.3f (V), check_current_H: %.3f (A)", check_voltage_H_V, check_current_H_A);
         check_H = pdTRUE;
 
@@ -489,6 +511,9 @@ void button_handler_task(void *pvParameters){
               #ifdef USE_CURRENT_OPEN_LOOP_TEST
                 xSemaphoreGive(open_loop_test_xBinarySemaphore); // 释放二值信号量，触发开环测试
               #endif
+              #ifdef USE_OUTPUT_CALIBRATION
+                xSemaphoreGive(output_calibration_xBinarySemaphore); // 释放二值信号量，触发输出标定
+              #endif
             }
           #endif // USE_BUTTON1
           #ifdef USE_BUTTON2
@@ -548,15 +573,15 @@ void get_encoder1_data_task(void *pvParameters)
     // 获取旋转编码器数据
     msg.device_id = DEVICE_ENCODER;
 
-    msg.value = encoder1.read_count_accum_clear()/100.0; // 获取编码器的总计数值
+    msg.value = encoder1.read_count_accum_clear(); // 获取编码器的总计数值
     // printf("\n[get_encoder1_data_task] encoder1 value: %.3f", msg.value);
 
     // 进行电流调节映射，把编码器的值进行限幅
-    if (msg.value > 2000.0) {
-      msg.value = 2000.0;
+    if (msg.value > 1800.0) {
+      msg.value = 1800.0;
       // printf("\n[get_encoder1_data_task] upper limit is %.3f A", msg.value);
-    } else if (msg.value < 500.0) {
-      msg.value = 500.0;
+    } else if (msg.value < 0) {
+      msg.value = 0;
       // printf("\n[get_encoder1_data_task] lower limit is %.3f A", msg.value);
     }
   
@@ -570,10 +595,21 @@ void get_encoder1_data_task(void *pvParameters)
         
       }else{
         // MCP4725_device.setVoltage(from_set_current2voltage_V(msg.value/1000.0)); // 设置输出电压为 3.3V
-    
-        current_ctrl.process_variable.target = msg.value; 
-      }
+        
+        #ifdef USE_PID_CONTROLLER
+          // 这里是 PID 控制器的电流值
+          current_ctrl.process_variable.target = msg.value; // 设置 PID 控制器的目标值
+          // printf("\n[get_encoder1_data_task] setpoint current(A): %.3f", msg.value);
+        #endif
 
+        #ifndef USE_PID_CONTROLLER
+          // 未启用 PID 控制器
+          printf("\n[get_encoder1_data_task] setpoint current(mA): %.3f", msg.value);
+          MCP4725_device.setVoltage(from_set_current2voltage_V(msg.value/1000.0)); // 设置 DAC 的目标值
+          // printf("\n[get_encoder1_data_task] setpoint current(A): %.3f", msg.value);
+        #endif
+      }
+  
       
       // printf("\n[get_encoder1_data_task] setpoint current(A): %.3f", msg.value);
       // printf("\n[get_encoder1_data_task] setpoint voltage(V): %.3f", MCP4725_device.getVoltage());
@@ -599,12 +635,13 @@ void get_encoder1_data_task(void *pvParameters)
 
 /*********************** 辅助函数 ***********************/
 #ifdef USE_IIC_DEVICE
-double from_set_current2voltage_V(double set_current_A){
-  return set_current_A * 125 * RSHUNT;
-}
-
+  double from_set_current2voltage_V(double set_current_A){
+    // const double DAC_OUTPUT_Calibration_A = 1.1530154317483; // DAC 输出校准系数A
+    // const double DAC_OUTPUT_Calibration_B = -43.853404582016; // DAC 输出校准系数B
+    // return (set_current_A * 1000 * DAC_OUTPUT_Calibration_A + DAC_OUTPUT_Calibration_B) * 0.125 * RSHUNT; // 计算电压值
+    return (set_current_A * 125 * RSHUNT); // 计算电压值
+  }
 
 #endif
-
 
 #endif // USE_ENCODER1
