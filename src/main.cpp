@@ -166,17 +166,17 @@ void setup() {
               1
             );
 
-  // load_testing_xBinarySemaphore = xSemaphoreCreateBinary();
-  // if (load_testing_xBinarySemaphore != NULL) {
-  //   xTaskCreatePinnedToCore(get_load_changing_rate_task,
-  //           "get_load_changing_rate_task",
-  //           1024*4,
-  //           NULL,
-  //           4,
-  //           NULL,
-  //           1
-  //         );       
-  // }
+  load_testing_xBinarySemaphore = xSemaphoreCreateBinary();
+  if (load_testing_xBinarySemaphore != NULL) {
+    xTaskCreatePinnedToCore(get_load_changing_rate_task,
+            "get_load_changing_rate_task",
+            1024*4,
+            NULL,
+            4,
+            NULL,
+            1
+          );       
+  }
   
 #endif
 

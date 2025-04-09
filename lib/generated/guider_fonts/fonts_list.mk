@@ -1,1 +1,1 @@
-GEN_CSRCS += lv_font_montserratMedium_16.c lv_font_montserratMedium_12.c
+GEN_CSRCS += lv_font_OPPOSans_Medium_16.c lv_font_montserratMedium_16.c lv_font_IntelOneMono_Medium_30.c lv_font_IntelOneMono_Medium_16.c lv_font_montserratMedium_18.c lv_font_montserratMedium_12.c lv_font_OPPOSans_Medium_32.c lv_font_OPPOSans_Medium_30.c lv_font_OPPOSans_Medium_27.c lv_font_montserratMedium_14.c
