@@ -54,8 +54,8 @@ void setup() {
     printf("could not connect INA226. Fix and Reboot");
   }
   INA226_device.configure(shunt, current_LSB_mA, current_offset_mA, bus_V_scaling_e4);
-  INA226_device.setShuntVoltageConversionTime(INA226_140_us); // 设置电流转换时间为8.3ms
-  INA226_device.setBusVoltageConversionTime(INA226_140_us); // 设置电压转换时间为8.3ms
+  INA226_device.setShuntVoltageConversionTime(INA226_8300_us); // 设置电流转换时间为8.3ms
+  INA226_device.setBusVoltageConversionTime(INA226_8300_us); // 设置电压转换时间为8.3ms
 
   /* 初始化 MCP4725 */
   if (!MCP4725_device.begin()) {

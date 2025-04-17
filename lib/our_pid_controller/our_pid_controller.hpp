@@ -48,6 +48,7 @@ class process_data_t {
     public:
         T measure; // 测量值
         T last_measure; // 上一次测量值
+        T last_output; // 上一次输出值
         T target; // 期望值
         T error; // 误差
 
@@ -112,6 +113,10 @@ class PID_controller_t {
  */
 template<typename T>
 void PID_controller_t<T>::pid_control_service() {
+    /* 第一次进入时初始化process_variable.last_output */
+    if (process_variable.last_output == 0) {
+        process_variable.last_output = CONTROLLER_OUTPUT_MIN; // 初始化上一次输出值为最小值
+    }
     /* 确保控制器输出在计算之前默认值是 0 */
     controller_output = T{};
     // printf("\n[PID_controller_t] Before, DAC_OP: %.3f(V), I_target %.3f ", controller_output, process_variable.target);
@@ -134,7 +139,7 @@ void PID_controller_t<T>::pid_control_service() {
         double d_term = kd * (process_variable.last_measure - process_variable.measure); 
         // d_term = kd * (error - last_error) 但是防止微分冲击 kd * (last_measure - measure)
 
-        controller_output = p_term + i_term + d_term;
+        controller_output = process_variable.last_output + p_term + i_term + d_term;
         // printf("\nraw op: %.3f", controller_output);
         /* 积分限幅和输出限幅 */
         if (controller_output > CONTROLLER_OUTPUT_MAX) { 
@@ -148,12 +153,14 @@ void PID_controller_t<T>::pid_control_service() {
         }
         /* 为下一次的算法计算记住一些变量 */
         process_variable.last_measure = process_variable.measure;
+        process_variable.last_output = controller_output; // 上一次输出值
     }
 
     /* 转换控制器输出 */
     if (convert_output) { // 检查输出转换函数是否存在
+        // controller_output = convert_output(process_variable.target * 0.00002 * 125); // 调用用户提供的输出转换函数
         controller_output = convert_output(controller_output); // 调用用户提供的输出转换函数
-        printf("DAC_OP/I_t/I_m:%.3f,%.3f,%.3f\n", controller_output, process_variable.target, process_variable.measure);
+        printf("DAC_OP/I_t/I_m/error:%.3f,%.3f,%.3f,%.3f\n", controller_output, process_variable.target, process_variable.measure, process_variable.error);
     }
 }
 

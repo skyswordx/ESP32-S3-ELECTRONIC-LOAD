@@ -45,7 +45,7 @@ void output_data_collection_task(void *pvParameters) {
         
         current_ctrl.pid_control_service();
         // vTaskDelay(100 / portTICK_PERIOD_MS); // 延时 100 ms
-        printf("Actual DAC output: %.3f(V)\n", MCP4725_device.getVoltage()); 
+        // printf("Actual DAC output: %.3f(V)\n", MCP4725_device.getVoltage()); 
       }
     }
 
@@ -251,7 +251,6 @@ void get_ina226_data_task(void *pvParameters)
     
     // 读取 INA226 的数据(修正后)
     // 使用 plus 版本
-
     double measure_current_mA = INA226_device.getCurrent_mA_plus(); // 读取电流值（plus版）
     double measure_voltage_V = INA226_device.getBusVoltage_plus(); // 读取电压值（plus版）
     double measure_power_W = abs((measure_current_mA * measure_voltage_V) / 1000); // 功率值
@@ -264,7 +263,7 @@ void get_ina226_data_task(void *pvParameters)
 
     double DAC_output_V = MCP4725_device.getVoltage();
     // printf("\n[get_sensors_task] INA226: %.3f mA, %.3f V, DAC set: %.3f V, I_target: %.3f A", measure_current_mA, measure_voltage_V, DAC_output_V, (DAC_output_V/(125 * RSHUNT)));
-    // printf("[get_ina226_data_task] INA226 V/mA: %.3f,%.3f\n", measure_voltage_V, measure_current_mA); 
+    printf("[get_ina226_data_task] INA226 V/mA: %.3f,%.3f\n", measure_voltage_V, measure_current_mA); 
 
     // 检查 INA226 电压是否超过警告值，如果超过则进行过压保护
     if(measure_voltage_V >= WARNING_VOLTAGE){
@@ -579,9 +578,11 @@ void get_encoder1_data_task(void *pvParameters)
     // 进行电流调节映射，把编码器的值进行限幅
     if (msg.value > 1800.0) {
       msg.value = 1800.0;
+      // encoder1.set_count(1800.0); // 设置编码器的值为 1800.0，避免溢出
       // printf("\n[get_encoder1_data_task] upper limit is %.3f A", msg.value);
-    } else if (msg.value < 0) {
-      msg.value = 0;
+    } else if (msg.value < 50) {
+      msg.value = 50;
+      // encoder1.set_count(50); // 设置编码器的值为 50.0，避免溢出
       // printf("\n[get_encoder1_data_task] lower limit is %.3f A", msg.value);
     }
   
@@ -599,7 +600,7 @@ void get_encoder1_data_task(void *pvParameters)
         #ifdef USE_PID_CONTROLLER
           // 这里是 PID 控制器的电流值
           current_ctrl.process_variable.target = msg.value; // 设置 PID 控制器的目标值
-          // printf("\n[get_encoder1_data_task] setpoint current(A): %.3f", msg.value);
+          printf("\n[get_encoder1_data_task] setpoint current(A): %.3f", msg.value);
         #endif
 
         #ifndef USE_PID_CONTROLLER
