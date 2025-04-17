@@ -21,7 +21,7 @@
  */
 
 /************************************ 条件编译选项 ***********************************/
-// #define USE_PID_CONTROLLER 1
+#define USE_PID_CONTROLLER 1
 //     #define USE_CURRENT_OPEN_LOOP_TEST 1
 #define USE_IIC_DEVICE 1 // 是否使用 IIC 设备
     // #define USE_INA226_MODULE 1 // 是否使用 INA226 模块
@@ -107,9 +107,8 @@ extern BaseType_t debug_flag2;
     // #define CURRENT_TASK_KP 0.0022226816 // 电流控制器比例系数
     // #define CURRENT_TASK_KI 0.00 // 电流控制器积分系数
 
-    #define CURRENT_TASK_KP 1.473 // 电流控制器比例系数
-    #define CURRENT_TASK_KI 0.530 // 电流控制器积分系数
-
+    #define CURRENT_TASK_KP 0.0001 // 电流控制器比例系数
+    #define CURRENT_TASK_KI 0.00005 // 电流控制器积分系数
     #define CURRENT_TASK_KD 0.0 // 电流控制器微分系数
 
     void set_current_task(void *pvParameters); // 设置电流任务函数
