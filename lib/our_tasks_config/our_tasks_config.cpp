@@ -42,8 +42,9 @@ void output_data_collection_task(void *pvParameters) {
       while (1) {
         // 等待二值信号量触发任务开始
         // printf("[set_current_task] 闭环控制设置电流值中\n");
-        
+
         current_ctrl.pid_control_service();
+
         // vTaskDelay(100 / portTICK_PERIOD_MS); // 延时 100 ms
         // printf("Actual DAC output: %.3f(V)\n", MCP4725_device.getVoltage()); 
       }
@@ -263,7 +264,7 @@ void get_ina226_data_task(void *pvParameters)
 
     double DAC_output_V = MCP4725_device.getVoltage();
     // printf("\n[get_sensors_task] INA226: %.3f mA, %.3f V, DAC set: %.3f V, I_target: %.3f A", measure_current_mA, measure_voltage_V, DAC_output_V, (DAC_output_V/(125 * RSHUNT)));
-    printf("[get_ina226_data_task] INA226 V/mA: %.3f,%.3f\n", measure_voltage_V, measure_current_mA); 
+    printf("\n[get_ina226_data_task] INA226 V/mA: %.3f,%.3f", measure_voltage_V, measure_current_mA); 
 
     // 检查 INA226 电压是否超过警告值，如果超过则进行过压保护
     if(measure_voltage_V >= WARNING_VOLTAGE){
@@ -309,9 +310,14 @@ void get_load_changing_rate_task(void *pvParameters){
       xSemaphoreTake(load_testing_xBinarySemaphore, portMAX_DELAY); // 总是保持阻塞等待二值信号量
       testing_load_flag = pdTRUE; // 设置测试负载标志位
       
-  
-      MCP4725_device.setVoltage(from_set_current2voltage_V(TESING_MIN_CURRENT_A)); // 设置输出电压为第一个电流值
-      vTaskDelay(10 / portTICK_PERIOD_MS); // 延时 10 ms
+      #ifdef USE_PID_CONTROLLER
+          // 这里是 PID 控制器的电流值
+          current_ctrl.process_variable.target = TESING_MIN_CURRENT_A * 1000; // 设置 PID 控制器的目标值
+      #else
+          // 这里是 DAC 的电流值
+          MCP4725_device.setVoltage(from_set_current2voltage_V(TESING_MIN_CURRENT_A)); // 设置输出电压为第一个电流值
+      #endif // 设置输出电压为第一个电流值
+      vTaskDelay(100 / portTICK_PERIOD_MS); // 延时 100 ms
 
       printf("\nFrom TEST_MIN_CURRENT to set DAC: %.3f(V)", MCP4725_device.getVoltage());
 
@@ -323,8 +329,14 @@ void get_load_changing_rate_task(void *pvParameters){
       }
 
       
-      MCP4725_device.setVoltage(from_set_current2voltage_V(TESING_MAX_CURRENT_A)); // 设置输出电压为第二个电流值
-      vTaskDelay(10 / portTICK_PERIOD_MS); // 延时 10 ms
+      #ifdef USE_PID_CONTROLLER
+          // 这里是 PID 控制器的电流值
+          current_ctrl.process_variable.target = TESING_MAX_CURRENT_A * 1000; // 设置 PID 控制器的目标值
+      #else
+          // 这里是 DAC 的电流值
+          MCP4725_device.setVoltage(from_set_current2voltage_V(TESING_MAX_CURRENT_A)); // 设置输出电压为第一个电流值
+      #endif  // 设置输出电压为第二个电流值
+      vTaskDelay(200 / portTICK_PERIOD_MS); // 延时 200 ms
       printf("\n From TEST_MAX_CURRENT to set DAC: %.3f (V)", MCP4725_device.getVoltage());
 
       check_current_H_A = INA226_device.getCurrent(); // 读取电流值
@@ -335,10 +347,8 @@ void get_load_changing_rate_task(void *pvParameters){
 
       }
       
-
       MCP4725_device.setVoltage(0.0); // 设置输出电压为 0V
       printf("\n[get_load_changing_rate_task] DAC output voltage set to 0V");
-
       
       if (check_L == pdTRUE && check_H == pdTRUE){
         // 计算负载变化率
@@ -350,20 +360,19 @@ void get_load_changing_rate_task(void *pvParameters){
         msg.device_id = EVENT_TESING_LOAD_RATE;
 
         msg.value = rate; // 发送负载变化率到消息队列
-
-        testing_load_flag = pdFALSE; // 清除测试负载标志位
   
         int return_value = xQueueSend(sensor_queue_handle, (void *)&msg, 0);
         if (return_value == pdTRUE) {
-          // printf("\n[get_load_changing_rate_task] sent message  to the queue successfully\n");
+          printf("\n[get_load_changing_rate_task] sent message to the queue successfully\n");
         } else if (return_value == errQUEUE_FULL) {
-          // printf("\n[get_load_changing_rate_task] failed to send message to queue, queue is full\n");
+          printf("\n[get_load_changing_rate_task] failed to send message to queue, queue is full\n");
         } else {
-          // printf("\n[get_load_changing_rate_task] failed to send message to queue\n");
+          printf("\n[get_load_changing_rate_task] failed to send message to queue\n");
         }
+
+        testing_load_flag = pdFALSE; // 清除测试负载标志位
       }
 
-      
     #endif // USE_IIC_DEVICE
     
   }
@@ -591,19 +600,12 @@ void get_encoder1_data_task(void *pvParameters)
     #ifdef USE_IIC_DEVICE
       // 计算设置电压
     
-      if (testing_load_flag == pdTRUE){
-        // 这里是测试负载的电流值
-        
-      }else{
-        // MCP4725_device.setVoltage(from_set_current2voltage_V(msg.value/1000.0)); // 设置输出电压为 3.3V
-        
+      if (testing_load_flag == pdFALSE){
         #ifdef USE_PID_CONTROLLER
           // 这里是 PID 控制器的电流值
           current_ctrl.process_variable.target = msg.value; // 设置 PID 控制器的目标值
           printf("\n[get_encoder1_data_task] setpoint current(A): %.3f", msg.value);
-        #endif
-
-        #ifndef USE_PID_CONTROLLER
+        #else
           // 未启用 PID 控制器
           printf("\n[get_encoder1_data_task] setpoint current(mA): %.3f", msg.value);
           MCP4725_device.setVoltage(from_set_current2voltage_V(msg.value/1000.0)); // 设置 DAC 的目标值
@@ -611,16 +613,13 @@ void get_encoder1_data_task(void *pvParameters)
         #endif
       }
   
-      
       // printf("\n[get_encoder1_data_task] setpoint current(A): %.3f", msg.value);
-      // printf("\n[get_encoder1_data_task] setpoint voltage(V): %.3f", MCP4725_device.getVoltage());
+      printf("\n[get_encoder1_data_task] setpoint voltage(V): %.3f", MCP4725_device.getVoltage());
     
     #endif
     
-
     // printf("\n[get_encoder1_data_task] encoder1 count: %lld", count);
     
-
     int return_value = xQueueSend(sensor_queue_handle, (void *)&msg, 0);
     if (return_value == pdTRUE) {
       // printf("\n[get_encoder1_data_task] sent message  to the queue successfully\n");

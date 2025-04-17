@@ -160,7 +160,7 @@ void PID_controller_t<T>::pid_control_service() {
     if (convert_output) { // 检查输出转换函数是否存在
         // controller_output = convert_output(process_variable.target * 0.00002 * 125); // 调用用户提供的输出转换函数
         controller_output = convert_output(controller_output); // 调用用户提供的输出转换函数
-        printf("DAC_OP/I_t/I_m/error:%.3f,%.3f,%.3f,%.3f\n", controller_output, process_variable.target, process_variable.measure, process_variable.error);
+        // printf("DAC_OP/I_t/I_m/error:%.3f,%.3f,%.3f,%.3f\n", controller_output, process_variable.target, process_variable.measure, process_variable.error);
     }
 }
 
