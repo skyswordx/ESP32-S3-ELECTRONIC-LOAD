@@ -107,9 +107,9 @@ extern BaseType_t debug_flag2;
     // #define CURRENT_TASK_KP 0.0022226816 // 电流控制器比例系数
     // #define CURRENT_TASK_KI 0.00 // 电流控制器积分系数
 
-    #define CURRENT_TASK_KP 0.0001 // 电流控制器比例系数
-    #define CURRENT_TASK_KI 0.00005 // 电流控制器积分系数
-    #define CURRENT_TASK_KD 0.0 // 电流控制器微分系数
+    #define CURRENT_TASK_KP 0.001 // 电流控制器比例系数
+    #define CURRENT_TASK_KI 0.00 // 电流控制器积分系数
+    #define CURRENT_TASK_KD 0.001 // 电流控制器微分系数
 
     void set_current_task(void *pvParameters); // 设置电流任务函数
 
