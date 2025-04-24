@@ -53,7 +53,7 @@ class process_data_t {
         T error; // 误差
 
         // 默认构造函数，初始化测量值、期望值和误差为 0
-        process_data_t() : measure(0), last_measure(0), target(0), error(0) {} 
+        process_data_t() : measure(T()), last_measure(T()), target(T()), error(T()) {} 
         
 };
 

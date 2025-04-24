@@ -37,13 +37,13 @@
     #define USE_BUTTON4 1 // 是否使用按键 4
 
 
-// #define USE_VOLTAGE_PROTECTION 1 // 是否使用过压保护功能
+#define USE_VOLTAGE_PROTECTION 1 // 是否使用过压保护功能
 // #define USE_DUMMY_SENSOR 1 // 是否使用虚拟传感器数据
 
 
 /*********************************** ESP32S3 Setup **********************************/
 #include <Arduino.h>
-#include "our_topic_queque.hpp"
+#include "our_queque.hpp"
 
 extern BaseType_t debug_flag1;
 extern BaseType_t debug_flag2;
@@ -222,8 +222,8 @@ extern BaseType_t debug_flag2;
 /************************************* RTOS-SetUP ***********************************/
 
 #ifdef USE_VOLTAGE_PROTECTION
-    extern SemaphoreHandle_t voltage_protection_xBinarySemaphore; // 过压保护二值信号量
-    void voltage_protection_task(void *pvParameters); // 过压保护任务函数
+    extern SemaphoreHandle_t over_voltage_protection_xBinarySemaphore; // 过压保护二值信号量
+    void over_voltage_protection_task(void *pvParameters); // 过压保护任务函数
 #endif // USE_VOLTAGE_PROTECTION
 
 

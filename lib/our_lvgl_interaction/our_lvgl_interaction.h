@@ -16,37 +16,14 @@
 
 #include <Arduino.h>
 #include "gui_guider.h"
+#include "our_queque.hpp" // 消息队列头文件
+
 #define WARNING_VOLTAGE 18 // 触发过压保护的电压
 
 extern SemaphoreHandle_t gui_xMutex;  // gui 互斥锁句柄，LVGL 线程不安全，需要加锁
-extern QueueHandle_t sensor_queue_handle; // 消息队列句柄
-extern QueueHandle_t button_queue_handle; // 按键消息队列句柄
+
 extern lv_ui guider_ui; // GUI guider 生成的 GUI 结构体
 
-
-// 定义一个枚举类型，表示发送消息的源设备 id
-enum device_id_t {
-    DEVICE_DUMMY_SENSOR = 0,
-    DEVICE_ENCODER = 1,
-    DEVICE_INA226 = 2,
-    DEVICE_ADC1 = 3,
-    EVENT_TESING_LOAD_RATE = 4,
-    DEVICE_UNKNOWN = 99
-  };
-  
-  typedef struct {
-    float value1; // 传感器数据
-    float value2; // 传感器数据
-    float value3; // 传感器数据
-    float value4; // 传感器数据
-    float value5; // 传感器数据
-  } device_data_t;
-  
-  typedef struct {
-    device_id_t device_id; // 设备ID
-    double value; // 存放的数据（简单设置为一个值，后期有需求再改为专门的结构体
-    device_data_t device_data; // INA226 传感器数据
-  } message_t;
 
 void lvgl_task(void *pvParameters);
 void update_gui_task(void *pvParameters);

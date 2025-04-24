@@ -45,7 +45,7 @@ class encoder_handle_t
 
         int64_t total_count;
         int64_t single_count;
-        float read_count_accum_clear();
+        double read_count_accum_clear();
         void set_count(int64_t value);
 
         encoder_mode_t mode = SINGLE;

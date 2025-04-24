@@ -358,6 +358,12 @@ esp 串口信息
 - [ESP32-S3的串口监视器Serial.println无输出_arduino ide esp32 串口打印编译正确为什么串口监视器不显示打印结果-CSDN博客](https://blog.csdn.net/m0_50360661/article/details/146286647)
 - - [ESP32-S3的串口监视器Serial.println无输出_arduino ide esp32 串口打印编译正确为什么串口监视器不显示打印结果-CSDN博客](https://blog.csdn.net/m0_50360661/article/details/146286647)
 
+## 链接时找不到引用
+
+怪不得了找不到引用
+我在cpp文件extern
+服了我了
+直接复制忘记删了extern
 ## inline关键词
 在 C++ 中，`inline` 是一个关键字，用于建议编译器将函数的代码直接插入到调用该函数的地方，而不是通过常规的函数调用机制（如压栈和跳转）来执行。这种方式可以减少函数调用的开销，尤其是对于小型函数。
 
