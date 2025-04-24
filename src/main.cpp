@@ -85,16 +85,20 @@ void setup() {
   }
 #endif
   /* 创建消息队列 */
-  // Create the queue which will have <queue_element_size> number of elements, each of size `message_t` and pass the address to <sensor_queue_handle>.
-  sensor_queue_handle = xQueueCreate(queue_element_size, sizeof(message_t));
-#ifdef USE_BUTTON
-  button_queue_handle = xQueueCreate(2, sizeof(gpio_num_t));
-#endif
-  // Check if the queue was successfully created
-  if (sensor_queue_handle == NULL) {
-    printf("Queue could not be created. Halt.");
-    while (1) delay(1000);  // Halt at this point as is not possible to continue
+  LVGL_queue = xQueueCreate(10, sizeof(QueueElement_t<double>)); // 创建消息队列
+
+  if (LVGL_queue == NULL) {
+    // Handle queue creation failure
+    while(1) {
+      printf("queue creation failure");
+      vTaskDelay(1000 / portTICK_PERIOD_MS);
+    }
   }
+
+#ifdef USE_BUTTON
+  button_queue = xQueueCreate(2, sizeof(gpio_num_t));
+#endif
+  
 
  
 
@@ -142,11 +146,11 @@ void setup() {
 #endif
 
 #ifdef USE_VOLTAGE_PROTECTION
-  voltage_protection_xBinarySemaphore = xSemaphoreCreateBinary();
-  if (voltage_protection_xBinarySemaphore != NULL) {
+  over_voltage_protection_xBinarySemaphore = xSemaphoreCreateBinary();
+  if (over_voltage_protection_xBinarySemaphore != NULL) {
     // Core 1 运行过压保护任务
-    xTaskCreatePinnedToCore(voltage_protection_task,
-              "voltage_protection_task",
+    xTaskCreatePinnedToCore(over_voltage_protection_task,
+              "over_voltage_protection_task",
               1024*4,
               NULL,
               4, // 必须是最高优先级

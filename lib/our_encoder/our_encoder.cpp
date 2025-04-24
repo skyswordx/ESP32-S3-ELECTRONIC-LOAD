@@ -28,11 +28,11 @@ encoder_handle_t::encoder_handle_t(int pin_A, int pin_B)
 /**
  * @brief 读取旋转编码器的计数值，并清除计数器
  * @author skyswordx
- * @return float 旋转编码器的总计数值
+ * @return double 旋转编码器的总计数值
  * @details 默认使用 4 倍频，这里可以根据需要进行处理
  *          这里默认是进入 else 分支
  */
-float encoder_handle_t::read_count_accum_clear()   
+double encoder_handle_t::read_count_accum_clear()   
 {
     // 默认使用 4 倍频，这里可以根据需要进行处理
     // 这里默认是进入 else 分支

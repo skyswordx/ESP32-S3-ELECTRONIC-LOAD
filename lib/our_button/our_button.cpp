@@ -8,7 +8,7 @@
  */
 #include "our_button.hpp"
 extern SemaphoreHandle_t button_xBinarySemaphore; // 按键二值信号量
-extern QueueHandle_t button_queue_handle; // 按键消息队列句柄
+extern QueueHandle_t button_queue; // 按键消息队列句柄
 extern GPIO_button_handler_t button1; // 按键对象
 extern GPIO_button_handler_t button2; // 按键对象
 extern GPIO_button_handler_t button3; // 按键对象
@@ -47,7 +47,7 @@ void IRAM_ATTR button1_press_ISR(void *arg ){ // 产生 GPIO 中断时调用
     xSemaphoreGiveFromISR(button_xBinarySemaphore, &xHigherPriorityTaskWoken);
   
     gpio_num_t GPIO_PIN = button1.pin; // 获取 GPIO 引脚号
-    xQueueSendFromISR(button_queue_handle, &GPIO_PIN, &xHigherPriorityTaskWoken); // 发送消息到按键消息队列
+    xQueueSendFromISR(button_queue, &GPIO_PIN, &xHigherPriorityTaskWoken); // 发送消息到按键消息队列
   
    
     portYIELD_FROM_ISR(xHigherPriorityTaskWoken); 
@@ -60,7 +60,7 @@ void IRAM_ATTR button1_press_ISR(void *arg ){ // 产生 GPIO 中断时调用
     xSemaphoreGiveFromISR(button_xBinarySemaphore, &xHigherPriorityTaskWoken);
   
     gpio_num_t GPIO_PIN = button2.pin; 
-    xQueueSendFromISR(button_queue_handle, &GPIO_PIN, &xHigherPriorityTaskWoken); 
+    xQueueSendFromISR(button_queue, &GPIO_PIN, &xHigherPriorityTaskWoken); 
   
     portYIELD_FROM_ISR(xHigherPriorityTaskWoken); 
     
@@ -72,7 +72,7 @@ void IRAM_ATTR button1_press_ISR(void *arg ){ // 产生 GPIO 中断时调用
     xSemaphoreGiveFromISR(button_xBinarySemaphore, &xHigherPriorityTaskWoken);
   
     gpio_num_t GPIO_PIN = button3.pin; 
-    xQueueSendFromISR(button_queue_handle, &GPIO_PIN, &xHigherPriorityTaskWoken); 
+    xQueueSendFromISR(button_queue, &GPIO_PIN, &xHigherPriorityTaskWoken); 
   
     portYIELD_FROM_ISR(xHigherPriorityTaskWoken); 
     
@@ -84,7 +84,7 @@ void IRAM_ATTR button1_press_ISR(void *arg ){ // 产生 GPIO 中断时调用
     xSemaphoreGiveFromISR(button_xBinarySemaphore, &xHigherPriorityTaskWoken);
   
     gpio_num_t GPIO_PIN = button4.pin; 
-    xQueueSendFromISR(button_queue_handle, &GPIO_PIN, &xHigherPriorityTaskWoken); 
+    xQueueSendFromISR(button_queue, &GPIO_PIN, &xHigherPriorityTaskWoken); 
   
     portYIELD_FROM_ISR(xHigherPriorityTaskWoken); 
     
@@ -96,7 +96,7 @@ void IRAM_ATTR button1_press_ISR(void *arg ){ // 产生 GPIO 中断时调用
         xSemaphoreGiveFromISR(button_xBinarySemaphore, &xHigherPriorityTaskWoken);
     
         gpio_num_t GPIO_PIN = encoder1_button.pin; 
-        xQueueSendFromISR(button_queue_handle, &GPIO_PIN, &xHigherPriorityTaskWoken); 
+        xQueueSendFromISR(button_queue, &GPIO_PIN, &xHigherPriorityTaskWoken); 
     
         portYIELD_FROM_ISR(xHigherPriorityTaskWoken); 
         
