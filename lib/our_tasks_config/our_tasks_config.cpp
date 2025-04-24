@@ -186,7 +186,7 @@ void output_data_collection_task(void *pvParameters) {
 
 #ifdef USE_BUTTON
   SemaphoreHandle_t button_xBinarySemaphore; // 按键二值信号量
-  QueueHandle_t button_queue_handle; // 按键消息队列句柄
+
 #endif
 
 #ifdef USE_VOLTAGE_PROTECTION
@@ -194,9 +194,7 @@ void output_data_collection_task(void *pvParameters) {
 #endif
 
 
-// GUI 更新使用的消息队列
-QueueHandle_t sensor_queue_handle; // 消息队列句柄
-const int queue_element_size = 10; // 消息队列元素大小
+
 
 
 /************************************** tasks ***************************************/
