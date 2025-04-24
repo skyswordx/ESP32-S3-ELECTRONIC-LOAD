@@ -43,6 +43,8 @@
 
 /*********************************** ESP32S3 Setup **********************************/
 #include <Arduino.h>
+#include "our_topic_queque.hpp"
+
 extern BaseType_t debug_flag1;
 extern BaseType_t debug_flag2;
 
@@ -192,7 +194,7 @@ extern BaseType_t debug_flag2;
 
 
     extern SemaphoreHandle_t button_xBinarySemaphore; // 按键二值信号量
-    extern QueueHandle_t button_queue_handle; // 按键消息队列句柄
+
 
     void button_handler_task(void *pvParameters); // 按键处理任务
 #endif // USE_BUTTON
@@ -224,9 +226,7 @@ extern BaseType_t debug_flag2;
     void voltage_protection_task(void *pvParameters); // 过压保护任务函数
 #endif // USE_VOLTAGE_PROTECTION
 
-// GUI 更新使用的消息队列
-extern QueueHandle_t sensor_queue_handle; // 消息队列句柄
-extern const int queue_element_size; // 消息队列元素大小
+
 
 
 /************************************** tasks ***************************************/
