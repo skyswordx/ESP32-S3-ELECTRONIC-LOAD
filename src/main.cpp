@@ -8,7 +8,7 @@
  *          传感器(INA226、MCP4725)类、自定义 ADC 类和 GPIO 按键类
  */
 #include "our_tasks_config.hpp"
-
+#include "esp_freertos_hooks.h"
 static void system_print(void) {
     printf("Hello world!\n");
 
@@ -22,6 +22,68 @@ static void system_print(void) {
             (chip_info.features & CHIP_FEATURE_BLE) ? "/BLE" : "");
 
     printf("Minimum free heap size: %d bytes\n", esp_get_minimum_free_heap_size());
+}
+
+
+volatile unsigned long ulIdleCycleCount0 = 0; // 空闲周期计数器
+volatile unsigned long ulLastIdleCycleCount0 = 0; // 上一次记录的空闲周期计数器
+volatile unsigned long ulIdleCycleDiff0 = 0; // 空闲周期差值
+
+volatile unsigned long ulIdleCycleCount1 = 0; // 空闲周期计数器
+volatile unsigned long ulLastIdleCycleCount1 = 0; // 上一次记录的空闲周期计数器
+volatile unsigned long ulIdleCycleDiff1 = 0; // 空闲周期差值
+
+bool myIdleCallBackCore0(void) {
+  // 让 CPU 进入低功耗模式
+  // esp_deep_sleep_start();
+
+  if (ulIdleCycleCount0 < 0xFFFFFFFF) {
+    ulIdleCycleCount0++;
+  } else {
+    printf("Core 0:  Idle cycles overflow\n");
+  }
+  return true; // 返回 true 以便在空闲时调用该函数
+}
+
+bool myIdleCallBackCore1(void) {
+  // 让 CPU 进入低功耗模式
+  // esp_deep_sleep_start();
+  if (ulIdleCycleCount1 < 0xFFFFFFFF) {
+    ulIdleCycleCount1++;
+  } else {
+    printf("Core 1:  Idle cycles overflow\n");
+  }
+  return true; // 返回 true 以便在空闲时调用该函数
+}
+
+
+// 定时打印空闲周期的任务
+void idle_cycle_monitor_task(void *pvParameters) {
+  while (true) {
+      // 计算空闲周期差值
+
+      ulIdleCycleDiff0 = ulIdleCycleCount0 - ulLastIdleCycleCount0;
+      ulLastIdleCycleCount0 = ulIdleCycleCount0;
+      ulIdleCycleDiff0 = ulIdleCycleCount0 - ulLastIdleCycleCount0;
+
+      ulIdleCycleDiff1 = ulIdleCycleCount1 - ulLastIdleCycleCount1;
+      ulLastIdleCycleCount1 = ulIdleCycleCount1;
+
+      // 计算到这行代码时，系统的累积 tick
+      unsigned long ulTickCount = xTaskGetTickCountFromISR();
+
+      // 计算空闲周期占比
+      double ulIdleCyclePercent0 = (double)ulIdleCycleDiff0 / (double)ulTickCount * 100.0;
+      double ulIdleCyclePercent1 = (double)ulIdleCycleDiff1 / (double)ulTickCount * 100.0;
+      printf("Tick Count: %lu\n", ulTickCount);
+      // 打印空闲周期信息
+      printf("Core 1:  Idle Diff: %lu, Count: %lu, Percent: %.2f%%\n", ulIdleCycleDiff1, ulIdleCycleCount1, ulIdleCyclePercent1);
+      printf("Core 0:  Idle Diff: %lu, Count: %lu, Percent: %.2f%%\n", ulIdleCycleDiff0, ulIdleCycleCount0, ulIdleCyclePercent0);
+  
+
+      // 每秒打印一次
+      vTaskDelay(1000 / portTICK_PERIOD_MS);
+  }
 }
 
 
@@ -266,7 +328,19 @@ void setup() {
               );
     }
   #endif
-#endif  
+#endif
+
+esp_register_freertos_idle_hook_for_cpu(myIdleCallBackCore0, 0); // Core 0
+esp_register_freertos_idle_hook_for_cpu(myIdleCallBackCore1, 1); // Core 1
+
+        // 创建监控空闲周期的任务
+        xTaskCreatePinnedToCore(idle_cycle_monitor_task,
+          "IdleCycleMonitor",
+          1024*100,
+          NULL,
+          1, // 低优先级
+          NULL,
+          1); // 绑定到 Core 1
 
 }
 
