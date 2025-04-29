@@ -74,7 +74,9 @@ arduino 的时间访问接口是 esp-idf 的封装
 在按键检测中，我是在按键处理里面是阻塞检测的
 - 有一个隐患就是，一直按会一直阻塞
 - 解决方案是利用 RTOS 时间片轮询接口的 `vtaskDelay`
-
+# FreeRTOS 优化
+空闲任务分析与双核系统
+- [FreeRTOS Hooks — ESP-IDF Programming Guide v3.0.8-30-gf3704f027 documentation](https://docs.espressif.com/projects/esp-idf/en/release-v3.0/api-reference/system/hooks.html#overview)
 ## GUI 需求
 
 需要显示的信息：
