@@ -14,6 +14,7 @@ extern "C" {
 #endif
 
 #include "gui_guider.h"
+#include "lv_dclock.h"
 
 void custom_init(lv_ui *ui);
 

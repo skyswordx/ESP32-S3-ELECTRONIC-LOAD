@@ -76,4 +76,143 @@ void clock_count(int *hour, int *min, int *sec)
 }
 #endif
 
+void lv_main_page_set_current_box_increment_event_cb(lv_event_t * event)
+{
+    lv_event_code_t code = lv_event_get_code(event);
+    if(code == LV_EVENT_SHORT_CLICKED || code == LV_EVENT_LONG_PRESSED_REPEAT) {
+        lv_spinbox_increment(guider_ui.main_page_set_current_box);
+    }
+}
+void lv_main_page_set_current_box_decrement_event_cb(lv_event_t * event)
+{
+    lv_event_code_t code = lv_event_get_code(event);
+    if(code == LV_EVENT_SHORT_CLICKED || code == LV_EVENT_LONG_PRESSED_REPEAT) {
+        lv_spinbox_decrement(guider_ui.main_page_set_current_box);
+    }
+}
+void lv_main_page_over_voltage_box_increment_event_cb(lv_event_t * event)
+{
+    lv_event_code_t code = lv_event_get_code(event);
+    if(code == LV_EVENT_SHORT_CLICKED || code == LV_EVENT_LONG_PRESSED_REPEAT) {
+        lv_spinbox_increment(guider_ui.main_page_over_voltage_box);
+    }
+}
+void lv_main_page_over_voltage_box_decrement_event_cb(lv_event_t * event)
+{
+    lv_event_code_t code = lv_event_get_code(event);
+    if(code == LV_EVENT_SHORT_CLICKED || code == LV_EVENT_LONG_PRESSED_REPEAT) {
+        lv_spinbox_decrement(guider_ui.main_page_over_voltage_box);
+    }
+}
+void lv_main_page_spinbox_4_increment_event_cb(lv_event_t * event)
+{
+    lv_event_code_t code = lv_event_get_code(event);
+    if(code == LV_EVENT_SHORT_CLICKED || code == LV_EVENT_LONG_PRESSED_REPEAT) {
+        lv_spinbox_increment(guider_ui.main_page_spinbox_4);
+    }
+}
+void lv_main_page_spinbox_4_decrement_event_cb(lv_event_t * event)
+{
+    lv_event_code_t code = lv_event_get_code(event);
+    if(code == LV_EVENT_SHORT_CLICKED || code == LV_EVENT_LONG_PRESSED_REPEAT) {
+        lv_spinbox_decrement(guider_ui.main_page_spinbox_4);
+    }
+}
+void lv_main_page_spinbox_6_increment_event_cb(lv_event_t * event)
+{
+    lv_event_code_t code = lv_event_get_code(event);
+    if(code == LV_EVENT_SHORT_CLICKED || code == LV_EVENT_LONG_PRESSED_REPEAT) {
+        lv_spinbox_increment(guider_ui.main_page_spinbox_6);
+    }
+}
+void lv_main_page_spinbox_6_decrement_event_cb(lv_event_t * event)
+{
+    lv_event_code_t code = lv_event_get_code(event);
+    if(code == LV_EVENT_SHORT_CLICKED || code == LV_EVENT_LONG_PRESSED_REPEAT) {
+        lv_spinbox_decrement(guider_ui.main_page_spinbox_6);
+    }
+}
+void lv_main_page_spinbox_7_increment_event_cb(lv_event_t * event)
+{
+    lv_event_code_t code = lv_event_get_code(event);
+    if(code == LV_EVENT_SHORT_CLICKED || code == LV_EVENT_LONG_PRESSED_REPEAT) {
+        lv_spinbox_increment(guider_ui.main_page_spinbox_7);
+    }
+}
+void lv_main_page_spinbox_7_decrement_event_cb(lv_event_t * event)
+{
+    lv_event_code_t code = lv_event_get_code(event);
+    if(code == LV_EVENT_SHORT_CLICKED || code == LV_EVENT_LONG_PRESSED_REPEAT) {
+        lv_spinbox_decrement(guider_ui.main_page_spinbox_7);
+    }
+}
+void lv_main_page_spinbox_5_increment_event_cb(lv_event_t * event)
+{
+    lv_event_code_t code = lv_event_get_code(event);
+    if(code == LV_EVENT_SHORT_CLICKED || code == LV_EVENT_LONG_PRESSED_REPEAT) {
+        lv_spinbox_increment(guider_ui.main_page_spinbox_5);
+    }
+}
+void lv_main_page_spinbox_5_decrement_event_cb(lv_event_t * event)
+{
+    lv_event_code_t code = lv_event_get_code(event);
+    if(code == LV_EVENT_SHORT_CLICKED || code == LV_EVENT_LONG_PRESSED_REPEAT) {
+        lv_spinbox_decrement(guider_ui.main_page_spinbox_5);
+    }
+}
+void lv_main_page_spinbox_10_increment_event_cb(lv_event_t * event)
+{
+    lv_event_code_t code = lv_event_get_code(event);
+    if(code == LV_EVENT_SHORT_CLICKED || code == LV_EVENT_LONG_PRESSED_REPEAT) {
+        lv_spinbox_increment(guider_ui.main_page_spinbox_10);
+    }
+}
+void lv_main_page_spinbox_10_decrement_event_cb(lv_event_t * event)
+{
+    lv_event_code_t code = lv_event_get_code(event);
+    if(code == LV_EVENT_SHORT_CLICKED || code == LV_EVENT_LONG_PRESSED_REPEAT) {
+        lv_spinbox_decrement(guider_ui.main_page_spinbox_10);
+    }
+}
+void lv_main_page_spinbox_9_increment_event_cb(lv_event_t * event)
+{
+    lv_event_code_t code = lv_event_get_code(event);
+    if(code == LV_EVENT_SHORT_CLICKED || code == LV_EVENT_LONG_PRESSED_REPEAT) {
+        lv_spinbox_increment(guider_ui.main_page_spinbox_9);
+    }
+}
+void lv_main_page_spinbox_9_decrement_event_cb(lv_event_t * event)
+{
+    lv_event_code_t code = lv_event_get_code(event);
+    if(code == LV_EVENT_SHORT_CLICKED || code == LV_EVENT_LONG_PRESSED_REPEAT) {
+        lv_spinbox_decrement(guider_ui.main_page_spinbox_9);
+    }
+}
+void lv_main_page_spinbox_8_increment_event_cb(lv_event_t * event)
+{
+    lv_event_code_t code = lv_event_get_code(event);
+    if(code == LV_EVENT_SHORT_CLICKED || code == LV_EVENT_LONG_PRESSED_REPEAT) {
+        lv_spinbox_increment(guider_ui.main_page_spinbox_8);
+    }
+}
+void lv_main_page_spinbox_8_decrement_event_cb(lv_event_t * event)
+{
+    lv_event_code_t code = lv_event_get_code(event);
+    if(code == LV_EVENT_SHORT_CLICKED || code == LV_EVENT_LONG_PRESSED_REPEAT) {
+        lv_spinbox_decrement(guider_ui.main_page_spinbox_8);
+    }
+}
+
+extern int main_page_running_time_hour_value;
+extern int main_page_running_time_min_value;
+extern int main_page_running_time_sec_value;
+
+void main_page_running_time_timer(lv_timer_t *timer)
+{
+    clock_count_24(&main_page_running_time_hour_value, &main_page_running_time_min_value, &main_page_running_time_sec_value);
+    if (lv_obj_is_valid(guider_ui.main_page_running_time))
+    {
+        lv_dclock_set_text_fmt(guider_ui.main_page_running_time, "%d:%02d:%02d", main_page_running_time_hour_value, main_page_running_time_min_value, main_page_running_time_sec_value);
+    }
+}
 

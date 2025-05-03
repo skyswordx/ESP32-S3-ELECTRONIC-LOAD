@@ -1,1 +1,1 @@
-GEN_CSRCS += 
+GEN_CSRCS += _logo_alpha_40x40.c _logo_alpha_57x59.c _circLEMoon_alpha_30x30.c _Triwalt_alpha_30x30.c

@@ -74,7 +74,7 @@ arduino 的时间访问接口是 esp-idf 的封装
 在按键检测中，我是在按键处理里面是阻塞检测的
 - 有一个隐患就是，一直按会一直阻塞
 - 解决方案是利用 RTOS 时间片轮询接口的 `vtaskDelay`
-# FreeRTOS 优化
+## FreeRTOS 优化
 空闲任务分析与双核系统
 - [FreeRTOS Hooks — ESP-IDF Programming Guide v3.0.8-30-gf3704f027 documentation](https://docs.espressif.com/projects/esp-idf/en/release-v3.0/api-reference/system/hooks.html#overview)
 ## GUI 需求
@@ -320,9 +320,11 @@ void lvgl_task(void *pvParameters)
 
 - [ESP32S3-LVGL-Port-IDF/doc/lvgl帧率优化/lvgl帧率优化.md at main · herexiong/ESP32S3-LVGL-Port-IDF](https://github.com/herexiong/ESP32S3-LVGL-Port-IDF/blob/main/doc/lvgl%E5%B8%A7%E7%8E%87%E4%BC%98%E5%8C%96/lvgl%E5%B8%A7%E7%8E%87%E4%BC%98%E5%8C%96.md)
 
-## LVGL 交互：按键切换页面/对象
+## LVGL 交互
 
 - [LVGL V8应用——通过按键切换页面_lvgl按键切换界面-CSDN博客](https://blog.csdn.net/m0_37187962/article/details/125526292)
+
+- [Gui-Guider1.8.1 数字时钟控件找不到定义，无法编译-CSDN博客](https://blog.csdn.net/qq_48211392/article/details/145586269)
 
 ## 连接 IIC 外设
 

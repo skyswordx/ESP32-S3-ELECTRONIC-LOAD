@@ -16,15 +16,13 @@
 #endif
 
 
-static void main_page_switch2chart_event_handler (lv_event_t *e)
+static void main_page_next_page_button_event_handler (lv_event_t *e)
 {
     lv_event_code_t code = lv_event_get_code(e);
     switch (code) {
-    case LV_EVENT_VALUE_CHANGED:
+    case LV_EVENT_CLICKED:
     {
-        lv_obj_t * status_obj = lv_event_get_target(e);
-        int status = lv_obj_has_state(status_obj, LV_STATE_CHECKED) ? true : false;
-        ui_load_scr_animation(&guider_ui, &guider_ui.chart_page, guider_ui.chart_page_del, &guider_ui.main_page_del, setup_scr_chart_page, LV_SCR_LOAD_ANIM_OVER_BOTTOM, 200, 200, false, true);
+        lv_obj_add_state(guider_ui.main_page_main_tileview, LV_STATE_SCROLLED);
         break;
     }
     default:
@@ -32,13 +30,148 @@ static void main_page_switch2chart_event_handler (lv_event_t *e)
     }
 }
 
-static void main_page_btn_1_event_handler (lv_event_t *e)
+static void main_page_ONOFF_event_handler (lv_event_t *e)
 {
     lv_event_code_t code = lv_event_get_code(e);
     switch (code) {
     case LV_EVENT_CLICKED:
     {
-        ui_load_scr_animation(&guider_ui, &guider_ui.chart_page, guider_ui.chart_page_del, &guider_ui.main_page_del, setup_scr_chart_page, LV_SCR_LOAD_ANIM_MOVE_RIGHT, 200, 200, false, true);
+        break;
+    }
+    default:
+        break;
+    }
+}
+
+static void main_page_measure_resistance_label_event_handler (lv_event_t *e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    switch (code) {
+    case LV_EVENT_CLICKED:
+    {
+        lv_obj_clear_flag(guider_ui.main_page_measure_resistance_chart, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_clear_flag(guider_ui.main_page_measure_resistance_chart, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(guider_ui.main_page_measure_resistance_label, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(guider_ui.main_page_measure_resistance_label, LV_OBJ_FLAG_HIDDEN);
+        break;
+    }
+    default:
+        break;
+    }
+}
+
+static void main_page_measure_resistance_chart_event_handler (lv_event_t *e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    switch (code) {
+    case LV_EVENT_CLICKED:
+    {
+        lv_obj_add_flag(guider_ui.main_page_measure_resistance_chart, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(guider_ui.main_page_measure_resistance_chart, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_clear_flag(guider_ui.main_page_measure_resistance_label, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_clear_flag(guider_ui.main_page_measure_resistance_label, LV_OBJ_FLAG_HIDDEN);
+        break;
+    }
+    default:
+        break;
+    }
+}
+
+static void main_page_measure_power_label_event_handler (lv_event_t *e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    switch (code) {
+    case LV_EVENT_CLICKED:
+    {
+        lv_obj_clear_flag(guider_ui.main_page_measure_power_chart, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_clear_flag(guider_ui.main_page_measure_power_chart, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(guider_ui.main_page_measure_power_label, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(guider_ui.main_page_measure_power_label, LV_OBJ_FLAG_HIDDEN);
+        break;
+    }
+    default:
+        break;
+    }
+}
+
+static void main_page_measure_power_chart_event_handler (lv_event_t *e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    switch (code) {
+    case LV_EVENT_CLICKED:
+    {
+        lv_obj_add_flag(guider_ui.main_page_measure_power_chart, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(guider_ui.main_page_measure_power_chart, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_clear_flag(guider_ui.main_page_measure_power_label, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_clear_flag(guider_ui.main_page_measure_power_label, LV_OBJ_FLAG_HIDDEN);
+        break;
+    }
+    default:
+        break;
+    }
+}
+
+static void main_page_measure_voltage_label_event_handler (lv_event_t *e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    switch (code) {
+    case LV_EVENT_CLICKED:
+    {
+        lv_obj_clear_flag(guider_ui.main_page_measure_voltage_chart, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_clear_flag(guider_ui.main_page_measure_voltage_chart, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(guider_ui.main_page_measure_voltage_label, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(guider_ui.main_page_measure_voltage_label, LV_OBJ_FLAG_HIDDEN);
+        break;
+    }
+    default:
+        break;
+    }
+}
+
+static void main_page_measure_voltage_chart_event_handler (lv_event_t *e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    switch (code) {
+    case LV_EVENT_CLICKED:
+    {
+        lv_obj_add_flag(guider_ui.main_page_measure_voltage_chart, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(guider_ui.main_page_measure_voltage_chart, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_clear_flag(guider_ui.main_page_measure_voltage_label, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_clear_flag(guider_ui.main_page_measure_voltage_label, LV_OBJ_FLAG_HIDDEN);
+        break;
+    }
+    default:
+        break;
+    }
+}
+
+static void main_page_measure_current_label_event_handler (lv_event_t *e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    switch (code) {
+    case LV_EVENT_CLICKED:
+    {
+        lv_obj_add_flag(guider_ui.main_page_measure_current_label, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(guider_ui.main_page_measure_current_label, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_clear_flag(guider_ui.main_page_measure_current_chart, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_clear_flag(guider_ui.main_page_measure_current_chart, LV_OBJ_FLAG_HIDDEN);
+        break;
+    }
+    default:
+        break;
+    }
+}
+
+static void main_page_measure_current_chart_event_handler (lv_event_t *e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    switch (code) {
+    case LV_EVENT_SHORT_CLICKED:
+    {
+        lv_obj_add_flag(guider_ui.main_page_measure_current_chart, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(guider_ui.main_page_measure_current_chart, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_clear_flag(guider_ui.main_page_measure_current_label, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_clear_flag(guider_ui.main_page_measure_current_label, LV_OBJ_FLAG_HIDDEN);
         break;
     }
     default:
@@ -48,44 +181,16 @@ static void main_page_btn_1_event_handler (lv_event_t *e)
 
 void events_init_main_page (lv_ui *ui)
 {
-    lv_obj_add_event_cb(ui->main_page_switch2chart, main_page_switch2chart_event_handler, LV_EVENT_ALL, ui);
-    lv_obj_add_event_cb(ui->main_page_btn_1, main_page_btn_1_event_handler, LV_EVENT_ALL, ui);
-}
-
-static void chart_page_sw_1_event_handler (lv_event_t *e)
-{
-    lv_event_code_t code = lv_event_get_code(e);
-    switch (code) {
-    case LV_EVENT_VALUE_CHANGED:
-    {
-        lv_obj_t * status_obj = lv_event_get_target(e);
-        int status = lv_obj_has_state(status_obj, LV_STATE_CHECKED) ? true : false;
-        ui_load_scr_animation(&guider_ui, &guider_ui.main_page, guider_ui.main_page_del, &guider_ui.chart_page_del, setup_scr_main_page, LV_SCR_LOAD_ANIM_MOVE_BOTTOM, 200, 200, false, true);
-        break;
-    }
-    default:
-        break;
-    }
-}
-
-static void chart_page_btn_1_event_handler (lv_event_t *e)
-{
-    lv_event_code_t code = lv_event_get_code(e);
-    switch (code) {
-    case LV_EVENT_CLICKED:
-    {
-        ui_load_scr_animation(&guider_ui, &guider_ui.main_page, guider_ui.main_page_del, &guider_ui.chart_page_del, setup_scr_main_page, LV_SCR_LOAD_ANIM_FADE_ON, 200, 200, false, true);
-        break;
-    }
-    default:
-        break;
-    }
-}
-
-void events_init_chart_page (lv_ui *ui)
-{
-    lv_obj_add_event_cb(ui->chart_page_sw_1, chart_page_sw_1_event_handler, LV_EVENT_ALL, ui);
-    lv_obj_add_event_cb(ui->chart_page_btn_1, chart_page_btn_1_event_handler, LV_EVENT_ALL, ui);
+    lv_obj_add_event_cb(ui->main_page_next_page_button, main_page_next_page_button_event_handler, LV_EVENT_ALL, ui);
+    lv_obj_add_event_cb(ui->main_page_ONOFF, main_page_ONOFF_event_handler, LV_EVENT_ALL, ui);
+    lv_obj_add_event_cb(ui->main_page_measure_resistance_label, main_page_measure_resistance_label_event_handler, LV_EVENT_ALL, ui);
+    lv_obj_add_event_cb(ui->main_page_measure_resistance_chart, main_page_measure_resistance_chart_event_handler, LV_EVENT_ALL, ui);
+    lv_obj_add_event_cb(ui->main_page_measure_power_label, main_page_measure_power_label_event_handler, LV_EVENT_ALL, ui);
+    lv_obj_add_event_cb(ui->main_page_measure_power_chart, main_page_measure_power_chart_event_handler, LV_EVENT_ALL, ui);
+    lv_obj_add_event_cb(ui->main_page_measure_voltage_label, main_page_measure_voltage_label_event_handler, LV_EVENT_ALL, ui);
+    lv_obj_add_event_cb(ui->main_page_measure_voltage_chart, main_page_measure_voltage_chart_event_handler, LV_EVENT_ALL, ui);
+    lv_obj_add_event_cb(ui->main_page_measure_current_label, main_page_measure_current_label_event_handler, LV_EVENT_ALL, ui);
+    lv_obj_add_event_cb(ui->main_page_measure_current_chart, main_page_measure_current_chart_event_handler, LV_EVENT_ALL, ui);
 }
 
 

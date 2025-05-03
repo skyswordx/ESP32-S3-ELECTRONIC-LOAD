@@ -57,7 +57,7 @@ void update_gui_task(void *pvParameters)
               if (guider_ui.main_page_measure_resistance_label != NULL && queue_element.data_description == DATA_DESCRIPTION_RESISTANCE){ lv_label_set_text_fmt(guider_ui.main_page_measure_resistance_label, "%.3f", queue_element.data); }
               break;
             case TASK_ENCODER:
-              if (guider_ui.main_page_set_current_label != NULL && queue_element.data_description == DATA_DESCRIPTION_SET_CURRENT){ lv_label_set_text_fmt(guider_ui.main_page_set_current_label, "%.3f", queue_element.data); }
+              // if (guider_ui.main_page_set_current_label != NULL && queue_element.data_description == DATA_DESCRIPTION_SET_CURRENT){ lv_label_set_text_fmt(guider_ui.main_page_set_current_label, "%.3f", queue_element.data); }
 
               break;
             case TASK_DUMMY_SENSOR:

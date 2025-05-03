@@ -248,13 +248,13 @@ void get_ina226_data_task(void *pvParameters)
     double measure_current_mA = INA226_device.getCurrent_mA_plus(); // 读取电流值（plus版）
     double measure_voltage_V = INA226_device.getBusVoltage_plus(); // 读取电压值（plus版）
     double measure_power_W = abs((measure_current_mA * measure_voltage_V) / 1000); // 功率值
-    double measure_resistance_Kohm = abs((measure_voltage_V )/ (measure_current_mA ));
+    double measure_resistance_ohm = abs((measure_voltage_V )/ (measure_current_mA * 1000));
 
 
     queue_element1.data = measure_current_mA; 
     queue_element2.data = measure_voltage_V; 
     queue_element3.data = measure_power_W; 
-    queue_element4.data = measure_resistance_Kohm; 
+    queue_element4.data = measure_resistance_ohm; 
 
     double DAC_output_V = MCP4725_device.getVoltage();
     // printf("\n[get_sensors_task] INA226: %.3f mA, %.3f V, DAC set: %.3f V, I_target: %.3f A", measure_current_mA, measure_voltage_V, DAC_output_V, (DAC_output_V/(125 * RSHUNT)));
