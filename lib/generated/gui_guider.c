@@ -76,7 +76,6 @@ void init_scr_del_flag(lv_ui *ui)
 {
 
     ui->main_page_del = true;
-    ui->chart_page_del = true;
 }
 
 void setup_ui(lv_ui *ui)

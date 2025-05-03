@@ -1,3 +1,4 @@
+#define LV_LVGL_H_INCLUDE_SIMPLE 1
 /*
 * Copyright 2025 NXP
 * NXP Proprietary. This software is owned or controlled by NXP and may only be used strictly in
@@ -7,20 +8,14 @@
 * terms, then you may not retain, install, activate or otherwise use the software.
 */
 
+#include "lvgl.h"
 
-#ifndef EVENTS_INIT_H_
-#define EVENTS_INIT_H_
-#ifdef __cplusplus
-extern "C" {
-#endif
+#if LV_USE_FS_RAWFS
 
-#include "gui_guider.h"
+const rawfs_size_t rawfs_file_count = 1;
+rawfs_file_t rawfs_files[1] = {
+	0x0, 0, 10093, "/logo.bin",
 
-void events_init(lv_ui *ui);
+};
 
-void events_init_main_page(lv_ui *ui);
-
-#ifdef __cplusplus
-}
-#endif
-#endif /* EVENT_CB_H_ */
+#endif  /*LV_USE_FS_RAWFS*/ 

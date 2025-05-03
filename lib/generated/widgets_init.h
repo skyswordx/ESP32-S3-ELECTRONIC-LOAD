@@ -22,7 +22,35 @@ __attribute__((unused)) void ta_event_cb(lv_event_t *e);
 void clock_count(int *hour, int *min, int *sec);
 #endif
 
+extern lv_obj_t * main_page_set_current_box;
+void lv_main_page_set_current_box_increment_event_cb(lv_event_t * event);
+void lv_main_page_set_current_box_decrement_event_cb(lv_event_t * event);
+extern lv_obj_t * main_page_over_voltage_box;
+void lv_main_page_over_voltage_box_increment_event_cb(lv_event_t * event);
+void lv_main_page_over_voltage_box_decrement_event_cb(lv_event_t * event);
+extern lv_obj_t * main_page_spinbox_4;
+void lv_main_page_spinbox_4_increment_event_cb(lv_event_t * event);
+void lv_main_page_spinbox_4_decrement_event_cb(lv_event_t * event);
+extern lv_obj_t * main_page_spinbox_6;
+void lv_main_page_spinbox_6_increment_event_cb(lv_event_t * event);
+void lv_main_page_spinbox_6_decrement_event_cb(lv_event_t * event);
+extern lv_obj_t * main_page_spinbox_7;
+void lv_main_page_spinbox_7_increment_event_cb(lv_event_t * event);
+void lv_main_page_spinbox_7_decrement_event_cb(lv_event_t * event);
+extern lv_obj_t * main_page_spinbox_5;
+void lv_main_page_spinbox_5_increment_event_cb(lv_event_t * event);
+void lv_main_page_spinbox_5_decrement_event_cb(lv_event_t * event);
+extern lv_obj_t * main_page_spinbox_10;
+void lv_main_page_spinbox_10_increment_event_cb(lv_event_t * event);
+void lv_main_page_spinbox_10_decrement_event_cb(lv_event_t * event);
+extern lv_obj_t * main_page_spinbox_9;
+void lv_main_page_spinbox_9_increment_event_cb(lv_event_t * event);
+void lv_main_page_spinbox_9_decrement_event_cb(lv_event_t * event);
+extern lv_obj_t * main_page_spinbox_8;
+void lv_main_page_spinbox_8_increment_event_cb(lv_event_t * event);
+void lv_main_page_spinbox_8_decrement_event_cb(lv_event_t * event);
 
+void main_page_running_time_timer(lv_timer_t *timer);
 
 #ifdef __cplusplus
 }
