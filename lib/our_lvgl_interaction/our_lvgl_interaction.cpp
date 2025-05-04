@@ -54,7 +54,7 @@ void update_gui_task(void *pvParameters)
               if (guider_ui.main_page_measure_current_label != NULL && queue_element.data_description == DATA_DESCRIPTION_CURRENT){ lv_label_set_text_fmt(guider_ui.main_page_measure_current_label, "%.3f", queue_element.data); }
               if (guider_ui.main_page_measure_voltage_label != NULL && queue_element.data_description == DATA_DESCRIPTION_VOLTAGE){ lv_label_set_text_fmt(guider_ui.main_page_measure_voltage_label, "%.3f", queue_element.data); }
               if (guider_ui.main_page_measure_power_label != NULL && queue_element.data_description == DATA_DESCRIPTION_POWER){ lv_label_set_text_fmt(guider_ui.main_page_measure_power_label, "%.3f", queue_element.data); }
-              if (guider_ui.main_page_measure_resistance_label != NULL && queue_element.data_description == DATA_DESCRIPTION_RESISTANCE){ lv_label_set_text_fmt(guider_ui.main_page_measure_resistance_label, "%.3f", queue_element.data); }
+              if (guider_ui.main_page_measure_resistance_label != NULL && queue_element.data_description == DATA_DESCRIPTION_RESISTANCE){ lv_label_set_text_fmt(guider_ui.main_page_measure_resistance_label, "%.1f", queue_element.data); }
               break;
             case TASK_ENCODER:
               // if (guider_ui.main_page_set_current_label != NULL && queue_element.data_description == DATA_DESCRIPTION_SET_CURRENT){ lv_label_set_text_fmt(guider_ui.main_page_set_current_label, "%.3f", queue_element.data); }
@@ -64,7 +64,7 @@ void update_gui_task(void *pvParameters)
 
               break;
             case EVENT_TESING_LOAD_RATE:
-                
+              if (guider_ui.main_page_start_load_regulation_button_label != NULL && queue_element.data_description == EVENT_TESING_LOAD_RATE){ lv_label_set_text_fmt(guider_ui.main_page_start_load_regulation_button_label, "%.4f", queue_element.data); }
               break;
 
             case EVENT_OVER_VOLTAGE:
