@@ -188,9 +188,6 @@ void output_data_collection_task(void *pvParameters) {
 #endif
 
 
-
-
-
 /************************************** tasks ***************************************/
 
 #ifdef USE_DUMMY_SENSOR
@@ -248,7 +245,7 @@ void get_ina226_data_task(void *pvParameters)
     double measure_current_mA = INA226_device.getCurrent_mA_plus(); // 读取电流值（plus版）
     double measure_voltage_V = INA226_device.getBusVoltage_plus(); // 读取电压值（plus版）
     double measure_power_W = abs((measure_current_mA * measure_voltage_V) / 1000); // 功率值
-    double measure_resistance_ohm = abs((measure_voltage_V )/ (measure_current_mA * 1000));
+    double measure_resistance_ohm = abs((measure_voltage_V )/ (measure_current_mA) * 1000);
 
 
     queue_element1.data = measure_current_mA; 
@@ -527,7 +524,7 @@ void button_handler_task(void *pvParameters){
             printf("\n[button_handler_task] duration: %d ms", time_ms);
           #ifdef USE_ENCODER1
             if (GPIO_PIN == encoder1_button.pin){
-              // 按下编码器俺家之后切换模式
+              // 按下编码器按键之后切换模式
               if (encoder1.mode == QUAD) {
                 encoder1.mode = SINGLE;
                 printf("\n[button_handler_task] encoder1 mode changed to SINGLE");
@@ -567,7 +564,7 @@ void button_handler_task(void *pvParameters){
               /* 页面切换 */
               // 从 chart -> main sw
               // ui_load_scr_animation(&guider_ui, &guider_ui.main_page, guider_ui.main_page_del, &guider_ui.chart_page_del, setup_scr_main_page, LV_SCR_LOAD_ANIM_NONE, 200, 200, false, true);
-    
+
             }
           #endif // USE_BUTTON4
           }
@@ -647,9 +644,6 @@ void get_encoder1_data_task(void *pvParameters)
 /*********************** 辅助函数 ***********************/
 #ifdef USE_IIC_DEVICE
   double from_set_current2voltage_V(double set_current_A){
-    // const double DAC_OUTPUT_Calibration_A = 1.1530154317483; // DAC 输出校准系数A
-    // const double DAC_OUTPUT_Calibration_B = -43.853404582016; // DAC 输出校准系数B
-    // return (set_current_A * 1000 * DAC_OUTPUT_Calibration_A + DAC_OUTPUT_Calibration_B) * 0.125 * RSHUNT; // 计算电压值
     return (set_current_A * 125 * RSHUNT); // 计算电压值
   }
 
