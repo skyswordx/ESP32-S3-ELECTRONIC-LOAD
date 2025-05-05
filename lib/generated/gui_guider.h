@@ -18,6 +18,19 @@ extern "C" {
 typedef struct
 {
   
+	lv_obj_t *initial_page;
+	bool initial_page_del;
+	lv_obj_t *initial_page_line_1;
+	lv_obj_t *startup_page;
+	bool startup_page_del;
+	lv_obj_t *startup_page_img_1;
+	lv_obj_t *startup_page_label_1;
+	lv_obj_t *startup_page_label_5;
+	lv_obj_t *startup_page_label_4;
+	lv_obj_t *startup_page_label_3;
+	lv_obj_t *startup_page_img_4;
+	lv_obj_t *startup_page_img_3;
+	lv_obj_t *startup_page_spinner_1;
 	lv_obj_t *main_page;
 	bool main_page_del;
 	lv_obj_t *main_page_main_tileview;
@@ -170,26 +183,32 @@ void init_keyboard(lv_ui *ui);
 extern lv_ui guider_ui;
 
 
+void setup_scr_initial_page(lv_ui *ui);
+void setup_scr_startup_page(lv_ui *ui);
 void setup_scr_main_page(lv_ui *ui);
+LV_IMG_DECLARE(_logo_alpha_152x152);
+LV_IMG_DECLARE(_circLEMoon_alpha_40x40);
+LV_IMG_DECLARE(_Triwalt_alpha_40x40);
 LV_IMG_DECLARE(_logo_alpha_40x40);
 LV_IMG_DECLARE(_logo_alpha_57x59);
 LV_IMG_DECLARE(_circLEMoon_alpha_30x30);
 LV_IMG_DECLARE(_Triwalt_alpha_30x30);
 
-LV_FONT_DECLARE(lv_font_OPPOSans_Medium_13)
+LV_FONT_DECLARE(lv_font_OPPOSans_Medium_25)
 LV_FONT_DECLARE(lv_font_montserratMedium_16)
+LV_FONT_DECLARE(lv_font_montserratMedium_9)
+LV_FONT_DECLARE(lv_font_OPPOSans_Medium_12)
+LV_FONT_DECLARE(lv_font_montserratMedium_11)
+LV_FONT_DECLARE(lv_font_OPPOSans_Medium_13)
 LV_FONT_DECLARE(lv_font_montserratMedium_12)
 LV_FONT_DECLARE(lv_font_OPPOSans_Medium_15)
 LV_FONT_DECLARE(lv_font_IntelOneMono_Medium_16)
 LV_FONT_DECLARE(lv_font_IntelOneMono_Medium_11)
-LV_FONT_DECLARE(lv_font_montserratMedium_9)
 LV_FONT_DECLARE(lv_font_OPPOSans_Medium_11)
-LV_FONT_DECLARE(lv_font_OPPOSans_Medium_12)
 LV_FONT_DECLARE(lv_font_FontAwesome5_28)
 LV_FONT_DECLARE(lv_font_OPPOSans_Medium_8)
 LV_FONT_DECLARE(lv_font_OPPOSans_Medium_16)
 LV_FONT_DECLARE(lv_font_OPPOSans_Medium_10)
-LV_FONT_DECLARE(lv_font_montserratMedium_11)
 LV_FONT_DECLARE(lv_font_IntelOneMono_Medium_19)
 LV_FONT_DECLARE(lv_font_montserratMedium_19)
 LV_FONT_DECLARE(lv_font_montserratMedium_17)
@@ -197,7 +216,6 @@ LV_FONT_DECLARE(lv_font_IntelOneMono_Medium_20)
 LV_FONT_DECLARE(lv_font_OPPOSans_Medium_17)
 LV_FONT_DECLARE(lv_font_IntelOneMono_Medium_30)
 LV_FONT_DECLARE(lv_font_OPPOSans_Medium_22)
-LV_FONT_DECLARE(lv_font_OPPOSans_Medium_25)
 LV_FONT_DECLARE(lv_font_OPPOSans_Medium_19)
 LV_FONT_DECLARE(lv_font_OPPOSans_Medium_14)
 

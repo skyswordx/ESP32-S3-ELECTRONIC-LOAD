@@ -40,9 +40,17 @@
     }
 */
 
+
 #include <functional> // 用于 std::function 绑定用户函数
 #include <Arduino.h> 
 #include "MCP4725.h"
+
+// 以后删掉
+#define RSHUNT 0.020 // 20mΩ 电阻
+inline double from_set_current_mA2voltage_V(double set_current_mA){
+    return (set_current_mA * 125 * RSHUNT / 1000); // 计算电压值
+}
+
 template<typename T>
 class process_data_t {
     public:
@@ -142,15 +150,19 @@ void PID_controller_t<T>::pid_control_service() {
         controller_output = process_variable.last_output + p_term + i_term + d_term;
         // printf("\nraw op: %.3f", controller_output);
         /* 积分限幅和输出限幅 */
-        if (controller_output > CONTROLLER_OUTPUT_MAX) { 
+
+        double shi = min(3 * from_set_current_mA2voltage_V(process_variable.target), CONTROLLER_OUTPUT_MAX); // 3倍的电流值对应的电压值
+       
+        if (controller_output > shi) { 
             // 核心在于 controller_output 计算完毕但在被限幅之前调整 i_term
             // 这样比直接把 i_term 和 controller_output 限幅在同一个值更加合理 
-            i_term -= controller_output - CONTROLLER_OUTPUT_MAX;
-            controller_output = CONTROLLER_OUTPUT_MAX;
+            i_term -= controller_output - shi;
+            controller_output = shi;
         } else if (controller_output < CONTROLLER_OUTPUT_MIN) {
             i_term += CONTROLLER_OUTPUT_MIN - controller_output;
             controller_output = CONTROLLER_OUTPUT_MIN;
         }
+        
         /* 为下一次的算法计算记住一些变量 */
         process_variable.last_measure = process_variable.measure;
         process_variable.last_output = controller_output; // 上一次输出值

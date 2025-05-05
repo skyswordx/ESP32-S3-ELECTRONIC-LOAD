@@ -13,7 +13,8 @@
 
 BaseType_t debug_flag1 = pdFALSE;
 BaseType_t debug_flag2 = pdFALSE;
-
+/******************************  ESP32S3 Setup ***********************************/
+SemaphoreHandle_t startup_xBinarySemaphore;
 /****************************** OUTPUT CAlibration *******************************/
 
 #ifdef USE_OUTPUT_CALIBRATION // 启用输出校准
@@ -581,6 +582,8 @@ void button_handler_task(void *pvParameters){
               #ifdef USE_OUTPUT_CALIBRATION
                 xSemaphoreGive(output_calibration_xBinarySemaphore); // 释放二值信号量，触发输出标定
               #endif
+                xSemaphoreGive(startup_xBinarySemaphore);
+              
             }
           #endif // USE_BUTTON1
           #ifdef USE_BUTTON2
