@@ -51,7 +51,7 @@
 
 extern BaseType_t debug_flag1;
 extern BaseType_t debug_flag2;
-
+extern SemaphoreHandle_t startup_xBinarySemaphore; // 启动二值信号量
 
 /*********************************** Current PID Setup ***********************************/
 // 包含自定义的 PID 控制器类和 VOFA 下位机

@@ -2762,8 +2762,8 @@ void setup_scr_main_page(lv_ui *ui)
     ui->main_page_measure_current_label = lv_label_create(ui->main_page);
     lv_label_set_text(ui->main_page_measure_current_label, "0.000");
     lv_label_set_long_mode(ui->main_page_measure_current_label, LV_LABEL_LONG_WRAP);
-    lv_obj_set_pos(ui->main_page_measure_current_label, 21, 83);
-    lv_obj_set_size(ui->main_page_measure_current_label, 130, 31);
+    lv_obj_set_pos(ui->main_page_measure_current_label, 11, 83);
+    lv_obj_set_size(ui->main_page_measure_current_label, 150, 31);
     lv_obj_add_flag(ui->main_page_measure_current_label, LV_OBJ_FLAG_CLICKABLE);
 
     //Write style for main_page_measure_current_label, Part: LV_PART_MAIN, State: LV_STATE_DEFAULT.
@@ -2847,7 +2847,7 @@ void setup_scr_main_page(lv_ui *ui)
 
     //Write codes main_page_over_voltage_warning_msgbox
     static const char * main_page_over_voltage_warning_msgbox_btns[] = {""};
-    ui->main_page_over_voltage_warning_msgbox = lv_msgbox_create(ui->main_page, "OVER  VOLATGE  WARNING", "\n极限过压了宝贝\n\n\n\n", main_page_over_voltage_warning_msgbox_btns, false);
+    ui->main_page_over_voltage_warning_msgbox = lv_msgbox_create(ui->main_page, "OVER  VOLATGE  WARNING", "\n极限过压了\n\n\n\n", main_page_over_voltage_warning_msgbox_btns, false);
     lv_obj_set_size(lv_msgbox_get_btns(ui->main_page_over_voltage_warning_msgbox), 0, 30);
     lv_obj_set_pos(ui->main_page_over_voltage_warning_msgbox, 101, 83);
     lv_obj_set_size(ui->main_page_over_voltage_warning_msgbox, 280, 150);

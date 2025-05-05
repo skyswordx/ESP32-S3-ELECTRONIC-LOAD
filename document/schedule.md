@@ -53,6 +53,20 @@ ADC 1 的 3 个通道，并联在一起
 - [泪滴 | 嘉立创EDA专业版用户指南](https://prodocs.lceda.cn/cn/pcb/tools-teardrop/index.html)
 ## 恒流指标
 
+```
+E (25336) task_wdt: Task watchdog got triggered. The following tasks did not reset the watchdog in time:
+
+E (25336) task_wdt: - IDLE0 (CPU 0)
+
+E (25336) task_wdt: Tasks currently running:
+
+E (25336) task_wdt: CPU 0: startup_task
+
+E (25336) task_wdt: CPU 1: loopTask
+
+E (25336) task_wdt: Aborting.
+```
+
 基本指标
 - 恒流电流设置范围为 100 mA~1000 mA
 	- **需要用怎么达到？**
