@@ -301,7 +301,7 @@ void setup() {
 
   current_ctrl.convert_output = [](double output) -> double {
     MCP4725_device.setVoltage(output);
-    vTaskDelay(10 / portTICK_PERIOD_MS); // 等待 10ms
+
     return output; // 整定时，使用的 OP 是 DAC 输出，所以这里直接返回即可 
   };
 

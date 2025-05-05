@@ -13,6 +13,11 @@
  * @details 仅在 setup() 中创建一次即可，LVGL 任务会一直运行，配合 GUI guider 的高级接口可以实现 LVGL 的页面显示和自动管理
  *          由于 LVGL 的接口是线程不安全的，所以需要加锁来保护 LVGL 的接口调用
  * 
+ *          所谓的互斥锁就是在同一时刻只能有一个线程访问共享资源，其他线程需要等待
+ *          实现的方式就是利用一个二值信号量，一个线程要运行下面的代码，就要先 take 这个信号量
+ *          其他线程因为之前的线程已经 take 了这个信号量，所以只能等待
+ *          直到之前的线程 give 这个信号量，其他线程才能继续运行
+ * 
  */
 void lvgl_task(void *pvParameters){
   while(1)
@@ -24,7 +29,7 @@ void lvgl_task(void *pvParameters){
     
     vTaskDelay( 20 );
   }
-  vTaskDelete(NULL);
+
 }
 
 /**
