@@ -146,6 +146,7 @@ typedef struct
 	lv_obj_t *main_page_measure_current_chart;
 	lv_chart_series_t *main_page_measure_current_chart_0;
 	lv_obj_t *main_page_measure_current_title;
+	lv_obj_t *main_page_over_voltage_warning_msgbox;
 }lv_ui;
 
 typedef void (*ui_setup_scr_t)(lv_ui * ui);
@@ -197,6 +198,8 @@ LV_FONT_DECLARE(lv_font_OPPOSans_Medium_17)
 LV_FONT_DECLARE(lv_font_IntelOneMono_Medium_30)
 LV_FONT_DECLARE(lv_font_OPPOSans_Medium_22)
 LV_FONT_DECLARE(lv_font_OPPOSans_Medium_25)
+LV_FONT_DECLARE(lv_font_OPPOSans_Medium_19)
+LV_FONT_DECLARE(lv_font_OPPOSans_Medium_14)
 
 
 #ifdef __cplusplus

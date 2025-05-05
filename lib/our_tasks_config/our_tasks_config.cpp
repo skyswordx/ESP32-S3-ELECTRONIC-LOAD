@@ -185,6 +185,8 @@ void output_data_collection_task(void *pvParameters) {
 #endif
 
 #ifdef USE_VOLTAGE_PROTECTION
+  BaseType_t over_voltage_protection_flag = pdFALSE; // 过压保护标志位
+  BaseType_t over_voltage_igonre_pid_flag = pdFALSE; // 过压保护忽略 PID 标志位
   SemaphoreHandle_t over_voltage_protection_xBinarySemaphore; // 过压保护二值信号量
 #endif
 
@@ -222,7 +224,6 @@ void get_dummy_sensor_data_task(void *pvParameters)
 #endif // USE_DUMMY_SENSOR
 
 #ifdef USE_IIC_DEVICE
-
 
 /**
  * @brief 获取 INA226 数据的任务函数
@@ -263,7 +264,23 @@ void get_ina226_data_task(void *pvParameters)
       // 电压过高，警告
     
       // 这里触发过压之后的保护程序
-      // xSemaphoreGive(over_voltage_protection_xBinarySemaphore);
+      xSemaphoreGive(over_voltage_protection_xBinarySemaphore);
+    }
+
+    if (measure_voltage_V < WARNING_VOLTAGE) {
+      // 电压正常，清除过压保护标志位
+      over_voltage_protection_flag = pdFALSE;
+      #ifdef USE_LCD_DISPLAY
+        // 获取LVGL互斥锁，确保LVGL操作线程安全
+        if (xSemaphoreTake(gui_xMutex, portMAX_DELAY) == pdTRUE) {
+          // 显示过压保护警告控件（假设guider_ui中有overvoltage_warning控件）
+          lv_obj_add_flag(guider_ui.main_page_over_voltage_warning_msgbox, LV_OBJ_FLAG_HIDDEN);
+          // lv_obj_set_style_opa(guider_ui.main_page, LV_OPA_60, LV_PART_MAIN | LV_STATE_DEFAULT);
+          printf("\n[over_voltage_protection_task] LVGL warning");
+          xSemaphoreGive(gui_xMutex); // 释放互斥锁
+        }
+      #endif
+      over_voltage_igonre_pid_flag = pdFALSE; // 清除过压保护忽略 PID 标志位
     }
  
     int return_value1 = xQueueSend(LVGL_queue, (void *)&queue_element1, 0); // 发送电流值到消息队列
@@ -281,7 +298,7 @@ void get_ina226_data_task(void *pvParameters)
       // printf("\n[get_ina226_data_task] failed to send message to queue\n");
     }
 
-    vTaskDelay( 1000 );
+    vTaskDelay( 200 / portTICK_PERIOD_MS ); // 延时 200 ms
   }
 }
 
@@ -292,13 +309,13 @@ void get_load_changing_rate_task(void *pvParameters){
    *  到达 check_current2 = ->  记录 bus_voltage2
    * rate = (bus_V1 - bus_V0) / bus_V0
    */
-  static double check_voltage_L_V = 0.0;
-  static double check_voltage_H_V = 0.0;
-  static double check_current_L_A = 0.0;
-  static double check_current_H_A = 0.0; 
+  double check_voltage_L_V = 0.0;
+  double check_voltage_H_V = 0.0;
+  double check_current_L_A = 0.0;
+  double check_current_H_A = 0.0; 
   BaseType_t check_L = pdFALSE;
   BaseType_t check_H = pdFALSE;
-  static double rate = 0.0;
+  double rate = 0.0;
 
   QueueElement_t<double> queue_element(EVENT_TESING_LOAD_RATE); // 定义一个队列元素对象
 
@@ -393,31 +410,52 @@ void over_voltage_protection_task(void *pvParameters){
     QueueElement_t<alert_type_t> queue_element(EVENT_OVER_VOLTAGE);
 
     while(1){
+      
     
       printf("\n[over_voltage_protection_task] waiting");
       xSemaphoreTake(over_voltage_protection_xBinarySemaphore, portMAX_DELAY); // 总是保持阻塞等待二值信号量
-      
+      over_voltage_protection_flag = pdTRUE; // 设置过压保护标志位
+      over_voltage_igonre_pid_flag = pdTRUE; // 设置过压保护忽略 PID 标志位
+
       printf("\n[over_voltage_protection_task] running on core: %d, Free stack space: %d", xPortGetCoreID(), uxTaskGetStackHighWaterMark(NULL));
   
+      // vTaskDelete(encoder1_task_handle); // 删除编码器任务
       // 执行过压保护任务，关闭 DAC 输出
+
+      #ifdef USE_LCD_DISPLAY
+        // 获取LVGL互斥锁，确保LVGL操作线程安全
+        if (xSemaphoreTake(gui_xMutex, portMAX_DELAY) == pdTRUE) {
+          // 显示过压保护警告控件（假设guider_ui中有overvoltage_warning控件）
+          lv_obj_clear_flag(guider_ui.main_page_over_voltage_warning_msgbox, LV_OBJ_FLAG_HIDDEN);
+          // lv_obj_set_style_opa(guider_ui.main_page, LV_OPA_60, LV_PART_MAIN | LV_STATE_DEFAULT);
+          printf("\n[over_voltage_protection_task] LVGL warning");
+          xSemaphoreGive(gui_xMutex); // 释放互斥锁
+        }
+      #endif
+
       #ifdef USE_PID_CONTROLLER
         current_ctrl.process_variable.target = 0.0;
+        // for (int i = 0; i < 1000; i++){
+        //   printf("\n[over_voltage_protection_task] block %d", i);
+        // } 
       #else
         MCP4725_device.setVoltage(0.0); // 设置输出电压为 0V
       #endif
 
+      
       // 切断功率板电源，让 MOSFET 关断
       /* todo */
+      
+      
+      // int return_value = xQueueSend(LVGL_queue, (void *)&queue_element, 0); // 发送过压保护值到消息队列
 
-      int return_value = xQueueSend(LVGL_queue, (void *)&queue_element, 0); // 发送电阻值到消息队列
-
-      if (return_value == pdTRUE) {
-        // printf("\n[get_ina226_data_task] sent message  to the queue successfully\n");
-      } else if ( return_value == errQUEUE_FULL) {
-        // printf("\n[get_ina226_data_task] failed to send message to queue, queue is full\n");
-      } else {
-        // printf("\n[get_ina226_data_task] failed to send message to queue\n");
-      }
+      // if (return_value == pdTRUE) {
+      //   printf("\n[over_voltage_protection_task] sent message to the queue successfully\n"); // 添加成功发送消息的打印
+      // } else if ( return_value == errQUEUE_FULL) {
+      //   printf("\n[over_voltage_protection_task] failed to send message to queue, queue is full\n"); // 添加队列满的打印
+      // } else {
+      //   printf("\n[over_voltage_protection_task] failed to send message to queue\n"); // 添加发送失败的打印
+      // }
 
 
       printf("\n[over_voltage_protection_task] DAC output voltage set to 0V");
@@ -578,6 +616,9 @@ void button_handler_task(void *pvParameters){
 #endif // USE_BUTTON
 
 #ifdef USE_ENCODER1
+
+TaskHandle_t encoder1_task_handle; // 旋转编码器任务结构句柄
+
 /**
  * @brief 获取编码器数据的任务函数，用来设置电流
  * @author skyswordx
@@ -587,7 +628,7 @@ void button_handler_task(void *pvParameters){
  */
 void get_encoder1_data_task(void *pvParameters)
 {
-  static double value;
+  double value;
   QueueElement_t<double> queue_element1(TASK_ENCODER, DATA_DESCRIPTION_SET_CURRENT); 
   while(1)
   {
@@ -595,7 +636,7 @@ void get_encoder1_data_task(void *pvParameters)
     
     // 获取旋转编码器数据
     value = encoder1.read_count_accum_clear(); // 获取编码器的总计数值
-    // printf("\n[get_encoder1_data_task] encoder1 value: %.3f", msg.value);
+    printf("\n[get_encoder1_data_task] encoder1 value: %.3f", value);
 
     /* 实现电流调节 */
     #ifdef USE_IIC_DEVICE
@@ -606,11 +647,14 @@ void get_encoder1_data_task(void *pvParameters)
       } else if (value < 50) {
         value = 50;
       }
+
+      printf("\n[get_encoder1_data_task] modified encoder1 value A: %.3f", value);
     
 
-      if (testing_load_flag == pdFALSE){
+      if (testing_load_flag == pdFALSE  && over_voltage_igonre_pid_flag == pdFALSE) {
         #ifdef USE_PID_CONTROLLER
           // 这里是 PID 控制器的电流值
+          printf("\n[get_encoder1_data_task] modified encoder1 value B: %.3f", value);
           current_ctrl.process_variable.target = value; // 设置 PID 控制器的目标值
           queue_element1.data = value; // 把该值传递给 LVGL 队列的元素
   
@@ -620,14 +664,17 @@ void get_encoder1_data_task(void *pvParameters)
           MCP4725_device.setVoltage(from_set_current2voltage_V(value/1000.0)); // 设置 DAC 的目标值
 
         #endif
+      }else{
+        printf("\n[get_encoder1_data_task] testing_load_flag: %d, over_voltage_protection_flag: %d", testing_load_flag, over_voltage_igonre_pid_flag);
       }
 
       // printf("\n[get_encoder1_data_task] setpoint voltage(V): %.3f", MCP4725_device.getVoltage());
     
     #endif
     
-    printf("\n[get_encoder1_data_task] encoder1 value: %.3f", value);
+    printf("\n[get_encoder1_data_task] set_point %.3f", current_ctrl.process_variable.target);
     printf("\n[get_encoder1_data_task] queque_element1 data: %.3f", queue_element1.data);
+
     int return_value1 = xQueueSend(LVGL_queue, (void *)&queue_element1, 0);
 
     if (return_value1 == pdTRUE ) { // Updated to check return_value2
@@ -638,7 +685,7 @@ void get_encoder1_data_task(void *pvParameters)
       // printf("\n[get_encoder1_data_task] failed to send message to queue\n");
     }
 
-    vTaskDelay( 1000 );
+    vTaskDelay( 200 / portTICK_PERIOD_MS ); // 延时 200 ms
   }
 }
 

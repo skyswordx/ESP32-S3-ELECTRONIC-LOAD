@@ -153,6 +153,7 @@ extern BaseType_t debug_flag2;
     #include "our_encoder.hpp"
     #define ENCODER_1_PIN_A 18
     #define ENCODER_1_PIN_B 17
+    extern TaskHandle_t encoder1_task_handle;
     extern encoder_handle_t encoder1; // 旋转编码器对象
 
     void get_encoder1_data_task(void *pvParameters); // 获取编码器数据的任务函数
@@ -191,6 +192,8 @@ extern BaseType_t debug_flag2;
         extern MCP4725 MCP4725_device; // MCP4725 DAC 芯片对象
 
         #ifdef USE_VOLTAGE_PROTECTION
+            extern BaseType_t over_voltage_protection_flag; // 过压保护标志位
+            extern BaseType_t over_voltage_igonre_pid_flag; // 忽略 PID 控制器标志位
             extern SemaphoreHandle_t over_voltage_protection_xBinarySemaphore; // 过压保护二值信号量
             void over_voltage_protection_task(void *pvParameters); // 过压保护任务函数
         #endif // USE_VOLTAGE_PROTECTION
