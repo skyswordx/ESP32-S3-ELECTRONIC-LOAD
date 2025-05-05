@@ -3,12 +3,12 @@
 
 #include <Arduino.h>
 
-// GUI 更新使用的消息队列
-
+// 在实际 main.cpp 代码中更新使用的消息队列
 extern QueueHandle_t button_queue; // 按键消息队列句柄
 extern QueueHandle_t LVGL_queue; 
 
 
+// 定义一个枚举类型，作为队列中的一种数据类型表示警报
 enum alert_type_t {
     ALERT_TYPE_NONE = 0, // 无警报
     ALERT_TYPE_VOLTAGE = 1, // 电压过高
@@ -29,6 +29,8 @@ enum task_id_t {
     TASK_UNKNOWN = 99  
 };
 
+// 定义一个枚举类型，表示数据描述
+// 适用于一个任务中要发送多种数据的情况
 enum data_description_t {
 // FOT INA226
     DATA_DESCRIPTION_NONE = 0,
@@ -44,6 +46,7 @@ enum data_description_t {
     DATA_DESCRIPTION_UNKNOWN = 99
 };
 
+// 定义一个模板类 QueueElement_t，表示队列中的元素，支持不同类型的数据
 template <typename T>
 class QueueElement_t {
 public:
