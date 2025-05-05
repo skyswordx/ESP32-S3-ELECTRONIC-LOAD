@@ -62,18 +62,20 @@ void update_gui_task(void *pvParameters)
               if (guider_ui.main_page_measure_resistance_label != NULL && queue_element.data_description == DATA_DESCRIPTION_RESISTANCE){ lv_label_set_text_fmt(guider_ui.main_page_measure_resistance_label, "%.1f", queue_element.data); }
               break;
             case TASK_ENCODER:
-              // if (guider_ui.main_page_set_current_label != NULL && queue_element.data_description == DATA_DESCRIPTION_SET_CURRENT){ lv_label_set_text_fmt(guider_ui.main_page_set_current_label, "%.3f", queue_element.data); }
-
+              // 显示编码器的电流值
+              if (guider_ui.main_page_set_current_box != NULL && queue_element.data_description == DATA_DESCRIPTION_SET_CURRENT){ lv_spinbox_set_value(guider_ui.main_page_set_current_box, queue_element.data); }
+              lv_spinbox_set_value(guider_ui.main_page_over_voltage_box, WARNING_VOLTAGE); // shi 以后要删掉
               break;
             case TASK_DUMMY_SENSOR:
 
               break;
             case EVENT_TESING_LOAD_RATE:
-              if (guider_ui.main_page_start_load_regulation_button_label != NULL && queue_element.data_description == EVENT_TESING_LOAD_RATE){ lv_label_set_text_fmt(guider_ui.main_page_start_load_regulation_button_label, "%.4f", queue_element.data); }
+              if (guider_ui.main_page_start_load_regulation_button_label != NULL){ lv_label_set_text_fmt(guider_ui.main_page_load_regulation_label, "%.3f", queue_element.data); }
               break;
 
             case EVENT_OVER_VOLTAGE:
               printf("\n[update_gui_task] over voltage event");
+
               break;
             default:
               break;

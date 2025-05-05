@@ -135,6 +135,8 @@ void setup() {
 
   lv_scr_load(guider_ui.main_page); //每一个页面的名字都是 gui_guider 结构体的元素
   
+  
+  
   /* 或者运行 LVGL demo */
   // lv_demo_benchmark();
 
@@ -146,7 +148,7 @@ void setup() {
   }
 #endif
   /* 创建消息队列 */
-  LVGL_queue = xQueueCreate(10, sizeof(QueueElement_t<double>)); // 创建消息队列
+  LVGL_queue = xQueueCreate(1000, sizeof(QueueElement_t<double>)); // 创建消息队列
 
   if (LVGL_queue == NULL) {
     // Handle queue creation failure
@@ -201,7 +203,7 @@ void setup() {
               1024*4,
               NULL,
               2,
-              NULL,
+              &encoder1_task_handle,
               1
             );
 #endif
@@ -329,17 +331,17 @@ void setup() {
   #endif
 #endif
 
-esp_register_freertos_idle_hook_for_cpu(myIdleCallBackCore0, 0); // Core 0
-esp_register_freertos_idle_hook_for_cpu(myIdleCallBackCore1, 1); // Core 1
+// esp_register_freertos_idle_hook_for_cpu(myIdleCallBackCore0, 0); // Core 0
+// esp_register_freertos_idle_hook_for_cpu(myIdleCallBackCore1, 1); // Core 1
 
-        // 创建监控空闲周期的任务
-        xTaskCreatePinnedToCore(idle_cycle_monitor_task,
-          "IdleCycleMonitor",
-          1024*100,
-          NULL,
-          1, // 低优先级
-          NULL,
-          1); // 绑定到 Core 1
+//         // 创建监控空闲周期的任务
+//         xTaskCreatePinnedToCore(idle_cycle_monitor_task,
+//           "IdleCycleMonitor",
+//           1024*100,
+//           NULL,
+//           1, // 低优先级
+//           NULL,
+//           1); // 绑定到 Core 1
 
 }
 

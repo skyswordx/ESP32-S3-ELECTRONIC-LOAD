@@ -18,7 +18,7 @@
 #include "gui_guider.h"
 #include "our_queque.hpp" // 消息队列头文件
 
-#define WARNING_VOLTAGE 18 // 触发过压保护的电压
+#define WARNING_VOLTAGE 10 // 触发过压保护的电压
 
 extern SemaphoreHandle_t gui_xMutex;  // gui 互斥锁句柄，LVGL 线程不安全，需要加锁
 
