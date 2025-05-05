@@ -41,6 +41,7 @@ void output_data_collection_task(void *pvParameters) {
       // 该任务用于根据电流控制器对象的 target 设定值数据设置电流值
       while (1) {
         current_ctrl.pid_control_service();
+        vTaskDelay(10 / portTICK_PERIOD_MS); // 等待 10ms
       }
     }
 

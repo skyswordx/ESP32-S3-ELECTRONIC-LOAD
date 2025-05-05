@@ -322,6 +322,9 @@ void lvgl_task(void *pvParameters)
 
 ## LVGL 交互
 
+base
+- [Widgets — LVGL documentation](https://docs.lvgl.io/8.3/widgets/index.html)
+
 - [LVGL V8应用——通过按键切换页面_lvgl按键切换界面-CSDN博客](https://blog.csdn.net/m0_37187962/article/details/125526292)
 
 - [Gui-Guider1.8.1 数字时钟控件找不到定义，无法编译-CSDN博客](https://blog.csdn.net/qq_48211392/article/details/145586269)
