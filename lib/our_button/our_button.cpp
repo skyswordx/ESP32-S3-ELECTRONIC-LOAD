@@ -52,52 +52,52 @@ void IRAM_ATTR button1_press_ISR(void *arg ){ // 产生 GPIO 中断时调用
    
     portYIELD_FROM_ISR(xHigherPriorityTaskWoken); 
     // 如果有更高优先级的任务需要运行，立即切换到那个任务（辅助任务，因为此任务设定为最高优先级）
-  }
-  
-  void IRAM_ATTR button2_press_ISR(void *arg ){ 
-    BaseType_t xHigherPriorityTaskWoken = pdFALSE; 
-  
-    xSemaphoreGiveFromISR(button_xBinarySemaphore, &xHigherPriorityTaskWoken);
-  
-    gpio_num_t GPIO_PIN = button2.pin; 
-    xQueueSendFromISR(button_queue, &GPIO_PIN, &xHigherPriorityTaskWoken); 
-  
-    portYIELD_FROM_ISR(xHigherPriorityTaskWoken); 
-    
-  }
-  
-  void IRAM_ATTR button3_press_ISR(void *arg ){ 
-    BaseType_t xHigherPriorityTaskWoken = pdFALSE; 
-  
-    xSemaphoreGiveFromISR(button_xBinarySemaphore, &xHigherPriorityTaskWoken);
-  
-    gpio_num_t GPIO_PIN = button3.pin; 
-    xQueueSendFromISR(button_queue, &GPIO_PIN, &xHigherPriorityTaskWoken); 
-  
-    portYIELD_FROM_ISR(xHigherPriorityTaskWoken); 
-    
-  }
-  
-  void IRAM_ATTR button4_press_ISR(void *arg ){ 
-    BaseType_t xHigherPriorityTaskWoken = pdFALSE; 
-  
-    xSemaphoreGiveFromISR(button_xBinarySemaphore, &xHigherPriorityTaskWoken);
-  
-    gpio_num_t GPIO_PIN = button4.pin; 
-    xQueueSendFromISR(button_queue, &GPIO_PIN, &xHigherPriorityTaskWoken); 
-  
-    portYIELD_FROM_ISR(xHigherPriorityTaskWoken); 
-    
-  }
+}
 
-    void IRAM_ATTR encoder1_button_press_ISR(void *arg ){ 
-        BaseType_t xHigherPriorityTaskWoken = pdFALSE; 
+void IRAM_ATTR button2_press_ISR(void *arg ){ 
+  BaseType_t xHigherPriorityTaskWoken = pdFALSE; 
+
+  xSemaphoreGiveFromISR(button_xBinarySemaphore, &xHigherPriorityTaskWoken);
+
+  gpio_num_t GPIO_PIN = button2.pin; 
+  xQueueSendFromISR(button_queue, &GPIO_PIN, &xHigherPriorityTaskWoken); 
+
+  portYIELD_FROM_ISR(xHigherPriorityTaskWoken); 
+  
+}
+
+void IRAM_ATTR button3_press_ISR(void *arg ){ 
+  BaseType_t xHigherPriorityTaskWoken = pdFALSE; 
+
+  xSemaphoreGiveFromISR(button_xBinarySemaphore, &xHigherPriorityTaskWoken);
+
+  gpio_num_t GPIO_PIN = button3.pin; 
+  xQueueSendFromISR(button_queue, &GPIO_PIN, &xHigherPriorityTaskWoken); 
+
+  portYIELD_FROM_ISR(xHigherPriorityTaskWoken); 
+  
+}
+
+void IRAM_ATTR button4_press_ISR(void *arg ){ 
+  BaseType_t xHigherPriorityTaskWoken = pdFALSE; 
+
+  xSemaphoreGiveFromISR(button_xBinarySemaphore, &xHigherPriorityTaskWoken);
+
+  gpio_num_t GPIO_PIN = button4.pin; 
+  xQueueSendFromISR(button_queue, &GPIO_PIN, &xHigherPriorityTaskWoken); 
+
+  portYIELD_FROM_ISR(xHigherPriorityTaskWoken); 
+  
+}
+
+void IRAM_ATTR encoder1_button_press_ISR(void *arg ){ 
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE; 
+
+    xSemaphoreGiveFromISR(button_xBinarySemaphore, &xHigherPriorityTaskWoken);
+
+    gpio_num_t GPIO_PIN = encoder1_button.pin; 
+    xQueueSendFromISR(button_queue, &GPIO_PIN, &xHigherPriorityTaskWoken); 
+
+    portYIELD_FROM_ISR(xHigherPriorityTaskWoken); 
     
-        xSemaphoreGiveFromISR(button_xBinarySemaphore, &xHigherPriorityTaskWoken);
-    
-        gpio_num_t GPIO_PIN = encoder1_button.pin; 
-        xQueueSendFromISR(button_queue, &GPIO_PIN, &xHigherPriorityTaskWoken); 
-    
-        portYIELD_FROM_ISR(xHigherPriorityTaskWoken); 
-        
-    }
+}
