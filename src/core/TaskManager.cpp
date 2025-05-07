@@ -186,7 +186,9 @@ TaskStats TaskManager::getTaskStats(TaskHandle_t handle) {
         stats.priority = taskDetails.uxCurrentPriority;
         stats.taskState = taskDetails.eCurrentState;
         stats.stackHighWater = taskDetails.usStackHighWaterMark;
-        stats.coreId = taskDetails.xCoreID;
+        
+        // ESP32专用：获取运行此任务的核心ID
+        stats.coreId = xTaskGetAffinity(handle);
         
         // 获取任务栈大小（FreeRTOS API未提供直接获取方式，这里使用默认值）
         stats.stackSize = 1024 * 4; // 默认值
