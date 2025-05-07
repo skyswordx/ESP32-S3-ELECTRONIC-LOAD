@@ -11,6 +11,7 @@
 #include "core/TaskManager.h"
 #include "devices/EncoderEvent.h"
 
+
 // 编码器值处理任务
 void encoderProcessTask(void* params) {
     // 创建编码器事件监听器
@@ -26,7 +27,7 @@ void encoderProcessTask(void* params) {
             return false;
         }
         
-        std::string getListenerId() const override {
+        String getListenerId() const override {
             return "EncoderValueListener";
         }
     };

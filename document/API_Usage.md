@@ -9,6 +9,11 @@
 3. **EventListener**: 事件监听器，用户需要实现该接口以处理事件。
 4. **TaskManager**: 任务管理器，负责管理FreeRTOS任务的创建、调度和销毁。
 
+记得在 `freeRTOS/task.h` 中定义
+```cpp
+ #define configTASKLIST_INCLUDE_COREID 1
+```
+
 ## C++单例类介绍
 
 在继续了解具体API之前，我们需要理解"单例类"的概念。单例类是一种特殊的类，它在整个程序中只有一个实例（对象）。
