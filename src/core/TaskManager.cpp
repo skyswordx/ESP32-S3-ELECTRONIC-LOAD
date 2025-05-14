@@ -180,12 +180,10 @@ TaskStats TaskManager::getTaskStats(TaskHandle_t handle) {
     
     // 获取任务信息
     if (!stats.name.isEmpty()) {
-        TaskStatus_t taskDetails;
-        vTaskGetInfo(handle, &taskDetails, pdTRUE, eInvalid);
-        
-        stats.priority = taskDetails.uxCurrentPriority;
-        stats.taskState = taskDetails.eCurrentState;
-        stats.stackHighWater = taskDetails.usStackHighWaterMark;
+        // 使用单独的API替代vTaskGetInfo
+        stats.priority = uxTaskPriorityGet(handle);
+        stats.taskState = eTaskGetState(handle);
+        stats.stackHighWater = uxTaskGetStackHighWaterMark(handle);
         
         // ESP32专用：获取运行此任务的核心ID
         stats.coreId = xTaskGetAffinity(handle);
