@@ -35,6 +35,20 @@ public:
     virtual bool init() = 0;
     
     /**
+<<<<<<< Updated upstream
+=======
+     * @brief 更新设备状态
+     */
+    virtual void update() = 0;
+    
+    /**
+     * @brief 获取设备类型
+     * @return 设备类型名称
+     */
+    virtual const char* getType() const = 0;
+    
+    /**
+>>>>>>> Stashed changes
      * @brief 获取设备名称
      * @return 设备名称
      */
