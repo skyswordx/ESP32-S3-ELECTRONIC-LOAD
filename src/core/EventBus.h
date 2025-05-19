@@ -23,6 +23,9 @@
  */
 class EventBus {
 public:
+    // 监听所有类型事件的特殊值
+    static const EventType ALL_EVENTS = static_cast<EventType>(-1);
+    
     /**
      * @brief 获取EventBus单例
      * @return EventBus单例引用
@@ -32,16 +35,14 @@ public:
     /**
      * @brief 发布事件
      * @param event 要发布的事件
-     * @return 如果有监听器处理了该事件返回true，否则返回false
      */
-    bool publish(const Event& event);
+    void publish(const Event& event);
 
     /**
      * @brief 发布事件(智能指针版本)
      * @param event 要发布的事件的智能指针
-     * @return 如果有监听器处理了该事件返回true，否则返回false
      */
-    bool publish(const std::shared_ptr<Event>& event);
+    void publish(const std::shared_ptr<Event>& event);
     
     /**
      * @brief 订阅特定类型的事件
@@ -56,12 +57,23 @@ public:
      * @param listener 事件监听器指针
      */
     void unsubscribe(EventType type, EventListener* listener);
-    
-    /**
+      /**
      * @brief 取消特定监听器的所有订阅
      * @param listener 要取消订阅的监听器
      */
     void unsubscribeAll(EventListener* listener);
+    
+    /**
+     * @brief 注册监听器（监听所有事件）
+     * @param listener 监听器指针
+     */
+    void registerListener(EventListener* listener);
+    
+    /**
+     * @brief 取消注册监听器
+     * @param listener 监听器指针
+     */
+    void unregisterListener(EventListener* listener);
 
 private:
     /**

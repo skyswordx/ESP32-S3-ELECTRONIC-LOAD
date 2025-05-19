@@ -21,13 +21,11 @@ public:
      * @brief 析构函数
      */
     virtual ~EventListener() = default;
-    
-    /**
+      /**
      * @brief 接收事件的接口方法
      * @param event 接收到的事件对象
-     * @return 如果事件被处理返回true，否则返回false
      */
-    virtual bool onEvent(const Event& event) = 0;
+    virtual void onEvent(const Event& event) = 0;
     
     /**
      * @brief 获取监听器的标识符(用于调试)

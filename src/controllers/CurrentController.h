@@ -34,14 +34,25 @@ public:
      * @param outputCallback 输出回调函数
      */
     void setOutputCallback(std::function<void(double)> outputCallback);
-    
-    /**
+      /**
      * @brief 计算并设置控制输出
      * @param measured 当前电流测量值
      * @return 控制器输出电压值
      */
     double compute(double measured) override;
     
+    /**
+     * @brief 设置目标电流值
+     * @param setpoint 目标电流(mA)
+     */
+    void setSetpoint(double setpoint) { setTarget(setpoint); }
+    
+    /**
+     * @brief 获取目标电流值
+     * @return 目标电流(mA)
+     */
+    double getSetpoint() const { return getTarget(); }
+
     /**
      * @brief 设置限流保护值
      * @param limit 电流限制值(mA)

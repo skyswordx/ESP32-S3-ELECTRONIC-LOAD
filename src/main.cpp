@@ -13,18 +13,15 @@
 
 
 // 编码器值处理任务
-void encoderProcessTask(void* params) {
-    // 创建编码器事件监听器
+void encoderProcessTask(void* params) {    // 创建编码器事件监听器
     class EncoderValueListener : public EventListener {
     public:
-        bool onEvent(const Event& event) override {
+        void onEvent(const Event& event) override {
             if (event.getType() == EventType::ENCODER_CHANGED) {
                 const auto& encoderEvent = static_cast<const EncoderValueChangedEvent&>(event);
                 double value = encoderEvent.getValue();
                 Serial.printf("编码器值更新: %.2f\n", value);
-                return true;
             }
-            return false;
         }
         
         String getListenerId() const override {
@@ -63,14 +60,9 @@ void encoderSimulationTask(void* params) {
         } else if (encoderValue < 0.0) {
             direction = 1;
         }
-        
-        // 创建并发布编码器值变化事件
+          // 创建并发布编码器值变化事件
         EncoderValueChangedEvent event(encoderValue);
-        bool handled = EventBus::getInstance().publish(event);
-        
-        if (!handled) {
-            Serial.println("警告: 没有监听器处理编码器事件");
-        }
+        EventBus::getInstance().publish(event);
         
         // 每秒更新一次编码器值
         vTaskDelay(pdMS_TO_TICKS(1000));

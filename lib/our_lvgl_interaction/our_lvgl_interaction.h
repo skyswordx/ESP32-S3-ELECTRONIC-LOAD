@@ -15,8 +15,8 @@
 // #include "lv_port_indev.h"
 
 #include <Arduino.h>
-#include "gui_guider.h"
-#include "our_queque.hpp" // 消息队列头文件
+#include "../generated/gui_guider.h"
+#include "../our_queue/our_queque.hpp" // 消息队列头文件
 
 #define WARNING_VOLTAGE 11 // 触发过压保护的电压
 

@@ -64,12 +64,17 @@ public:
      * @return 任务名称
      */
     String getName() const { return name_; }
-    
-    /**
+      /**
      * @brief 获取任务句柄
      * @return 任务句柄
      */
     TaskHandle_t getHandle() const { return handle_; }
+    
+    /**
+     * @brief 检查任务是否正在运行
+     * @return 如果任务在运行返回true，否则返回false
+     */
+    bool isRunning() const { return handle_ != NULL; }
     
 protected:
     /**

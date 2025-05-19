@@ -30,13 +30,11 @@ EventBus::~EventBus() {
     }
 }
 
-bool EventBus::publish(const Event& event) {
-    bool processed = false;
-    
+void EventBus::publish(const Event& event) {
     // 尝试获取互斥锁
     if (xSemaphoreTake(mutex_, portMAX_DELAY) != pdTRUE) {
         Serial.println("Failed to take EventBus mutex!");
-        return false;
+        return;
     }
     
     // 获取事件类型对应的监听器列表
@@ -51,23 +49,18 @@ bool EventBus::publish(const Event& event) {
         // 通知所有监听器
         for (auto listener : listenersCopy) {
             if (listener) {
-                if (listener->onEvent(event)) {
-                    processed = true;
-                }
+                listener->onEvent(event);
             }
-        }
-    } else {
+        }    } else {
         xSemaphoreGive(mutex_); // 如果没有监听器，释放互斥锁
     }
-    
-    return processed;
 }
 
-bool EventBus::publish(const std::shared_ptr<Event>& event) {
+void EventBus::publish(const std::shared_ptr<Event>& event) {
     if (!event) {
-        return false;
+        return;
     }
-    return publish(*event);
+    publish(*event);
 }
 
 void EventBus::subscribe(EventType type, EventListener* listener) {
@@ -175,4 +168,26 @@ void EventBus::unsubscribeAll(EventListener* listener) {
     Serial.printf("Listener %s unsubscribed from all events\n", listener->getListenerId().c_str());
     
     xSemaphoreGive(mutex_); // 释放互斥锁
+}
+
+void EventBus::registerListener(EventListener* listener) {
+    if (!listener) {
+        return;
+    }
+    
+    // 为ALL_EVENTS类型注册监听器，表示监听所有事件
+    subscribe(ALL_EVENTS, listener);
+    
+    Serial.printf("Listener %s registered for all events\n", listener->getListenerId().c_str());
+}
+
+void EventBus::unregisterListener(EventListener* listener) {
+    if (!listener) {
+        return;
+    }
+    
+    // 取消所有事件的监听
+    unsubscribeAll(listener);
+    
+    Serial.printf("Listener %s unregistered from all events\n", listener->getListenerId().c_str());
 }

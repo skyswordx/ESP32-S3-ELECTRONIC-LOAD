@@ -63,3 +63,5 @@ void CurrentController::service(double measured) {
     // 计算并设置输出
     compute(measured);
 }
+
+// setSetpoint 方法已在头文件中定义

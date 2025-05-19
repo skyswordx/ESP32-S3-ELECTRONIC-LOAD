@@ -48,6 +48,10 @@ enum class EventType {
     // UI事件
     UI_PAGE_CHANGED,
     
+    // 通用事件类型
+    BUTTON,     // 按钮通用事件
+    CONTROL,    // 控制通用事件
+    
     // 未知事件
     UNKNOWN
 };
