@@ -35,14 +35,35 @@ void output_data_collection_task(void *pvParameters) {
 /*********************************** PID Setup ***********************************/
 // 包含自定义的 PID 控制器类和 VOFA 下位机
 #ifdef USE_PID_CONTROLLER
-    #include "our_pid_controller.hpp"
-    PID_controller_t<double> current_ctrl(DAC_OUTPUT_V_MAX, DAC_OUTPUT_V_MIN, CURRENT_TASK_KP, CURRENT_TASK_KI, CURRENT_TASK_KD);  
-
+    #include "our_pid_controller.hpp"   
+    PID_controller_t<double> current_ctrl(DAC_OUTPUT_V_MAX, DAC_OUTPUT_V_MIN, CURRENT_TASK_KP, CURRENT_TASK_KI, CURRENT_TASK_KD);
+    
     void set_current_task(void *pvParameters) {
-      // 该任务用于根据电流控制器对象的 target 设定值数据设置电流值
+      QueueElement_t<double> received_message;
+      
       while (1) {
-        current_ctrl.pid_control_service();
-        vTaskDelay(10 / portTICK_PERIOD_MS); // 等待 10ms
+        // 阻塞等待队列消息
+        if (xQueueReceive(current_control_queue, &received_message, portMAX_DELAY) == pdTRUE) {
+          printf("\n[set_current_task] Received message from task_id: %d, data: %.3f mA", 
+                 received_message.task_id, received_message.data);
+          
+          // 根据task_id（优先级）处理消息
+          if (received_message.task_id == EVENT_OVER_VOLTAGE) {
+            // 紧急处理：过压保护，立即设置电流为0
+            printf("\n[set_current_task] EMERGENCY: Over-voltage protection, setting current to 0 mA");
+            current_ctrl.process_variable.target = 0.0;
+          } else {
+            // 正常消息处理：设置目标电流值
+            current_ctrl.process_variable.target = received_message.data;
+            printf("\n[set_current_task] Set target current to: %.3f mA", received_message.data);
+          }
+          
+          // 执行PID控制
+          current_ctrl.pid_control_service();
+        }
+        
+        // 短暂延时防止任务独占CPU
+        vTaskDelay(1 / portTICK_PERIOD_MS);
       }
     }
 
@@ -432,10 +453,18 @@ void over_voltage_protection_task(void *pvParameters){
           printf("\n[over_voltage_protection_task] LVGL warning");
           xSemaphoreGive(gui_xMutex); // 释放互斥锁
         }
-      #endif
-
+      #endif      
       #ifdef USE_PID_CONTROLLER
-        current_ctrl.process_variable.target = 0.0;
+        // 发送紧急优先级消息到电流控制队列（使用统一的QueueElement_t结构）
+        QueueElement_t<double> emergency_message(EVENT_OVER_VOLTAGE, DATA_DESCRIPTION_EMERGENCY_STOP, 0.0);
+        
+        if (xQueueSend(current_control_queue, &emergency_message, 0) == pdTRUE) {
+          printf("\n[over_voltage_protection_task] Sent emergency current setpoint message: 0.0 mA");
+        } else {
+          printf("\n[over_voltage_protection_task] Failed to send emergency message - queue full");
+          // 如果队列满了，直接设置目标值作为备用方案
+          current_ctrl.process_variable.target = 0.0;
+        }
         // for (int i = 0; i < 1000; i++){
         //   printf("\n[over_voltage_protection_task] block %d", i);
         // } 
@@ -656,9 +685,17 @@ void get_encoder1_data_task(void *pvParameters)
 
       if (testing_load_flag == pdFALSE  && over_voltage_igonre_pid_flag == pdFALSE) {
         #ifdef USE_PID_CONTROLLER
-          // 这里是 PID 控制器的电流值
-          printf("\n[get_encoder1_data_task] modified encoder1 value B: %.3f", value);
-          current_ctrl.process_variable.target = value; // 设置 PID 控制器的目标值
+          // 创建编码器电流控制消息 (使用统一的QueueElement_t结构)
+          QueueElement_t<double> encoder_message(TASK_ENCODER, DATA_DESCRIPTION_CURRENT_SETPOINT, value);
+          
+          // 发送消息到电流控制队列
+          if (xQueueSend(current_control_queue, &encoder_message, 0) == pdTRUE) {
+            printf("\n[get_encoder1_data_task] Sent current setpoint message: %.3f mA", value);
+          } else {
+            printf("\n[get_encoder1_data_task] Failed to send current setpoint message - queue full");
+          }
+          
+          // 继续发送数据到 LVGL 队列用于显示
           queue_element1.data = value; // 把该值传递给 LVGL 队列的元素
   
         #else
@@ -667,7 +704,7 @@ void get_encoder1_data_task(void *pvParameters)
           MCP4725_device.setVoltage(from_set_current2voltage_V(value/1000.0)); // 设置 DAC 的目标值
 
         #endif
-      }else{
+      } else {
         printf("\n[get_encoder1_data_task] testing_load_flag: %d, over_voltage_protection_flag: %d", testing_load_flag, over_voltage_igonre_pid_flag);
       }
 

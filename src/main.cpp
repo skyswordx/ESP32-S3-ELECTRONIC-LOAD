@@ -268,14 +268,23 @@ void setup() {
      // Handle semaphore creation failure
      printf("semaphore creation failure");
      return;
-   }
-   /* 创建消息队列 */
+   }   /* 创建消息队列 */
    LVGL_queue = xQueueCreate(1000, sizeof(QueueElement_t<double>)); // 创建消息队列
 
    if (LVGL_queue == NULL) {
      // Handle queue creation failure
      while(1) {
        printf("queue creation failure");
+       vTaskDelay(1000 / portTICK_PERIOD_MS);
+     }
+   }
+
+   /* 创建电流控制队列 */  current_control_queue = xQueueCreate(10, sizeof(QueueElement_t<double>)); // 创建电流控制队列
+  
+  if (current_control_queue == NULL) {
+     // Handle queue creation failure
+     while(1) {
+       printf("current control queue creation failure");
        vTaskDelay(1000 / portTICK_PERIOD_MS);
      }
    }
