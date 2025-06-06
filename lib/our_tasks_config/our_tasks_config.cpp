@@ -37,6 +37,130 @@ void output_data_collection_task(void *pvParameters) {
 #ifdef USE_PID_CONTROLLER
     #include "our_pid_controller.hpp"   
     PID_controller_t<double> current_ctrl(DAC_OUTPUT_V_MAX, DAC_OUTPUT_V_MIN, CURRENT_TASK_KP, CURRENT_TASK_KI, CURRENT_TASK_KD);
+      // 添加优先级状态管理变量
+    static priority_state_t current_priority_state = PRIORITY_STATE_NORMAL;
+    static double last_normal_current = 0.0; // 保存正常状态下的最后电流值，用于退出保护状态时恢复
+    static TickType_t over_voltage_start_time = 0; // 过压保护开始时间
+    
+    /**
+     * @brief 检查消息是否应该被接受（优先级仲裁）
+     * @param message 接收到的消息
+     * @return true 接受消息，false 拒绝消息
+     */
+    bool should_accept_message(const QueueElement_t<double>& message) {
+        switch (current_priority_state) {
+            case PRIORITY_STATE_NORMAL:
+                // 正常状态：接受所有消息
+                return true;
+                
+            case PRIORITY_STATE_OVER_VOLTAGE:
+                // 过压保护状态：最高优先级，只接受过压相关消息
+                // 忽略编码器和负载测试消息
+                return (message.task_id == EVENT_OVER_VOLTAGE || 
+                        message.task_id == EVENT_OVER_VOLTAGE_CLEAR);
+                
+            case PRIORITY_STATE_TESTING:
+                // 负载测试状态：接受负载测试消息和过压消息（过压可以托管测试状态）
+                // 忽略编码器消息，防止编码器退出测试状态
+                return (message.task_id == EVENT_OVER_VOLTAGE || 
+                        message.task_id == EVENT_TESING_LOAD_RATE ||
+                        message.task_id == EVENT_TESTING_COMPLETE);
+                
+            case PRIORITY_STATE_EMERGENCY:
+                // 紧急状态：只接受紧急消息
+                return (message.task_id == EVENT_OVER_VOLTAGE);
+                
+            default:
+                return false;
+        }
+    }/**
+     * @brief 处理状态转换
+     * @param message 触发状态转换的消息
+     */
+    void handle_state_transition(const QueueElement_t<double>& message) {
+        switch (message.task_id) {
+            case EVENT_OVER_VOLTAGE:
+                // 过压消息具有最高优先级，可以从任何状态转入过压状态
+                if (current_priority_state != PRIORITY_STATE_OVER_VOLTAGE) {
+                    // 保存当前正常电流值（如果不是从过压状态转入）
+                    if (current_priority_state == PRIORITY_STATE_NORMAL) {
+                        last_normal_current = current_ctrl.process_variable.target;
+                    }
+                    current_priority_state = PRIORITY_STATE_OVER_VOLTAGE;
+                    over_voltage_start_time = xTaskGetTickCount();
+                    printf("\n[set_current_task] State transition to OVER_VOLTAGE protection");
+                }
+                break;
+                  case EVENT_OVER_VOLTAGE_CLEAR:
+                // 过压解除，返回正常状态
+                if (current_priority_state == PRIORITY_STATE_OVER_VOLTAGE) {
+                    current_priority_state = PRIORITY_STATE_NORMAL;
+                    printf("\n[set_current_task] Over-voltage cleared, returned to NORMAL state");
+                    // 注意：电流值恢复将在状态处理逻辑中统一管理
+                }
+                break;
+                
+            case EVENT_TESING_LOAD_RATE:
+                // 负载测试消息只能在正常状态下启动测试
+                if (current_priority_state == PRIORITY_STATE_NORMAL) {
+                    last_normal_current = current_ctrl.process_variable.target;
+                    current_priority_state = PRIORITY_STATE_TESTING;
+                    printf("\n[set_current_task] State transition to TESTING mode");
+                }
+                // 如果在其他状态（如过压），忽略负载测试请求
+                break;
+                  case EVENT_TESTING_COMPLETE:
+                // 负载测试完成，返回正常状态
+                if (current_priority_state == PRIORITY_STATE_TESTING) {
+                    current_priority_state = PRIORITY_STATE_NORMAL;
+                    printf("\n[set_current_task] Load testing complete, returned to NORMAL state");
+                    // 注意：电流值恢复将在状态处理逻辑中统一管理
+                }
+                break;
+                
+            case TASK_ENCODER:
+                // 编码器消息不会主动改变状态，只在正常状态下工作
+                // 不允许编码器消息退出测试或过压状态
+                if (current_priority_state == PRIORITY_STATE_NORMAL) {
+                    // 在正常状态下更新last_normal_current
+                    last_normal_current = message.data;
+                }
+                break;
+                
+            default:
+                break;
+        }
+    }
+    
+    /**
+     * @brief 检查是否可以退出过压保护状态
+     * @return true 可以退出，false 不能退出
+     */
+    bool can_exit_over_voltage_protection() {
+        // 可以添加额外的条件检查，比如电压是否已经降到安全范围
+        // 这里简单地检查是否在过压状态超过一定时间
+        const TickType_t MIN_PROTECTION_TIME = pdMS_TO_TICKS(1000); // 最少保护1秒
+        
+        return (current_priority_state == PRIORITY_STATE_OVER_VOLTAGE && 
+                (xTaskGetTickCount() - over_voltage_start_time) > MIN_PROTECTION_TIME);
+    }
+    
+    /**
+     * @brief 获取当前优先级状态（用于调试和监控）
+     * @return 当前的优先级状态
+     */
+    priority_state_t get_current_priority_state() {
+        return current_priority_state;
+    }
+    
+    /**
+     * @brief 强制退出当前优先级状态（紧急情况下使用）
+     * @param force_state 要强制设置的状态
+     */
+    void force_priority_state(priority_state_t force_state) {
+        printf("\n[set_current_task] Force state transition from %d to %d", current_priority_state, force_state);
+        current_priority_state = force_state;
+    }
     
     void set_current_task(void *pvParameters) {
       QueueElement_t<double> received_message;
@@ -44,22 +168,67 @@ void output_data_collection_task(void *pvParameters) {
       while (1) {
         // 阻塞等待队列消息
         if (xQueueReceive(current_control_queue, &received_message, portMAX_DELAY) == pdTRUE) {
-          printf("\n[set_current_task] Received message from task_id: %d, data: %.3f mA", 
-                 received_message.task_id, received_message.data);
+          printf("\n[set_current_task] Received message from task_id: %d, data: %.3f mA, current_state: %d", 
+                 received_message.task_id, received_message.data, current_priority_state);
           
-          // 根据task_id（优先级）处理消息
-          if (received_message.task_id == EVENT_OVER_VOLTAGE) {
-            // 紧急处理：过压保护，立即设置电流为0
-            printf("\n[set_current_task] EMERGENCY: Over-voltage protection, setting current to 0 mA");
-            current_ctrl.process_variable.target = 0.0;
-          } else {
-            // 正常消息处理：设置目标电流值
-            current_ctrl.process_variable.target = received_message.data;
-            printf("\n[set_current_task] Set target current to: %.3f mA", received_message.data);
+          // 优先级仲裁：检查是否应该接受此消息
+          if (!should_accept_message(received_message)) {
+            printf("\n[set_current_task] Message rejected due to priority arbitration");
+            continue; // 拒绝消息，继续等待下一个
+          }
+            // 处理状态转换
+          handle_state_transition(received_message);
+          
+          // 根据当前优先级状态处理电流设定
+          switch (current_priority_state) {
+            case PRIORITY_STATE_OVER_VOLTAGE:
+              // 过压保护状态：强制电流为0
+              current_ctrl.process_variable.target = 0.0;
+              printf("\n[set_current_task] OVER_VOLTAGE state: forcing current to 0 mA");
+              break;
+              
+            case PRIORITY_STATE_TESTING:
+              // 负载测试状态：使用消息中的电流值（来自测试任务）
+              current_ctrl.process_variable.target = received_message.data;
+              printf("\n[set_current_task] TESTING state: set current to %.3f mA", received_message.data);
+              break;
+                case PRIORITY_STATE_NORMAL:
+              // 正常状态：使用消息中的电流值，并更新last_normal_current
+              // 特殊处理：如果是状态退出事件，恢复之前保存的电流值
+              if (received_message.task_id == EVENT_OVER_VOLTAGE_CLEAR || 
+                  received_message.task_id == EVENT_TESTING_COMPLETE) {
+                // 状态退出，恢复到之前保存的正常电流值
+                current_ctrl.process_variable.target = last_normal_current;
+                printf("\n[set_current_task] NORMAL state: restored current to %.3f mA", last_normal_current);
+              } else {
+                // 正常的电流设定，使用消息中的电流值并更新保存值
+                current_ctrl.process_variable.target = received_message.data;
+                last_normal_current = received_message.data;
+                printf("\n[set_current_task] NORMAL state: set current to %.3f mA", received_message.data);
+              }
+              break;
+              
+            case PRIORITY_STATE_EMERGENCY:
+              // 紧急状态：强制电流为0
+              current_ctrl.process_variable.target = 0.0;
+              printf("\n[set_current_task] EMERGENCY state: forcing current to 0 mA");
+              break;
+              
+            default:
+              printf("\n[set_current_task] Unknown priority state, ignoring message");
+              continue;
           }
           
           // 执行PID控制
           current_ctrl.pid_control_service();
+        }
+        
+        // 检查是否可以退出过压保护状态
+        if (can_exit_over_voltage_protection()) {
+            current_priority_state = PRIORITY_STATE_NORMAL;
+            // 可选：恢复到之前的电流值
+            // current_ctrl.process_variable.target = last_normal_current;
+            printf("\n[set_current_task] Exited over-voltage protection, returned to NORMAL state");
         }
         
         // 短暂延时防止任务独占CPU
@@ -279,30 +448,36 @@ void get_ina226_data_task(void *pvParameters)
 
     double DAC_output_V = MCP4725_device.getVoltage();
     // printf("\n[get_sensors_task] INA226: %.3f mA, %.3f V, DAC set: %.3f V, I_target: %.3f A", measure_current_mA, measure_voltage_V, DAC_output_V, (DAC_output_V/(125 * RSHUNT)));
-    printf("\n[get_ina226_data_task] INA226 V/mA: %.3f,%.3f", measure_voltage_V, measure_current_mA); 
-
-    // 检查 INA226 电压是否超过警告值，如果超过则进行过压保护
+    printf("\n[get_ina226_data_task] INA226 V/mA: %.3f,%.3f", measure_voltage_V, measure_current_mA);     // 检查 INA226 电压是否超过警告值，如果超过则进行过压保护
     if(measure_voltage_V >= WARNING_VOLTAGE){
       // 电压过高，警告
     
       // 这里触发过压之后的保护程序
       xSemaphoreGive(over_voltage_protection_xBinarySemaphore);
     }
-
-    if (measure_voltage_V < WARNING_VOLTAGE) {
-      // 电压正常，清除过压保护标志位
-      over_voltage_protection_flag = pdFALSE;
+    
+    // 检查过压状态是否可以解除
+    static bool last_over_voltage_state = false;
+    bool current_over_voltage = (measure_voltage_V >= WARNING_VOLTAGE);
+    
+    if (last_over_voltage_state && !current_over_voltage) {
+      // 从过压状态转为正常状态，发送过压解除消息
+      QueueElement_t<double> over_voltage_clear_message(EVENT_OVER_VOLTAGE_CLEAR, DATA_DESCRIPTION_CURRENT_SETPOINT, 0.0);
+      xQueueSend(current_control_queue, &over_voltage_clear_message, 0);
+      printf("\n[get_ina226_data_task] Over-voltage cleared, sent EVENT_OVER_VOLTAGE_CLEAR message");
+    }
+    last_over_voltage_state = current_over_voltage;if (measure_voltage_V < WARNING_VOLTAGE) {
+      // 电压正常，过压状态将在接收端自动管理
       #ifdef USE_LCD_DISPLAY
         // 获取LVGL互斥锁，确保LVGL操作线程安全
         if (xSemaphoreTake(gui_xMutex, portMAX_DELAY) == pdTRUE) {
-          // 显示过压保护警告控件（假设guider_ui中有overvoltage_warning控件）
+          // 隐藏过压保护警告控件
           lv_obj_add_flag(guider_ui.main_page_over_voltage_warning_msgbox, LV_OBJ_FLAG_HIDDEN);
-          // lv_obj_set_style_opa(guider_ui.main_page, LV_OPA_60, LV_PART_MAIN | LV_STATE_DEFAULT);
-          printf("\n[over_voltage_protection_task] LVGL warning");
+          printf("\n[get_ina226_data_task] LVGL warning cleared");
           xSemaphoreGive(gui_xMutex); // 释放互斥锁
         }
       #endif
-      over_voltage_igonre_pid_flag = pdFALSE; // 清除过压保护忽略 PID 标志位
+      // 移除标志位清除，状态管理统一在接收端处理
     }
  
     int return_value1 = xQueueSend(LVGL_queue, (void *)&queue_element1, 0); // 发送电流值到消息队列
@@ -340,15 +515,16 @@ void get_load_changing_rate_task(void *pvParameters){
   double rate = 0.0;
 
   QueueElement_t<double> queue_element(EVENT_TESING_LOAD_RATE); // 定义一个队列元素对象
-
   while(1){
     #ifdef USE_IIC_DEVICE
       xSemaphoreTake(load_testing_xBinarySemaphore, portMAX_DELAY); // 总是保持阻塞等待二值信号量
-      testing_load_flag = pdTRUE; // 设置测试负载标志位
+      printf("\n[get_load_changing_rate_task] Load rate testing started");
+      // 移除标志位设置，状态管理统一在接收端处理
       
       #ifdef USE_PID_CONTROLLER
-          // 这里是 PID 控制器的电流值
-          current_ctrl.process_variable.target = TESING_MIN_CURRENT_A * 1000; // 设置 PID 控制器的目标值
+          // 发送测试消息到电流控制队列，接收端会自动管理状态
+          QueueElement_t<double> test_message_min(EVENT_TESING_LOAD_RATE, DATA_DESCRIPTION_CURRENT_SETPOINT, TESING_MIN_CURRENT_A * 1000);
+          xQueueSend(current_control_queue, &test_message_min, 0);
       #else
           // 这里是 DAC 的电流值
           MCP4725_device.setVoltage(from_set_current2voltage_V(TESING_MIN_CURRENT_A)); // 设置输出电压为第一个电流值
@@ -362,12 +538,11 @@ void get_load_changing_rate_task(void *pvParameters){
         check_voltage_L_V = INA226_device.getBusVoltage_plus(); // 读取电压值
         printf("\n[get_load_changing_rate_task] check_voltage_L: %.3f (V), check_current_L: %.3f (A)", check_voltage_L_V, check_current_L_A);
         check_L = pdTRUE;
-      }
-
-      
+      }      
       #ifdef USE_PID_CONTROLLER
-          // 这里是 PID 控制器的电流值
-          current_ctrl.process_variable.target = TESING_MAX_CURRENT_A * 1000; // 设置 PID 控制器的目标值
+          // 发送测试消息到电流控制队列，接收端会自动管理状态
+          QueueElement_t<double> test_message_max(EVENT_TESING_LOAD_RATE, DATA_DESCRIPTION_CURRENT_SETPOINT, TESING_MAX_CURRENT_A * 1000);
+          xQueueSend(current_control_queue, &test_message_max, 0);
       #else
           // 这里是 DAC 的电流值
           MCP4725_device.setVoltage(from_set_current2voltage_V(TESING_MAX_CURRENT_A)); // 设置输出电压为第一个电流值
@@ -395,10 +570,7 @@ void get_load_changing_rate_task(void *pvParameters){
         rate =(check_voltage_L_V - check_voltage_H_V ) / check_voltage_L_V;
         printf("\n[get_load_changing_rate_task] load changing rate: %.3f\n", rate);
         check_L = pdFALSE;
-        check_H = pdFALSE;
-
-
-        queue_element.data = rate; // 发送负载变化率到消息队列
+        check_H = pdFALSE;        queue_element.data = rate; // 发送负载变化率到消息队列
   
         int return_value = xQueueSend(LVGL_queue, (void *)&queue_element, 0);
         if (return_value == pdTRUE) {
@@ -407,9 +579,13 @@ void get_load_changing_rate_task(void *pvParameters){
           printf("\n[get_load_changing_rate_task] failed to send message to queue, queue is full\n");
         } else {
           printf("\n[get_load_changing_rate_task] failed to send message to queue\n");
-        }
-
-        testing_load_flag = pdFALSE; // 清除测试负载标志位
+        }        // 移除标志位清除，状态管理统一在接收端处理
+        printf("\n[get_load_changing_rate_task] Load rate testing completed");
+        
+        // 发送测试完成消息，通知接收端退出测试状态
+        QueueElement_t<double> test_complete_message(EVENT_TESTING_COMPLETE, DATA_DESCRIPTION_CURRENT_SETPOINT, 0.0);
+        xQueueSend(current_control_queue, &test_complete_message, 0);
+        printf("\n[get_load_changing_rate_task] Sent EVENT_TESTING_COMPLETE message");
       }
 
     #endif // USE_IIC_DEVICE
@@ -436,9 +612,8 @@ void over_voltage_protection_task(void *pvParameters){
     
       printf("\n[over_voltage_protection_task] waiting");
       xSemaphoreTake(over_voltage_protection_xBinarySemaphore, portMAX_DELAY); // 总是保持阻塞等待二值信号量
-      over_voltage_protection_flag = pdTRUE; // 设置过压保护标志位
-      over_voltage_igonre_pid_flag = pdTRUE; // 设置过压保护忽略 PID 标志位
-
+      // 移除标志位设置，状态管理统一在接收端处理
+      
       printf("\n[over_voltage_protection_task] running on core: %d, Free stack space: %d", xPortGetCoreID(), uxTaskGetStackHighWaterMark(NULL));
   
       // vTaskDelete(encoder1_task_handle); // 删除编码器任务
@@ -481,7 +656,7 @@ void over_voltage_protection_task(void *pvParameters){
 
       // if (return_value == pdTRUE) {
       //   printf("\n[over_voltage_protection_task] sent message to the queue successfully\n"); // 添加成功发送消息的打印
-      // } else if ( return_value == errQUEUE_FULL) {
+      // } else if (return_value == errQUEUE_FULL) {
       //   printf("\n[over_voltage_protection_task] failed to send message to queue, queue is full\n"); // 添加队列满的打印
       // } else {
       //   printf("\n[over_voltage_protection_task] failed to send message to queue\n"); // 添加发送失败的打印
@@ -681,32 +856,26 @@ void get_encoder1_data_task(void *pvParameters)
       }
 
       printf("\n[get_encoder1_data_task] modified encoder1 value A: %.3f", value);
-    
+        // 移除发送端限制逻辑，统一在接收端进行优先级仲裁
+      #ifdef USE_PID_CONTROLLER
+        // 创建编码器电流控制消息 (使用统一的QueueElement_t结构)
+        QueueElement_t<double> encoder_message(TASK_ENCODER, DATA_DESCRIPTION_CURRENT_SETPOINT, value);
+        
+        // 发送消息到电流控制队列（接收端会进行优先级仲裁）
+        if (xQueueSend(current_control_queue, &encoder_message, 0) == pdTRUE) {
+          printf("\n[get_encoder1_data_task] Sent current setpoint message: %.3f mA", value);
+        } else {
+          printf("\n[get_encoder1_data_task] Failed to send current setpoint message - queue full");
+        }
+        
+        // 继续发送数据到 LVGL 队列用于显示
+        queue_element1.data = value; // 把该值传递给 LVGL 队列的元素
 
-      if (testing_load_flag == pdFALSE  && over_voltage_igonre_pid_flag == pdFALSE) {
-        #ifdef USE_PID_CONTROLLER
-          // 创建编码器电流控制消息 (使用统一的QueueElement_t结构)
-          QueueElement_t<double> encoder_message(TASK_ENCODER, DATA_DESCRIPTION_CURRENT_SETPOINT, value);
-          
-          // 发送消息到电流控制队列
-          if (xQueueSend(current_control_queue, &encoder_message, 0) == pdTRUE) {
-            printf("\n[get_encoder1_data_task] Sent current setpoint message: %.3f mA", value);
-          } else {
-            printf("\n[get_encoder1_data_task] Failed to send current setpoint message - queue full");
-          }
-          
-          // 继续发送数据到 LVGL 队列用于显示
-          queue_element1.data = value; // 把该值传递给 LVGL 队列的元素
-  
-        #else
-          // 未启用 PID 控制器
-          printf("\n[get_encoder1_data_task] setpoint current(mA): %.3f", value); // 修改为 value 变量
-          MCP4725_device.setVoltage(from_set_current2voltage_V(value/1000.0)); // 设置 DAC 的目标值
-
-        #endif
-      } else {
-        printf("\n[get_encoder1_data_task] testing_load_flag: %d, over_voltage_protection_flag: %d", testing_load_flag, over_voltage_igonre_pid_flag);
-      }
+      #else
+        // 未启用 PID 控制器
+        printf("\n[get_encoder1_data_task] setpoint current(mA): %.3f", value); // 修改为 value 变量
+        MCP4725_device.setVoltage(from_set_current2voltage_V(value/1000.0)); // 设置 DAC 的目标值
+      #endif
 
       // printf("\n[get_encoder1_data_task] setpoint voltage(V): %.3f", MCP4725_device.getVoltage());
     

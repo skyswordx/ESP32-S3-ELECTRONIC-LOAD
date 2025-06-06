@@ -28,6 +28,8 @@ enum task_id_t {
     TASK_INA226 = 3,             // INA226任务（普通优先级）
     TASK_ADC1 = 4,               // ADC任务（普通优先级）
     EVENT_TESING_LOAD_RATE = 5,  // 负载测试事件（普通优先级）
+    EVENT_OVER_VOLTAGE_CLEAR = 6, // 过压解除事件
+    EVENT_TESTING_COMPLETE = 7,   // 负载测试完成事件
     TASK_UNKNOWN = 99            // 未知任务（最低优先级）
 };
 
@@ -50,6 +52,14 @@ enum data_description_t {
 
 // FOR ...
     DATA_DESCRIPTION_UNKNOWN = 99
+};
+
+// 定义优先级状态枚举，用于接收端状态管理
+enum priority_state_t {
+    PRIORITY_STATE_NORMAL = 0,           // 正常状态，接受所有消息
+    PRIORITY_STATE_OVER_VOLTAGE = 1,     // 过压保护状态，只接受过压相关和更高优先级消息
+    PRIORITY_STATE_TESTING = 2,          // 负载测试状态，暂停普通编码器控制
+    PRIORITY_STATE_EMERGENCY = 3         // 紧急状态，只接受紧急消息
 };
 
 // 定义一个模板类 QueueElement_t，表示队列中的元素，支持不同类型的数据
