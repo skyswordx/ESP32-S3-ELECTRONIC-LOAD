@@ -18,12 +18,12 @@
 #include "gui_guider.h"
 #include "our_queque.hpp" // 消息队列头文件
 
-#define WARNING_VOLTAGE 11 // 触发过压保护的电压
 
 extern SemaphoreHandle_t gui_xMutex;  // gui 互斥锁句柄，LVGL 线程不安全，需要加锁
 
 extern lv_ui guider_ui; // GUI guider 生成的 GUI 结构体
 
+extern uint8_t Warning_Voltage; // 警告电压值
 
 void lvgl_task(void *pvParameters);
 void update_gui_task(void *pvParameters);
