@@ -173,6 +173,10 @@ void startup_task(void *pvParameters) {
         MCP4725_device.setMaxVoltage(5.0); // 设置最大输出电压
         MCP4725_device.setVoltage(0.0); // 设置输出电压为 0V
         
+        // 初始化电路开关状态为关闭
+        circuit_enabled = false; // 确保电路开关状态为关闭
+        printf("\n[main] Circuit initially disabled, DAC output set to 0V");
+        
         printf("\n[main] I2C devices initialized with mutex protection");
         
         xTaskCreatePinnedToCore(get_ina226_data_task,

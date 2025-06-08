@@ -15,6 +15,9 @@ BaseType_t debug_flag1 = pdFALSE;
 BaseType_t debug_flag2 = pdFALSE;
 /******************************  ESP32S3 Setup ***********************************/
 SemaphoreHandle_t startup_xBinarySemaphore;
+
+// 定义电路开关状态变量，默认关闭
+bool circuit_enabled = false; // 电路开关状态，开机后默认关闭
 /****************************** OUTPUT CAlibration *******************************/
 
 #ifdef USE_OUTPUT_CALIBRATION // 启用输出校准
@@ -45,7 +48,7 @@ uint8_t Warning_Voltage = 12; // 过压保护阈值，单位为 V
     /**
      * @brief 初始化PID控制器，设置线程安全的传感器读取函数
      * @author skyswordx
-     */
+     */    
     void init_pid_controller() {
         // 设置线程安全的传感器读取函数
         current_ctrl.read_sensor = []() -> double {
@@ -54,6 +57,12 @@ uint8_t Warning_Voltage = 12; // 过压保护阈值，单位为 V
         
         // 设置输出转换函数
         current_ctrl.convert_output = [](double output_voltage) -> double {
+            // 如果电路关闭，则强制输出为0
+            if (!circuit_enabled) {
+                output_voltage = 0.0;
+                printf("\n[convert_output] Circuit disabled, forcing output to 0V");
+            }
+            
             // 限幅保护
             double safe_voltage = constrain(output_voltage, 0.0, 5.0);
             #ifdef USE_IIC_DEVICE
@@ -74,8 +83,20 @@ uint8_t Warning_Voltage = 12; // 过压保护阈值，单位为 V
     void set_current_task(void *pvParameters) {
         // 该任务用于根据电流控制器对象的 target 设定值数据设置电流值
         while (1) {
+            // 首先检查电路开关状态
+            if (!circuit_enabled) {
+                // 在电路关闭状态下强制停止输出
+                if (xSemaphoreTake(i2c_device_mutex, 50 / portTICK_PERIOD_MS) == pdTRUE) {
+                    MCP4725_device.setVoltage(0.0);
+                    xSemaphoreGive(i2c_device_mutex);
+                }
+                current_ctrl.process_variable.target = 0.0;
+                vTaskDelay(100 / portTICK_PERIOD_MS);
+                continue;
+            }
+            
             // 检查保护状态
-            if (over_voltage_igonre_pid_flag == pdTRUE && over_voltage_protection_flag == pdTRUE) {
+            if (over_voltage_protection_flag == pdTRUE) {
                 // 在保护状态下强制停止输出
                 if (xSemaphoreTake(i2c_device_mutex, 50 / portTICK_PERIOD_MS) == pdTRUE) {
                     MCP4725_device.setVoltage(0.0);
@@ -86,6 +107,7 @@ uint8_t Warning_Voltage = 12; // 过压保护阈值，单位为 V
                 continue;
             }
             
+            // 电路开启且无保护状态时正常执行PID控制
             current_ctrl.pid_control_service();
             vTaskDelay(10 / portTICK_PERIOD_MS);
         }
@@ -282,7 +304,6 @@ uint8_t Warning_Voltage = 12; // 过压保护阈值，单位为 V
 
 #ifdef USE_VOLTAGE_PROTECTION
   BaseType_t over_voltage_protection_flag = pdFALSE; // 过压保护标志位
-  BaseType_t over_voltage_igonre_pid_flag = pdFALSE; // 过压保护忽略 PID 标志位
   SemaphoreHandle_t over_voltage_protection_xBinarySemaphore; // 过压保护二值信号量
 #endif
 
@@ -360,7 +381,7 @@ void get_ina226_data_task(void *pvParameters)
       xSemaphoreGive(over_voltage_protection_xBinarySemaphore);
     }
 
-    if (measure_voltage_V < Warning_Voltage && over_voltage_igonre_pid_flag == pdTRUE) {
+    if (measure_voltage_V < Warning_Voltage && over_voltage_protection_flag == pdTRUE) {
       // 电压正常，清除过压保护标志位
       // 显示测量到的电压
       printf("\n[get_ina226_data_task] Voltage is normal, measure_voltage_V: %.3f V", measure_voltage_V);
@@ -368,6 +389,10 @@ void get_ina226_data_task(void *pvParameters)
       #ifdef USE_LCD_DISPLAY
         // 获取LVGL互斥锁，确保LVGL操作线程安全
         if (xSemaphoreTake(gui_xMutex, portMAX_DELAY) == pdTRUE) {
+          if (circuit_enabled) {
+            lv_obj_set_style_text_color(guider_ui.main_page_measure_current_label, lv_color_hex(0xff9600), LV_PART_MAIN|LV_STATE_DEFAULT);
+            lv_obj_add_state(guider_ui.main_page_measure_current_label, LV_STATE_PRESSED);
+          }
           // 清除过压保护警告控件（假设guider_ui中有overvoltage_warning控件）
           lv_obj_add_flag(guider_ui.main_page_over_voltage_warning_msgbox, LV_OBJ_FLAG_HIDDEN);
           // lv_obj_set_style_opa(guider_ui.main_page, LV_OPA_60, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -375,9 +400,8 @@ void get_ina226_data_task(void *pvParameters)
           xSemaphoreGive(gui_xMutex); // 释放互斥锁
         }
       #endif
-      over_voltage_igonre_pid_flag = pdFALSE; // 清除过压保护忽略 PID 标志位
       printf("\n[over_voltage_protection_task] Voltage is normal, over_voltage_protection_flag: %d, over_voltage_igonre_pid_flag: %d", 
-      over_voltage_protection_flag, over_voltage_igonre_pid_flag);
+      over_voltage_protection_flag);
     }
  
     int return_value1 = xQueueSend(LVGL_queue, (void *)&queue_element1, 0); // 发送电流值到消息队列
@@ -520,7 +544,6 @@ void over_voltage_protection_task(void *pvParameters){
       printf("\n[over_voltage_protection_task] waiting");
       xSemaphoreTake(over_voltage_protection_xBinarySemaphore, portMAX_DELAY); // 总是保持阻塞等待二值信号量
       over_voltage_protection_flag = pdTRUE; // 设置过压保护标志位
-      over_voltage_igonre_pid_flag = pdTRUE; // 设置过压保护忽略 PID 标志位
 
       printf("\n[over_voltage_protection_task] running on core: %d, Free stack space: %d", xPortGetCoreID(), uxTaskGetStackHighWaterMark(NULL));
   
@@ -531,6 +554,8 @@ void over_voltage_protection_task(void *pvParameters){
         // 获取LVGL互斥锁，确保LVGL操作线程安全
         if (xSemaphoreTake(gui_xMutex, portMAX_DELAY) == pdTRUE) {
           // 显示过压保护警告控件（假设guider_ui中有overvoltage_warning控件）
+          lv_obj_set_style_text_color(guider_ui.main_page_measure_current_label, lv_color_hex(0xc4c4c4), LV_PART_MAIN|LV_STATE_DEFAULT);
+          lv_obj_clear_state(guider_ui.main_page_ONOFF, LV_STATE_PRESSED); // 取消电路开关的选中状态
           lv_obj_clear_flag(guider_ui.main_page_over_voltage_warning_msgbox, LV_OBJ_FLAG_HIDDEN);
           // lv_obj_set_style_opa(guider_ui.main_page, LV_OPA_60, LV_PART_MAIN | LV_STATE_DEFAULT);
           printf("\n[over_voltage_protection_task] LVGL warning");
@@ -540,11 +565,17 @@ void over_voltage_protection_task(void *pvParameters){
 
       #ifdef USE_PID_CONTROLLER
         current_ctrl.process_variable.target = 0.0;
+        // 触发过压保护时同时关闭电路开关
+        circuit_enabled = false;
+        printf("\n[over_voltage_protection_task] Circuit disabled due to overvoltage protection");
         // for (int i = 0; i < 1000; i++){
         //   printf("\n[over_voltage_protection_task] block %d", i);
         // } 
       #else
         MCP4725_device.setVoltage(0.0); // 设置输出电压为 0V
+        // 触发过压保护时同时关闭电路开关
+        circuit_enabled = false;
+        printf("\n[over_voltage_protection_task] Circuit disabled due to overvoltage protection");
       #endif
 
       
@@ -687,14 +718,51 @@ void button_handler_task(void *pvParameters){
           #endif // USE_ENCODER1
           #ifdef USE_BUTTON1
             if(GPIO_PIN == button1.pin){
-              #ifdef USE_CURRENT_OPEN_LOOP_TEST
-                xSemaphoreGive(open_loop_test_xBinarySemaphore); // 释放二值信号量，触发开环测试
-              #endif
-              #ifdef USE_OUTPUT_CALIBRATION
-                xSemaphoreGive(output_calibration_xBinarySemaphore); // 释放二值信号量，触发输出标定
-              #endif
-                xSemaphoreGive(startup_xBinarySemaphore);
+              // 按键1：电路开关功能
+              circuit_enabled = !circuit_enabled; // 切换电路开关状态
               
+              if (!circuit_enabled) {
+                // 电路关闭时，强制设置DAC为0V
+                printf("\n[button_handler_task] Circuit disabled, setting DAC to 0V");
+                lv_obj_set_style_text_color(guider_ui.main_page_measure_current_label, lv_color_hex(0xc4c4c4), LV_PART_MAIN|LV_STATE_DEFAULT);
+                lv_obj_clear_state(guider_ui.main_page_ONOFF, LV_STATE_PRESSED); // 取消电路开关的选中状态
+                #ifdef USE_IIC_DEVICE
+                  if (xSemaphoreTake(i2c_device_mutex, 50 / portTICK_PERIOD_MS) == pdTRUE) {
+                    MCP4725_device.setVoltage(0.0); // 设置输出电压为0V
+                    xSemaphoreGive(i2c_device_mutex);
+                  }
+                #endif
+                
+                #ifdef USE_PID_CONTROLLER
+                  current_ctrl.process_variable.target = 0.0; // 设置目标电流为0
+                #endif
+              } else {
+                // 电路开启时，输出日志
+                printf("\n[button_handler_task] Circuit enabled");
+                if (over_voltage_protection_flag == pdFALSE) {
+                  lv_obj_set_style_text_color(guider_ui.main_page_measure_current_label, lv_color_hex(0xff9600), LV_PART_MAIN|LV_STATE_DEFAULT);
+                  lv_obj_add_state(guider_ui.main_page_measure_current_label, LV_STATE_PRESSED);  
+                }
+              }
+              
+              #ifdef USE_CURRENT_OPEN_LOOP_TEST
+                // 仅在电路开启时才进行开环测试
+                if (circuit_enabled) {
+                  xSemaphoreGive(open_loop_test_xBinarySemaphore); // 释放二值信号量，触发开环测试
+                }
+              #endif
+              
+              #ifdef USE_OUTPUT_CALIBRATION
+                // 仅在电路开启时才进行输出标定
+                if (circuit_enabled) {
+                  xSemaphoreGive(output_calibration_xBinarySemaphore); // 释放二值信号量，触发输出标定
+                }
+              #endif
+              
+              // 原有功能保留
+              if (circuit_enabled) {
+                xSemaphoreGive(startup_xBinarySemaphore);
+              }
             }
           #endif // USE_BUTTON1
           #ifdef USE_BUTTON2
@@ -770,16 +838,14 @@ void get_encoder1_data_task(void *pvParameters)
       } else if (value < 50) {
         value = 50;
       }
+      queue_element1.data = value; // 把该值传递给 LVGL 队列的元素
 
       printf("\n[get_encoder1_data_task] modified encoder1 value A: %.3f", value);
-    
-
-      if (testing_load_flag == pdFALSE  && over_voltage_igonre_pid_flag == pdFALSE) {
+        if (testing_load_flag == pdFALSE && circuit_enabled == true) {
         #ifdef USE_PID_CONTROLLER
           // 这里是 PID 控制器的电流值
           // printf("\n[get_encoder1_data_task] modified encoder1 value B: %.3f", value);
           current_ctrl.process_variable.target = value; // 设置 PID 控制器的目标值
-          queue_element1.data = value; // 把该值传递给 LVGL 队列的元素
   
         #else
           // 未启用 PID 控制器
@@ -788,7 +854,18 @@ void get_encoder1_data_task(void *pvParameters)
 
         #endif
       }else{
-        // printf("\n[get_encoder1_data_task] testing_load_flag: %d, over_voltage_protection_flag: %d", testing_load_flag, over_voltage_igonre_pid_flag);
+        // printf("\n[get_encoder1_data_task] testing_load_flag: %d, circuit_enabled: %d", testing_load_flag, circuit_enabled);
+        if (!circuit_enabled) {
+          //TODO: 每次都灰色化当前电流显示（无法初始化为灰色的妥协）
+          lv_obj_set_style_text_color(guider_ui.main_page_measure_current_label, lv_color_hex(0xc4c4c4), LV_PART_MAIN|LV_STATE_DEFAULT);
+          printf("\n[get_encoder1_data_task] Circuit disabled, encoder input ignored");
+          // 电路关闭时，确保目标值为0
+          #ifdef USE_PID_CONTROLLER
+            current_ctrl.process_variable.target = 0.0;
+          #else
+            MCP4725_device.setVoltage(0.0);
+          #endif
+        }
       }
 
       // printf("\n[get_encoder1_data_task] setpoint voltage(V): %.3f", MCP4725_device.getVoltage());
