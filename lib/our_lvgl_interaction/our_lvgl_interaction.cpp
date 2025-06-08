@@ -64,7 +64,7 @@ void update_gui_task(void *pvParameters)
             case TASK_ENCODER:
               // 显示编码器的电流值
               if (guider_ui.main_page_set_current_box != NULL && queue_element.data_description == DATA_DESCRIPTION_SET_CURRENT){ lv_spinbox_set_value(guider_ui.main_page_set_current_box, queue_element.data); }
-              lv_spinbox_set_value(guider_ui.main_page_over_voltage_box, WARNING_VOLTAGE); // shi 以后要删掉
+              lv_spinbox_set_value(guider_ui.main_page_over_voltage_box, WARNING_VOLTAGE); //TODO: 以后要删掉
               break;
             case TASK_DUMMY_SENSOR:
 
