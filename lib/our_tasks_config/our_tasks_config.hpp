@@ -144,9 +144,8 @@ extern SemaphoreHandle_t startup_xBinarySemaphore; // 启动二值信号量
 #endif // USE_OUTPUT_CALIBRATION 
 
 
-
-
-
+/*************************************** Safty Setup ********************************/
+extern uint8_t Warning_Voltage; // 过压保护阈值
 
 /*************************************** Encoder Setup *****************************/
 #ifdef USE_ENCODER1

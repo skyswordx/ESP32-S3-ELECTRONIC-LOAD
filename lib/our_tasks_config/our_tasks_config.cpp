@@ -32,6 +32,10 @@ void output_data_collection_task(void *pvParameters) {
 }
 #endif
 
+/****************************** Safty Setup ***********************************/
+
+uint8_t Warning_Voltage = 12; // 过压保护阈值，单位为 V
+
 /*********************************** PID Setup ***********************************/
 // 包含自定义的 PID 控制器类和 VOFA 下位机
 #ifdef USE_PID_CONTROLLER
@@ -351,12 +355,12 @@ void get_ina226_data_task(void *pvParameters)
     printf("\n[get_ina226_data_task] INA226 V/mA: %.3f,%.3f", measure_voltage_V, measure_current_mA);
 
     // 检查 INA226 电压是否超过警告值，如果超过则进行过压保护
-    if(measure_voltage_V >= WARNING_VOLTAGE){
+    if(measure_voltage_V >= Warning_Voltage){
       // 电压过高，触发过压之后的保护程序
       xSemaphoreGive(over_voltage_protection_xBinarySemaphore);
     }
 
-    if (measure_voltage_V < WARNING_VOLTAGE && over_voltage_igonre_pid_flag == pdTRUE) {
+    if (measure_voltage_V < Warning_Voltage && over_voltage_igonre_pid_flag == pdTRUE) {
       // 电压正常，清除过压保护标志位
       // 显示测量到的电压
       printf("\n[get_ina226_data_task] Voltage is normal, measure_voltage_V: %.3f V", measure_voltage_V);
@@ -704,12 +708,24 @@ void button_handler_task(void *pvParameters){
           #ifdef USE_BUTTON3
             if(GPIO_PIN == button3.pin){
               // 提高过压阈值
+              if (Warning_Voltage < 20.0) {
+                Warning_Voltage += 1; // 增加过压阈值
+                printf("\n[button_handler_task] Warning_Voltage increased to: %.3f V", Warning_Voltage);
+              } else {
+                printf("\n[button_handler_task] Warning_Voltage already at maximum: %.3f V", Warning_Voltage);
+              }
 
             }
           #endif // USE_BUTTON3
           #ifdef USE_BUTTON4
             if(GPIO_PIN == button4.pin){
               // 降低过压阈值
+              if (Warning_Voltage > 5.0) {
+                Warning_Voltage -= 1; // 减少过压阈值
+                printf("\n[button_handler_task] Warning_Voltage decreased to: %.3f V", Warning_Voltage);
+              } else {
+                printf("\n[button_handler_task] Warning_Voltage already at minimum: %.3f V", Warning_Voltage);
+              }
               
             }
           #endif // USE_BUTTON4
