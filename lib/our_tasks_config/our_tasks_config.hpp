@@ -146,6 +146,7 @@ extern SemaphoreHandle_t startup_xBinarySemaphore; // 启动二值信号量
 
 /*************************************** Safty Setup ********************************/
 extern uint8_t Warning_Voltage; // 过压保护阈值
+extern bool circuit_enabled; // 电路开关状态（true=开启，false=关闭）
 
 /*************************************** Encoder Setup *****************************/
 #ifdef USE_ENCODER1
@@ -192,7 +193,6 @@ extern uint8_t Warning_Voltage; // 过压保护阈值
 
         #ifdef USE_VOLTAGE_PROTECTION
             extern BaseType_t over_voltage_protection_flag; // 过压保护标志位
-            extern BaseType_t over_voltage_igonre_pid_flag; // 忽略 PID 控制器标志位
             extern SemaphoreHandle_t over_voltage_protection_xBinarySemaphore; // 过压保护二值信号量
             void over_voltage_protection_task(void *pvParameters); // 过压保护任务函数
         #endif // USE_VOLTAGE_PROTECTION

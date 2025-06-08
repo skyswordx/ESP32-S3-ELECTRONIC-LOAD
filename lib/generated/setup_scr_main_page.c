@@ -2769,7 +2769,7 @@ void setup_scr_main_page(lv_ui *ui)
     //Write style for main_page_measure_current_label, Part: LV_PART_MAIN, State: LV_STATE_DEFAULT.
     lv_obj_set_style_border_width(ui->main_page_measure_current_label, 0, LV_PART_MAIN|LV_STATE_DEFAULT);
     lv_obj_set_style_radius(ui->main_page_measure_current_label, 0, LV_PART_MAIN|LV_STATE_DEFAULT);
-    lv_obj_set_style_text_color(ui->main_page_measure_current_label, lv_color_hex(0xff9600), LV_PART_MAIN|LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(ui->main_page_measure_current_label, lv_color_hex(0xc4c4c4), LV_PART_MAIN|LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(ui->main_page_measure_current_label, &lv_font_IntelOneMono_Medium_30, LV_PART_MAIN|LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui->main_page_measure_current_label, 255, LV_PART_MAIN|LV_STATE_DEFAULT);
     lv_obj_set_style_text_letter_space(ui->main_page_measure_current_label, 0, LV_PART_MAIN|LV_STATE_DEFAULT);
