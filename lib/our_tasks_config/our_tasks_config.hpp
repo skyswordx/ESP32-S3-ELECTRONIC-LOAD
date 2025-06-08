@@ -198,8 +198,17 @@ extern SemaphoreHandle_t startup_xBinarySemaphore; // 启动二值信号量
             void over_voltage_protection_task(void *pvParameters); // 过压保护任务函数
         #endif // USE_VOLTAGE_PROTECTION
     #endif // USE_MCP4725
-    
-    
+
+    // 添加I2C互斥锁保护，防止并发访问冲突
+    extern SemaphoreHandle_t i2c_device_mutex;
+
+    // 线程安全的INA226读取函数
+    double safe_read_ina226_current_mA();
+    double safe_read_ina226_voltage_V();
+    double safe_read_ina226_power_W();
+    void init_pid_controller();
+
+
 #endif // USE_IIC_DEVICE
 
 

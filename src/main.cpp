@@ -139,8 +139,14 @@ void startup_task(void *pvParameters) {
                   );
         }
       #endif
-    
       #ifdef USE_IIC_DEVICE
+        // 创建I2C设备互斥锁，防止并发访问冲突
+        i2c_device_mutex = xSemaphoreCreateMutex();
+        if (i2c_device_mutex == NULL) {
+          printf("Failed to create I2C mutex!");
+          return;
+        }
+        
         // 初始化 Wire IIC 总线
         Wire.begin(IIC_SDA, IIC_SCL);
         /* 初始化 INA226 */
@@ -165,7 +171,10 @@ void startup_task(void *pvParameters) {
           printf("could not connect MCP4725. Fix and Reboot");
         }
         MCP4725_device.setMaxVoltage(5.0); // 设置最大输出电压
-        MCP4725_device.setVoltage(0.0); // 设置输出电压为 3.3V
+        MCP4725_device.setVoltage(0.0); // 设置输出电压为 0V
+        
+        printf("\n[main] I2C devices initialized with mutex protection");
+        
         xTaskCreatePinnedToCore(get_ina226_data_task,
                     "get_ina226_data_task",
                     1024*4,
@@ -200,17 +209,9 @@ void startup_task(void *pvParameters) {
                   );
       #endif
     
-    
-    #ifdef USE_PID_CONTROLLER
-      current_ctrl.read_sensor = []() -> double {
-        return INA226_device.getCurrent_mA_plus(); 
-      };
-    
-      current_ctrl.convert_output = [](double output) -> double {
-        MCP4725_device.setVoltage(output);
-    
-        return output; // 整定时，使用的 OP 是 DAC 输出，所以这里直接返回即可 
-      };
+      #ifdef USE_PID_CONTROLLER
+      // 使用线程安全的PID控制器初始化函数
+      init_pid_controller();
     
       xTaskCreatePinnedToCore(set_current_task,
                   "set_current_task",
@@ -270,7 +271,7 @@ void setup() {
      return;
    }
    /* 创建消息队列 */
-   LVGL_queue = xQueueCreate(1000, sizeof(QueueElement_t<double>)); // 创建消息队列
+   LVGL_queue = xQueueCreate(100, sizeof(QueueElement_t<double>)); // 创建消息队列
 
    if (LVGL_queue == NULL) {
      // Handle queue creation failure

@@ -34,14 +34,18 @@ encoder_handle_t::encoder_handle_t(int pin_A, int pin_B)
  */
 double encoder_handle_t::read_count_accum_clear()   
 {
-    // 默认使用 4 倍频，这里可以根据需要进行处理
-    // 这里默认是进入 else 分支
-    if (this->mode == QUAD) {
+    // 默认 SINGLE，可以根据需要进行处理
+    // 这里默认是进入 SINGLE 分支
+    if (this->mode == TEN) {
         this->single_count = this->encoder.getCount() * 10.0;
         this->encoder.clearCount();
         this->total_count += this->single_count;
     } else if (this->mode == SINGLE) {
         this->single_count = this->encoder.getCount();
+        this->encoder.clearCount();
+        this->total_count += this->single_count;
+    } else if (this->mode == HUNDRED) {
+        this->single_count = this->encoder.getCount() * 100.0;
         this->encoder.clearCount();
         this->total_count += this->single_count;
     }

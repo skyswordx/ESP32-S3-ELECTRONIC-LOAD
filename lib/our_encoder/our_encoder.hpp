@@ -19,14 +19,15 @@
 
 
 /**
- * @brief 旋转编码器模式
+ * @brief 旋转编码器步进长度
  * @author skyswordx
  * @details QUAD 模式：四倍频模式，默认使用这个模式
  *          SINGLE 模式：单倍频模式，使用这个模式可以减少编码器的抖动
  */
 enum encoder_mode_t {
-    QUAD = 0,
-    SINGLE = 1
+    TEN = 0,
+    SINGLE = 1,
+    HUNDRED = 2
 };
 
 

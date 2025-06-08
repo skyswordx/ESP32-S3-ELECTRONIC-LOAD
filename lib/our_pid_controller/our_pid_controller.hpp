@@ -151,13 +151,14 @@ void PID_controller_t<T>::pid_control_service() {
         // printf("\nraw op: %.3f", controller_output);
         /* 积分限幅和输出限幅 */
 
-        double shi = min(3 * from_set_current_mA2voltage_V(process_variable.target), CONTROLLER_OUTPUT_MAX); // 3倍的电流值对应的电压值
+        // 限幅控制器输出
+        double controller_output_limited = min(3 * from_set_current_mA2voltage_V(process_variable.target), CONTROLLER_OUTPUT_MAX); // 3倍的电流值对应的电压值
        
-        if (controller_output > shi) { 
+        if (controller_output > controller_output_limited) { 
             // 核心在于 controller_output 计算完毕但在被限幅之前调整 i_term
             // 这样比直接把 i_term 和 controller_output 限幅在同一个值更加合理 
-            i_term -= controller_output - shi;
-            controller_output = shi;
+            i_term -= controller_output - controller_output_limited;
+            controller_output = controller_output_limited;
         } else if (controller_output < CONTROLLER_OUTPUT_MIN) {
             i_term += CONTROLLER_OUTPUT_MIN - controller_output;
             controller_output = CONTROLLER_OUTPUT_MIN;
