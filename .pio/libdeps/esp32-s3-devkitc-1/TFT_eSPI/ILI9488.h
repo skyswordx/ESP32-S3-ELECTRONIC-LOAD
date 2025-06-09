@@ -226,14 +226,14 @@
 // 如果加载了所有字体，则所需的额外闪存空间约为17Kbytes。
 // 为了节省内存空间，只启用您需要的字体！
 
-#define LOAD_GLCD   // 字体 1. 原来的Adafruit 8像素字体需要约1820字节的FLASH
-#define LOAD_FONT2  // 字体 2. 16像素高的小字体，需要大约3534字节的FLASH，96个字符
-#define LOAD_FONT4  // 字体 4. 中等26像素高字体，FLASH需要5848字节，96个字符
-#define LOAD_FONT6  // 字体 6. 48像素的大字体，FLASH需要2666字节，只有字符1234567890:-.
-#define LOAD_FONT7  // 字体 7. 7段48像素字体，FLASH需要约2438字节，仅字符1234567890:-.
-#define LOAD_FONT8  // 字体 8. 75像素的大字体在FLASH中需要3256字节，只有1234567890个字符:-.
+// #define LOAD_GLCD   // 字体 1. 原来的Adafruit 8像素字体需要约1820字节的FLASH
+// #define LOAD_FONT2  // 字体 2. 16像素高的小字体，需要大约3534字节的FLASH，96个字符
+// #define LOAD_FONT4  // 字体 4. 中等26像素高字体，FLASH需要5848字节，96个字符
+// #define LOAD_FONT6  // 字体 6. 48像素的大字体，FLASH需要2666字节，只有字符1234567890:-.
+// #define LOAD_FONT7  // 字体 7. 7段48像素字体，FLASH需要约2438字节，仅字符1234567890:-.
+// #define LOAD_FONT8  // 字体 8. 75像素的大字体在FLASH中需要3256字节，只有1234567890个字符:-.
 //#define LOAD_FONT8N // 字体 8. 上面字体8的替代品，稍微窄一些，因此3位数字适合160像素的TFT
-#define LOAD_GFXFF  // 自由字体. 包括访问48个Adafruit_GFX免费字体FF1到FF48和自定义字体
+// #define LOAD_GFXFF  // 自由字体. 包括访问48个Adafruit_GFX免费字体FF1到FF48和自定义字体
 
 // 注释掉下面的定义，以停止SPIFFS文件系统并平滑加载字体代码
 // 这将节约 ~20kbytes of flash
