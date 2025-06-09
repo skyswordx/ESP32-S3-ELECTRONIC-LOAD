@@ -75,7 +75,12 @@ void update_gui_task(void *pvParameters)
 
             case EVENT_OVER_VOLTAGE:
               printf("\n[update_gui_task] over voltage event");
-
+            
+            case TASK_ADC1:
+              // 显示 ADC1 读取的电压值
+              if (guider_ui.main_page_temperature_label != NULL){
+                lv_label_set_text_fmt(guider_ui.main_page_temperature_label, "%.1f", queue_element.data);
+              }
               break;
             default:
               break;

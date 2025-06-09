@@ -66,11 +66,19 @@ class ADC_channel_handler_t {
         esp_adc_cal_characteristics_t *adc_chars;
         esp_adc_cal_value_t val_type = ESP_ADC_CAL_VAL_EFUSE_TP;
 
+        // 温度计算相关常量
+        static constexpr double VCC = 5.0;           // 供电电压 5V
+        static constexpr double R_SERIES = 51000.0;  // 串联电阻 51kΩ
+        static constexpr double R_25 = 100000.0;     // NTC在25°C时的电阻值 100kΩ
+        static constexpr double B_VALUE = 3950.0;    // B值常数
+        static constexpr double T_25 = 298.15;       // 25°C对应的绝对温度(K)
+
     public:
         
         uint32_t num_samples; // 采样次数，后期可以更改
         uint32_t adc_raw_value; // 保存 ADC 的值
         float adc_voltage; // 保存 ADC 转换后的电压值
+        float temperature_celsius; // 保存计算得到的温度值(°C)
 
         /***************** ADC 成员函数 *****************/
         /* 构造函数及其重载，适配 ADC1 和 ADC2 的初始化 */
@@ -83,6 +91,9 @@ class ADC_channel_handler_t {
         uint32_t get_ADC2_raw_average();
         float get_ADC2_voltage_average_mV(); // 获取 ADC2 的电压值
         
+        // 温度计算相关函数
+        float calculate_temperature_from_voltage(float voltage_mV); // 根据电压计算温度
+        float get_temperature_celsius(); // 获取温度值(°C)
         
 };
 

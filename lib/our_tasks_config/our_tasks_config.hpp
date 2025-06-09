@@ -32,7 +32,7 @@
 
 #define USE_LCD_DISPLAY 1  // 是否使用 LCD 显示屏
 #define USE_ENCODER1 1 // 是否使用编码器 1
-// #define USE_ADC1 1 // 是否使用 ADC1 通道 5 读取电压值
+#define USE_ADC1 1 // 是否使用 ADC1 通道 5 读取电压值
 
 #define USE_BUTTON 1 // 是否使用按键
     #define USE_BUTTON1 1 // 是否使用按键 1
@@ -66,9 +66,9 @@ extern SemaphoreHandle_t startup_xBinarySemaphore; // 启动二值信号量
     // #define CURRENT_TASK_KP 0.0022226816 // 电流控制器比例系数
     // #define CURRENT_TASK_KI 0.00 // 电流控制器积分系数
             
-    #define CURRENT_TASK_KP 0.001 // 电流控制器比例系数
-    #define CURRENT_TASK_KI 0.00 // 电流控制器积分系数
-    #define CURRENT_TASK_KD 0.001 // 电流控制器微分系数
+    #define CURRENT_TASK_KP 0.0005 // 电流控制器比例系数
+    #define CURRENT_TASK_KI 0.0000 // 电流控制器积分系数
+    #define CURRENT_TASK_KD 0.000 // 电流控制器微分系数
             
     void set_current_task(void *pvParameters); // 设置电流任务函数
             
@@ -157,6 +157,8 @@ extern bool circuit_enabled; // 电路开关状态（true=开启，false=关闭�
     extern encoder_handle_t encoder1; // 旋转编码器对象
 
     void get_encoder1_data_task(void *pvParameters); // 获取编码器数据的任务函数
+    void set_encoder_current_setpoint(double setpoint_mA); // 设置编码器任务的当前电流设定值
+    double get_encoder_current_setpoint(); // 获取编码器任务的当前电流设定值
 #endif // USE_ENCODER1
 
 /*********************************** INA226 & MCP4725 Setup *************************/

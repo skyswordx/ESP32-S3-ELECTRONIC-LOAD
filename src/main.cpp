@@ -93,9 +93,7 @@ void startup_task(void *pvParameters) {
       
       #ifdef USE_LCD_DISPLAY
         lv_scr_load(guider_ui.startup_page);
-        for (int i = 0; i < 100; i++) {
-          printf("\n[startup_task] %d\n", i);
-        }
+        vTaskDelay(5000 / portTICK_PERIOD_MS); // 延时 1 秒，显示启动页面
         lv_scr_load(guider_ui.main_page);
       #endif
       

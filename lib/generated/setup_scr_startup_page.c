@@ -45,10 +45,10 @@ void setup_scr_startup_page(lv_ui *ui)
 
     //Write codes startup_page_label_1
     ui->startup_page_label_1 = lv_label_create(ui->startup_page);
-    lv_label_set_text(ui->startup_page_label_1, "CONST CURRENT BOY  恒流小子 v1.0");
+    lv_label_set_text(ui->startup_page_label_1, "CONST CURRENT BOY                 恒流小子 v1.0");
     lv_label_set_long_mode(ui->startup_page_label_1, LV_LABEL_LONG_WRAP);
     lv_obj_set_pos(ui->startup_page_label_1, 227, 38);
-    lv_obj_set_size(ui->startup_page_label_1, 152, 110);
+    lv_obj_set_size(ui->startup_page_label_1, 160, 110);
 
     //Write style for startup_page_label_1, Part: LV_PART_MAIN, State: LV_STATE_DEFAULT.
     lv_obj_set_style_radius(ui->startup_page_label_1, 0, LV_PART_MAIN|LV_STATE_DEFAULT);
