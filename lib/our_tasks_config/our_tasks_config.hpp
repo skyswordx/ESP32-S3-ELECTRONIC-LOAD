@@ -276,6 +276,27 @@ extern bool circuit_enabled; // 电路开关状态（true=开启，false=关闭�
     void get_dummy_sensor_data_task(void *pvParameters); // 模拟获得传感器数据的任务函数
 #endif // USE_DUMMY_SENSOR
 
+/*********************************** Load Mode Setup *********************************/
+/**
+ * @brief 负载模式枚举
+ * @author Triwalt
+ * @details 支持三种负载模式：恒流、恒功率、恒阻
+ */
+enum LoadMode {
+    CONSTANT_CURRENT = 0,   // 恒流模式
+    CONSTANT_POWER = 1,     // 恒功率模式  
+    CONSTANT_RESISTANCE = 2  // 恒阻模式
+};
 
+// 全局变量声明
+extern LoadMode current_load_mode;       // 当前负载模式
+extern double load_setpoint_current_mA;  // 恒流模式设定值(mA)
+extern double load_setpoint_power_W;     // 恒功率模式设定值(W)
+extern double load_setpoint_resistance_ohm; // 恒阻模式设定值(Ω)
+
+// 负载模式相关函数声明
+void switch_load_mode();                 // 切换负载模式
+void update_load_mode_display();         // 更新负载模式显示
+double calculate_target_current_for_mode(); // 根据当前模式计算目标电流
 
 #endif // OUR_CONFIG_HPP
