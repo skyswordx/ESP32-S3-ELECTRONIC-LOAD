@@ -5,6 +5,7 @@
  * @details 该文件基于 ESP-IDF 接口，包含了自定义 ADC 类的定义和函数声明
  */
 #include "our_adc.hpp"
+#include <math.h>  // 添加数学函数支持
 
 
 /**
@@ -135,4 +136,47 @@ float ADC_channel_handler_t::get_ADC2_voltage_average_mV(){
     this->adc_voltage = esp_adc_cal_raw_to_voltage(this->adc_raw_value, this->adc_chars);
 
     return this->adc_voltage;
+}
+
+/**
+ * @brief 根据电压值计算NTC温度
+ * @author skyswordx
+ * @details 根据分压电路和NTC特性计算温度值
+ * @param voltage_mV ADC采样得到的电压值(mV)
+ * @return float 计算得到的温度值(°C)
+ */
+float ADC_channel_handler_t::calculate_temperature_from_voltage(float voltage_mV) {
+    // 将电压从mV转换为V
+    double voltage_V = voltage_mV / 1000.0;
+    
+    // 计算NTC电阻值
+    // 分压电路: VCC - R_SERIES - NTC - GND
+    // ADC测量的是NTC两端的电压
+    double R_ntc = (voltage_V * R_SERIES) / (VCC - voltage_V);
+    
+    // 使用Steinhart-Hart方程计算温度
+    // 1/T = 1/T0 + (1/B) * ln(R/R0)
+    // 其中 T0 = 298.15K (25°C), R0 = 100kΩ
+    double temp_K = 1.0 / (1.0/T_25 + (1.0/B_VALUE) * log(R_ntc / R_25));
+    
+    // 转换为摄氏度
+    float temp_C = temp_K - 273.15;
+    
+    this->temperature_celsius = temp_C;
+    
+    return temp_C;
+}
+
+/**
+ * @brief 获取温度值
+ * @author skyswordx
+ * @details 先读取ADC电压值，然后计算温度
+ * @return float 温度值(°C)
+ */
+float ADC_channel_handler_t::get_temperature_celsius() {
+    // 先获取电压值
+    float voltage = get_ADC1_voltage_average_mV();
+    
+    // 根据电压计算温度
+    return calculate_temperature_from_voltage(voltage);
 }

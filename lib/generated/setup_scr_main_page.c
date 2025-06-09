@@ -2455,7 +2455,7 @@ void setup_scr_main_page(lv_ui *ui)
     ui->main_page_temperature_label = lv_label_create(ui->main_page);
     lv_label_set_text(ui->main_page_temperature_label, "25 ");
     lv_label_set_long_mode(ui->main_page_temperature_label, LV_LABEL_LONG_WRAP);
-    lv_obj_set_pos(ui->main_page_temperature_label, 230, 254);
+    lv_obj_set_pos(ui->main_page_temperature_label, 220, 254);
     lv_obj_set_size(ui->main_page_temperature_label, 79, 22);
 
     //Write style for main_page_temperature_label, Part: LV_PART_MAIN, State: LV_STATE_DEFAULT.

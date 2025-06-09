@@ -20,6 +20,7 @@ encoder_handle_t::encoder_handle_t(int pin_A, int pin_B)
 
     this->total_count = 0;
     this->single_count = 0;
+    this->last_count = 0; // 初始化上次计数值
     this->encoder.attachSingleEdge(pin_A, pin_B);
     this->encoder.setCount(0);
 }
@@ -64,5 +65,32 @@ double encoder_handle_t::read_count_accum_clear()
 void encoder_handle_t::set_count(int64_t value) {
     this->encoder.setCount(value);
     this->total_count = value;
+}
+
+/**
+ * @brief 读取旋转编码器的增量计数值
+ * @author skyswordx
+ * @return double 旋转编码器相对于上次调用的增量值
+ * @details 该函数不会清除编码器计数器，而是计算相对于上次调用的增量
+ *          根据模式进行相应的倍数处理
+ */
+double encoder_handle_t::read_count_increment()
+{
+    int64_t current_count = this->encoder.getCount();
+    int64_t increment = current_count - this->last_count;
+    this->last_count = current_count;
+    
+    double processed_increment = 0.0;
+    
+    // 根据模式处理增量
+    if (this->mode == TEN) {
+        processed_increment = increment * 10.0;
+    } else if (this->mode == SINGLE) {
+        processed_increment = increment;
+    } else if (this->mode == HUNDRED) {
+        processed_increment = increment * 100.0;
+    }
+    
+    return processed_increment;
 }
 

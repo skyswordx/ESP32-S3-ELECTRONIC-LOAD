@@ -197,6 +197,55 @@ uint8_t Warning_Voltage = 12; // 过压保护阈值，单位为 V
 /*************************************** Encoder Setup *****************************/
 #ifdef USE_ENCODER1 
   encoder_handle_t encoder1(ENCODER_1_PIN_A, ENCODER_1_PIN_B);
+  
+  // 编码器任务的当前电流设定值，使用互斥锁保护
+  static double encoder_current_setpoint = 100.0; // 初始值100mA
+  static SemaphoreHandle_t encoder_setpoint_mutex = NULL;
+  
+  /**
+   * @brief 设置编码器任务的当前电流设定值
+   * @author skyswordx
+   * @param setpoint_mA 要设置的电流值（毫安）
+   * @details 线程安全的方式设置编码器任务内部维护的电流设定值
+   */
+  void set_encoder_current_setpoint(double setpoint_mA) {
+    if (encoder_setpoint_mutex == NULL) {
+      encoder_setpoint_mutex = xSemaphoreCreateMutex();
+    }
+    
+    if (xSemaphoreTake(encoder_setpoint_mutex, 100 / portTICK_PERIOD_MS) == pdTRUE) {
+      encoder_current_setpoint = setpoint_mA;
+      // 限幅处理
+      if (encoder_current_setpoint > 1800.0) {
+        encoder_current_setpoint = 1800.0;
+      } else if (encoder_current_setpoint < 50.0) {
+        encoder_current_setpoint = 50.0;
+      }
+      printf("\n[set_encoder_current_setpoint] Setpoint updated to: %.3f mA", encoder_current_setpoint);
+      xSemaphoreGive(encoder_setpoint_mutex);
+    }
+  }
+  
+  /**
+   * @brief 获取编码器任务的当前电流设定值
+   * @author skyswordx
+   * @return double 当前的电流设定值（毫安）
+   * @details 线程安全的方式获取编码器任务内部维护的电流设定值
+   */
+  double get_encoder_current_setpoint() {
+    double setpoint = 0.0;
+    
+    if (encoder_setpoint_mutex == NULL) {
+      encoder_setpoint_mutex = xSemaphoreCreateMutex();
+    }
+    
+    if (xSemaphoreTake(encoder_setpoint_mutex, 100 / portTICK_PERIOD_MS) == pdTRUE) {
+      setpoint = encoder_current_setpoint;
+      xSemaphoreGive(encoder_setpoint_mutex);
+    }
+    
+    return setpoint;
+  }
 #endif
 
 
@@ -263,7 +312,7 @@ uint8_t Warning_Voltage = 12; // 过压保护阈值，单位为 V
 
 /***************************************** ADC1 Setup *******************************/
 #ifdef USE_ADC1
-  ADC_channel_handler_t MY_ADC_GPIO6(ADC1_CHANNEL_5, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, 64, ADC_UNIT_1);
+  ADC_channel_handler_t MY_ADC_GPIO6(ADC1_CHANNEL_5, ADC_ATTEN_DB_12, ADC_WIDTH_BIT_12, 64, ADC_UNIT_1);
 #endif
 /************************************* GPIO-button Setup ****************************/
 #ifdef USE_BUTTON1
@@ -373,7 +422,7 @@ void get_ina226_data_task(void *pvParameters)
 
     double DAC_output_V = MCP4725_device.getVoltage();
     // printf("\n[get_sensors_task] INA226: %.3f mA, %.3f V, DAC set: %.3f V, I_target: %.3f A", measure_current_mA, measure_voltage_V, DAC_output_V, (DAC_output_V/(125 * RSHUNT)));
-    printf("\n[get_ina226_data_task] INA226 V/mA: %.3f,%.3f", measure_voltage_V, measure_current_mA);
+    // printf("\n[get_ina226_data_task] INA226 V/mA: %.3f,%.3f", measure_voltage_V, measure_current_mA);
 
     // 检查 INA226 电压是否超过警告值，如果超过则进行过压保护
     if(measure_voltage_V >= Warning_Voltage){
@@ -384,7 +433,7 @@ void get_ina226_data_task(void *pvParameters)
     if (measure_voltage_V < Warning_Voltage && over_voltage_protection_flag == pdTRUE) {
       // 电压正常，清除过压保护标志位
       // 显示测量到的电压
-      printf("\n[get_ina226_data_task] Voltage is normal, measure_voltage_V: %.3f V", measure_voltage_V);
+      // printf("\n[get_ina226_data_task] Voltage is normal, measure_voltage_V: %.3f V", measure_voltage_V);
       over_voltage_protection_flag = pdFALSE;
       #ifdef USE_LCD_DISPLAY
         // 获取LVGL互斥锁，确保LVGL操作线程安全
@@ -396,12 +445,11 @@ void get_ina226_data_task(void *pvParameters)
           // 清除过压保护警告控件（假设guider_ui中有overvoltage_warning控件）
           lv_obj_add_flag(guider_ui.main_page_over_voltage_warning_msgbox, LV_OBJ_FLAG_HIDDEN);
           // lv_obj_set_style_opa(guider_ui.main_page, LV_OPA_60, LV_PART_MAIN | LV_STATE_DEFAULT);
-          printf("\n[over_voltage_protection_task] LVGL warning");
+          // printf("\n[over_voltage_protection_task] LVGL warning");
           xSemaphoreGive(gui_xMutex); // 释放互斥锁
         }
       #endif
-      printf("\n[over_voltage_protection_task] Voltage is normal, over_voltage_protection_flag: %d, over_voltage_igonre_pid_flag: %d", 
-      over_voltage_protection_flag);
+      // printf("\n[over_voltage_protection_task] Voltage is normal, over_voltage_protection_flag: %d, over_voltage_igonre_pid_flag: %d", over_voltage_protection_flag);
     }
  
     int return_value1 = xQueueSend(LVGL_queue, (void *)&queue_element1, 0); // 发送电流值到消息队列
@@ -411,7 +459,7 @@ void get_ina226_data_task(void *pvParameters)
 
 
     // 打印当前队列的占用情况
-    printf("\n[get_ina226_data_task] Queue length: %d, Queue space: %d", uxQueueMessagesWaiting(LVGL_queue), uxQueueSpacesAvailable(LVGL_queue));
+    // printf("\n[get_ina226_data_task] Queue length: %d, Queue space: %d", uxQueueMessagesWaiting(LVGL_queue), uxQueueSpacesAvailable(LVGL_queue));
 
     if (return_value1 == pdTRUE && return_value2 == pdTRUE && return_value3 == pdTRUE && return_value4 == pdTRUE) {
       // printf("\n[get_ina226_data_task] sent message  to the queue successfully\n");
@@ -610,31 +658,33 @@ void over_voltage_protection_task(void *pvParameters){
 #ifdef USE_ADC1
 void ADC1_read_task(void *pvParameters)
 {
-  QueueElement_t queue_element(TASK_ADC1); // 定义一个队列元素对象
+  QueueElement_t<double> queue_element(TASK_ADC1); // 定义一个队列元素对象，存储温度数据(float类型)
   while(1)
   {
     // printf("\n[ADC1_read_task] running on core: %d, Free stack space: %d", xPortGetCoreID(), uxTaskGetStackHighWaterMark(NULL));
     
- 
+    // 获取ADC电压值
+    double adc_voltage_mV = MY_ADC_GPIO6.get_ADC1_voltage_average_mV();
+    
+    // 计算温度值
+    float temperature_celsius = MY_ADC_GPIO6.calculate_temperature_from_voltage(adc_voltage_mV);
 
-    double adc_value_3 = MY_ADC_GPIO6.get_ADC1_voltage_average_mV();
+    // 将温度值发送到消息队列
+    queue_element.data = temperature_celsius;
 
-    double adc_value_average = adc_value_3 / 1.0;
-
-    queue_element.data = adc_value_average; // 发送电压值到消息队列
-
-    printf("\n[ADC1_read_task] ADC1_CHANNEL_5: %.3f", adc_value_3);
+    // 通过串口输出电压值和温度值
+    printf("\n[ADC1_read_task] NTC Voltage: %.3f mV, Temperature: %.2f °C", adc_voltage_mV, temperature_celsius);
     
     int return_value = xQueueSend(LVGL_queue, (void *)&queue_element, 0);
     if (return_value == pdTRUE) {
-      // printf("\n[ADC1_read_task] sent message  to the queue successfully\n");
+      // printf("\n[ADC1_read_task] sent temperature data to the queue successfully\n");
     } else if (return_value == errQUEUE_FULL) {
       // printf("\n[ADC1_read_task] failed to send message to queue, queue is full\n");
     } else {
       // printf("\n[ADC1_read_task] failed to send message to queue\n");
     }
 
-    vTaskDelay( 1000 );
+    vTaskDelay( 1000 ); // 每秒更新一次温度
   }
 }
 #endif // USE_ADC1
@@ -814,58 +864,66 @@ TaskHandle_t encoder1_task_handle; // 旋转编码器任务结构句柄
  * @brief 获取编码器数据的任务函数，用来设置电流
  * @author skyswordx
  * @param pvParameters 任务参数
- * @details 仅在 setup 调用一次即可，该任务会一直运行，获取编码器的数据（期望电流）转换所需相应的 DAC 电压输出
+ * @details 仅在 setup 调用一次即可，该任务会一直运行，获取编码器的增量数据并更新电流设定值
+ *          使用增量方式避免电流设置值与编码器传递过来的值不一致的问题
  *          并把期望电流数据发送到消息队列中给 LVGL 更新
  */
 void get_encoder1_data_task(void *pvParameters)
 {
-  double value;
+  double increment;
   QueueElement_t<double> queue_element1(TASK_ENCODER, DATA_DESCRIPTION_SET_CURRENT); 
+  
   while(1)
   {
-    printf("\n[get_encoder1_data_task] running on core: %d, Free stack space: %d", xPortGetCoreID(), uxTaskGetStackHighWaterMark(NULL));
+    // printf("\n[get_encoder1_data_task] running on core: %d, Free stack space: %d", xPortGetCoreID(), uxTaskGetStackHighWaterMark(NULL));    // 获取旋转编码器增量数据
+    increment = encoder1.read_count_increment(); // 获取编码器相对于上次的增量值
     
-    // 获取旋转编码器数据
-    value = encoder1.read_count_accum_clear(); // 获取编码器的总计数值
-    printf("\n[get_encoder1_data_task] encoder1 value: %.3f", value);
+    // 只有当有增量时才更新设定值
+    if (increment != 0.0) {
+      // 使用全局函数更新设定值（内部会处理限幅和互斥锁）
+      double current_setpoint = get_encoder_current_setpoint();
+      current_setpoint += increment;
+      set_encoder_current_setpoint(current_setpoint);
+      
+      printf("\n[get_encoder1_data_task] encoder increment: %.3f, new setpoint: %.3f mA", increment, current_setpoint);
+    }                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
 
     /* 实现电流调节 */
     #ifdef USE_IIC_DEVICE
-      // 进行电流调节映射，把编码器的值进行限幅
-      if (value > 1800.0) {
-        value = 1800.0;
-    
-      } else if (value < 50) {
-        value = 50;
-      }
-      queue_element1.data = value; // 把该值传递给 LVGL 队列的元素
+      double current_setpoint = get_encoder_current_setpoint(); // 获取当前设定值
+      queue_element1.data = current_setpoint; // 把当前设定值传递给 LVGL 队列的元素
 
-      printf("\n[get_encoder1_data_task] modified encoder1 value A: %.3f", value);
-        if (testing_load_flag == pdFALSE && circuit_enabled == true) {
+      if (testing_load_flag == pdFALSE && circuit_enabled == true) {
         #ifdef USE_PID_CONTROLLER
           // 这里是 PID 控制器的电流值
-          // printf("\n[get_encoder1_data_task] modified encoder1 value B: %.3f", value);
-          current_ctrl.process_variable.target = value; // 设置 PID 控制器的目标值
-  
+          current_ctrl.process_variable.target = current_setpoint; // 设置 PID 控制器的目标值
+          if (increment != 0.0) {
+            printf("\n[get_encoder1_data_task] PID target updated to: %.3f mA", current_setpoint);
+          }
         #else
           // 未启用 PID 控制器
-          printf("\n[get_encoder1_data_task] setpoint current(mA): %.3f", value); // 修改为 value 变量
-          MCP4725_device.setVoltage(from_set_current2voltage_V(value/1000.0)); // 设置 DAC 的目标值
-
+          if (increment != 0.0) {
+            printf("\n[get_encoder1_data_task] setpoint current(mA): %.3f", current_setpoint);
+            MCP4725_device.setVoltage(from_set_current2voltage_V(current_setpoint/1000.0)); // 设置 DAC 的目标值
+          }
         #endif
-      }else{
+      } else {
         // printf("\n[get_encoder1_data_task] testing_load_flag: %d, circuit_enabled: %d", testing_load_flag, circuit_enabled);
         if (!circuit_enabled) {
           //TODO: 每次都灰色化当前电流显示（无法初始化为灰色的妥协）
           lv_obj_set_style_text_color(guider_ui.main_page_measure_current_label, lv_color_hex(0xc4c4c4), LV_PART_MAIN|LV_STATE_DEFAULT);
           lv_obj_clear_state(guider_ui.main_page_ONOFF, LV_STATE_CHECKED); // 取消电路开关的选中状态
-          printf("\n[get_encoder1_data_task] Circuit disabled, encoder input ignored");
-          // 电路关闭时，确保目标值为0
+          
+          // 电路关闭时，确保目标值为0，但保持设定值不变以便重新开启时恢复
           #ifdef USE_PID_CONTROLLER
             current_ctrl.process_variable.target = 0.0;
           #else
             MCP4725_device.setVoltage(0.0);
           #endif
+          
+          if (increment != 0.0) {
+            printf("\n[get_encoder1_data_task] Circuit disabled, encoder input stored but not applied");
+          }
         }
       }
 
@@ -878,15 +936,15 @@ void get_encoder1_data_task(void *pvParameters)
 
     int return_value1 = xQueueSend(LVGL_queue, (void *)&queue_element1, 0);
 
-    if (return_value1 == pdTRUE ) { // Updated to check return_value2
-      printf("\n[get_encoder1_data_task] sent message to the queue successfully\n");
-    } else if (return_value1 == errQUEUE_FULL ) { // Updated to check return_value2 for queue full
-      printf("\n[get_encoder1_data_task] failed to send message to queue, queue is full\n");
-    } else {
-      printf("\n[get_encoder1_data_task] failed to send message to queue\n");
-    }
+    // if (return_value1 == pdTRUE ) { // Updated to check return_value2
+    //   printf("\n[get_encoder1_data_task] sent message to the queue successfully\n");
+    // } else if (return_value1 == errQUEUE_FULL ) { // Updated to check return_value2 for queue full
+    //   printf("\n[get_encoder1_data_task] failed to send message to queue, queue is full\n");
+    // } else {
+    //   printf("\n[get_encoder1_data_task] failed to send message to queue\n");
+    // }
 
-    vTaskDelay( 200 / portTICK_PERIOD_MS ); // 延时 200 ms
+    vTaskDelay( 100 / portTICK_PERIOD_MS ); // 延时 100 ms
   }
 }
 
