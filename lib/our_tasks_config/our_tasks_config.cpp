@@ -391,7 +391,7 @@ void get_ina226_data_task(void *pvParameters)
         if (xSemaphoreTake(gui_xMutex, portMAX_DELAY) == pdTRUE) {
           if (circuit_enabled) {
             lv_obj_set_style_text_color(guider_ui.main_page_measure_current_label, lv_color_hex(0xff9600), LV_PART_MAIN|LV_STATE_DEFAULT);
-            lv_obj_add_state(guider_ui.main_page_measure_current_label, LV_STATE_PRESSED);
+            lv_obj_add_state(guider_ui.main_page_ONOFF, LV_STATE_CHECKED);
           }
           // 清除过压保护警告控件（假设guider_ui中有overvoltage_warning控件）
           lv_obj_add_flag(guider_ui.main_page_over_voltage_warning_msgbox, LV_OBJ_FLAG_HIDDEN);
@@ -555,7 +555,7 @@ void over_voltage_protection_task(void *pvParameters){
         if (xSemaphoreTake(gui_xMutex, portMAX_DELAY) == pdTRUE) {
           // 显示过压保护警告控件（假设guider_ui中有overvoltage_warning控件）
           lv_obj_set_style_text_color(guider_ui.main_page_measure_current_label, lv_color_hex(0xc4c4c4), LV_PART_MAIN|LV_STATE_DEFAULT);
-          lv_obj_clear_state(guider_ui.main_page_ONOFF, LV_STATE_PRESSED); // 取消电路开关的选中状态
+          lv_obj_clear_state(guider_ui.main_page_ONOFF, LV_STATE_CHECKED); // 取消电路开关的选中状态
           lv_obj_clear_flag(guider_ui.main_page_over_voltage_warning_msgbox, LV_OBJ_FLAG_HIDDEN);
           // lv_obj_set_style_opa(guider_ui.main_page, LV_OPA_60, LV_PART_MAIN | LV_STATE_DEFAULT);
           printf("\n[over_voltage_protection_task] LVGL warning");
@@ -725,7 +725,7 @@ void button_handler_task(void *pvParameters){
                 // 电路关闭时，强制设置DAC为0V
                 printf("\n[button_handler_task] Circuit disabled, setting DAC to 0V");
                 lv_obj_set_style_text_color(guider_ui.main_page_measure_current_label, lv_color_hex(0xc4c4c4), LV_PART_MAIN|LV_STATE_DEFAULT);
-                lv_obj_clear_state(guider_ui.main_page_ONOFF, LV_STATE_PRESSED); // 取消电路开关的选中状态
+                lv_obj_clear_state(guider_ui.main_page_ONOFF, LV_STATE_CHECKED); // 取消电路开关的选中状态
                 #ifdef USE_IIC_DEVICE
                   if (xSemaphoreTake(i2c_device_mutex, 50 / portTICK_PERIOD_MS) == pdTRUE) {
                     MCP4725_device.setVoltage(0.0); // 设置输出电压为0V
@@ -741,7 +741,7 @@ void button_handler_task(void *pvParameters){
                 printf("\n[button_handler_task] Circuit enabled");
                 if (over_voltage_protection_flag == pdFALSE) {
                   lv_obj_set_style_text_color(guider_ui.main_page_measure_current_label, lv_color_hex(0xff9600), LV_PART_MAIN|LV_STATE_DEFAULT);
-                  lv_obj_add_state(guider_ui.main_page_measure_current_label, LV_STATE_PRESSED);  
+                  lv_obj_add_state(guider_ui.main_page_ONOFF, LV_STATE_CHECKED);  
                 }
               }
               
@@ -858,6 +858,7 @@ void get_encoder1_data_task(void *pvParameters)
         if (!circuit_enabled) {
           //TODO: 每次都灰色化当前电流显示（无法初始化为灰色的妥协）
           lv_obj_set_style_text_color(guider_ui.main_page_measure_current_label, lv_color_hex(0xc4c4c4), LV_PART_MAIN|LV_STATE_DEFAULT);
+          lv_obj_clear_state(guider_ui.main_page_ONOFF, LV_STATE_CHECKED); // 取消电路开关的选中状态
           printf("\n[get_encoder1_data_task] Circuit disabled, encoder input ignored");
           // 电路关闭时，确保目标值为0
           #ifdef USE_PID_CONTROLLER

@@ -16,7 +16,8 @@
  *      DEFINES
  *********************/
 
-//  #define OUR_USE_DMA 1 // 我们使用 DMA 传输数据
+// #define OUR_USE_DMA 1 // 我们使用 DMA 传输数据
+// #define ESP32_DMA 1 // ESP32 DMA 传输数据
 
 #ifndef MY_DISP_HOR_RES
     #warning Please define or replace the macro MY_DISP_HOR_RES with the actual screen width, default value 320 is used for now.
@@ -91,35 +92,44 @@ void lv_port_disp_init(void)
     /* Example for 1) */
     // static lv_disp_draw_buf_t draw_buf_dsc_1;
     // static lv_color_t buf_1[MY_DISP_HOR_RES * 10];                          /*A buffer for 10 rows*/
-    // lv_disp_draw_buf_init(&draw_buf_dsc_1, buf_1, NULL, MY_DISP_HOR_RES * 10);   /*Initialize the display buffer*/
-
-    // 选择这个选项，可以实现非真双缓冲
+    // lv_disp_draw_buf_init(&draw_buf_dsc_1, buf_1, NULL, MY_DISP_HOR_RES * 10);   /*Initialize the display buffer*/    // 选择这个选项，可以实现半屏双缓冲，节省内存并提供良好性能
     /* Example for 2) */
-    // static lv_disp_draw_buf_t draw_buf_dsc_2;
-    // static lv_color_t buf_2_1[MY_DISP_HOR_RES * 10];                        /*A buffer for 10 rows*/
-    // static lv_color_t buf_2_2[MY_DISP_HOR_RES * 10];                        /*An other buffer for 10 rows*/
-    // lv_disp_draw_buf_init(&draw_buf_dsc_2, buf_2_1, buf_2_2, MY_DISP_HOR_RES * 10);   /*Initialize the display buffer*/
+    static lv_disp_draw_buf_t draw_buf_dsc_2;
+    // 半屏缓冲区大小，每个缓冲区为屏幕高度的一半
+    #define HALF_SCREEN_BUFFER_SIZE (MY_DISP_HOR_RES * MY_DISP_VER_RES / 2)
+#if OUR_USE_DMA
+    static lv_color_t* buf_2_1 = (lv_color_t*) heap_caps_malloc(HALF_SCREEN_BUFFER_SIZE * sizeof(lv_color_t), MALLOC_CAP_DMA | MALLOC_CAP_SPIRAM);
+    static lv_color_t* buf_2_2 = (lv_color_t*) heap_caps_malloc(HALF_SCREEN_BUFFER_SIZE * sizeof(lv_color_t), MALLOC_CAP_DMA | MALLOC_CAP_SPIRAM);
+#else
+    static lv_color_t* buf_2_1 = (lv_color_t*) heap_caps_malloc(HALF_SCREEN_BUFFER_SIZE * sizeof(lv_color_t), MALLOC_CAP_SPIRAM);
+    static lv_color_t* buf_2_2 = (lv_color_t*) heap_caps_malloc(HALF_SCREEN_BUFFER_SIZE * sizeof(lv_color_t), MALLOC_CAP_SPIRAM);
+#endif
+    if(buf_2_1 == NULL || buf_2_2 == NULL)
+    {
+        ESP_LOGI("HALF_SCREEN_BUFFER", "allocate memory fail--------");
+    }
+    lv_disp_draw_buf_init(&draw_buf_dsc_2, buf_2_1, buf_2_2, HALF_SCREEN_BUFFER_SIZE);   /*Initialize the display buffer*/
 
-    //使用 PSRAM 时启用，最大化利用 PSRAM 刷屏
+    //使用 PSRAM 时启用，最大化利用 PSRAM 刷屏（已改为半屏双缓冲）
     /* Example for 3) also set disp_drv.full_refresh = 1 below*/
-    static lv_disp_draw_buf_t draw_buf_dsc_3;
+    // static lv_disp_draw_buf_t draw_buf_dsc_3;
     // 不使用下面的开辟缓存区的构造函数，因为这样会使用 lv_conf 中指定的 stdlib 中的 malloc
     // static lv_color_t buf_3_1[MY_DISP_HOR_RES * MY_DISP_VER_RES];            /*A screen sized buffer*/
     // static lv_color_t buf_3_2[MY_DISP_HOR_RES * MY_DISP_VER_RES];            /*Another screen sized buffer*/
-#if OUR_USE_DMA
-    static lv_color_t* buf_3_1 = (lv_color_t*) heap_caps_malloc(MY_DISP_HOR_RES * MY_DISP_VER_RES * sizeof(lv_color_t), MALLOC_CAP_DMA | MALLOC_CAP_SPIRAM);
-    static lv_color_t* buf_3_2 = (lv_color_t*) heap_caps_malloc(MY_DISP_HOR_RES * MY_DISP_VER_RES*  sizeof(lv_color_t), MALLOC_CAP_DMA | MALLOC_CAP_SPIRAM);
-    
-#else
-    static lv_color_t* buf_3_1 = (lv_color_t*) heap_caps_malloc(MY_DISP_HOR_RES * MY_DISP_VER_RES * sizeof(lv_color_t), MALLOC_CAP_SPIRAM);
-    static lv_color_t* buf_3_2 = (lv_color_t*) heap_caps_malloc(MY_DISP_HOR_RES * MY_DISP_VER_RES*  sizeof(lv_color_t), MALLOC_CAP_SPIRAM);
-#endif   
-    if(buf_3_1 == NULL || buf_3_2 == NULL)
-    {
-        ESP_LOGI("FLASH_BUFFER", "allocate memery fail--------");
-    }
-    lv_disp_draw_buf_init(&draw_buf_dsc_3, buf_3_1, buf_3_2,
-                          MY_DISP_VER_RES * MY_DISP_HOR_RES);   /*Initialize the display buffer*/
+// #if OUR_USE_DMA
+//     static lv_color_t* buf_3_1 = (lv_color_t*) heap_caps_malloc(MY_DISP_HOR_RES * MY_DISP_VER_RES * sizeof(lv_color_t), MALLOC_CAP_DMA | MALLOC_CAP_SPIRAM);
+//     static lv_color_t* buf_3_2 = (lv_color_t*) heap_caps_malloc(MY_DISP_HOR_RES * MY_DISP_VER_RES*  sizeof(lv_color_t), MALLOC_CAP_DMA | MALLOC_CAP_SPIRAM);
+//     
+// #else
+//     static lv_color_t* buf_3_1 = (lv_color_t*) heap_caps_malloc(MY_DISP_HOR_RES * MY_DISP_VER_RES * sizeof(lv_color_t), MALLOC_CAP_SPIRAM);
+//     static lv_color_t* buf_3_2 = (lv_color_t*) heap_caps_malloc(MY_DISP_HOR_RES * MY_DISP_VER_RES*  sizeof(lv_color_t), MALLOC_CAP_SPIRAM);
+// #endif   
+//     if(buf_3_1 == NULL || buf_3_2 == NULL)
+//     {
+//         ESP_LOGI("FLASH_BUFFER", "allocate memery fail--------");
+//     }
+//     lv_disp_draw_buf_init(&draw_buf_dsc_3, buf_3_1, buf_3_2,
+//                           MY_DISP_VER_RES * MY_DISP_HOR_RES);   /*Initialize the display buffer*/
 
     /*-----------------------------------
      * Register the display in LVGL
@@ -135,15 +145,13 @@ void lv_port_disp_init(void)
     disp_drv.ver_res = MY_DISP_VER_RES;
 
     /*Used to copy the buffer's content to the display*/
-    disp_drv.flush_cb = disp_flush;
-
-    /*Set a display buffer*/
+    disp_drv.flush_cb = disp_flush;    /*Set a display buffer*/
     // disp_drv.draw_buf = &draw_buf_dsc_1;
-    // disp_drv.draw_buf = &draw_buf_dsc_2;
-    disp_drv.draw_buf = &draw_buf_dsc_3;
+    disp_drv.draw_buf = &draw_buf_dsc_2;
+    // disp_drv.draw_buf = &draw_buf_dsc_3;
 
-    /*Required for Example 3)*/
-    disp_drv.full_refresh = 1;
+    /*Required for Example 3) - 半屏双缓冲不需要full_refresh*/
+    // disp_drv.full_refresh = 1;
 
     /* Fill a memory array with a color if you have GPU.
      * Note that, in lv_conf.h you can enable GPUs that has built-in support in LVGL.
