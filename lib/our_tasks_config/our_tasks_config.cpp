@@ -78,9 +78,7 @@ uint8_t Warning_Voltage = 12; // 过压保护阈值，单位为 V
         };
         
         printf("\n[init_pid_controller] PID controller initialized with thread-safe I/O");
-    }
-
-    void set_current_task(void *pvParameters) {
+    }    void set_current_task(void *pvParameters) {
         // 该任务用于根据电流控制器对象的 target 设定值数据设置电流值
         while (1) {
             // 首先检查电路开关状态
@@ -106,6 +104,19 @@ uint8_t Warning_Voltage = 12; // 过压保护阈值，单位为 V
                 vTaskDelay(100 / portTICK_PERIOD_MS);
                 continue;
             }
+            
+            // 根据当前负载模式更新目标电流
+            // 只有在恒功率和恒阻模式下才需要动态计算目标电流
+            // 恒流模式的目标电流由编码器或其他方式直接设置
+            if (current_load_mode == CONSTANT_POWER || current_load_mode == CONSTANT_RESISTANCE) {
+                double calculated_target = calculate_target_current_for_mode();
+                // 如果计算出的目标电流与当前目标相差较大才更新，避免频繁抖动
+                if (abs(calculated_target - current_ctrl.process_variable.target) > 5.0) { // 5mA的死区
+                    current_ctrl.process_variable.target = calculated_target;
+                    printf("\n[set_current_task] Mode-based target updated to %.3f mA", calculated_target);
+                }
+            }
+            // 恒流模式下目标电流由编码器任务或其他地方设置，这里不需要改变
             
             // 电路开启且无保护状态时正常执行PID控制
             current_ctrl.pid_control_service();
@@ -739,10 +750,12 @@ void button_handler_task(void *pvParameters){
             if (time_ms < 1000) { // 1s
               short_press = pdTRUE;
               printf("\n[button_handler_task] GPIO %d short press", GPIO_PIN);
+              long_press = pdFALSE; // 短按时清除长按标志位
   
             } else {
               long_press = pdTRUE;
               printf("\n[button_handler_task] GPIO %d long press", GPIO_PIN);
+              short_press = pdFALSE; // 长按时清除短按标志位
             }
   
            
@@ -768,50 +781,66 @@ void button_handler_task(void *pvParameters){
           #endif // USE_ENCODER1
           #ifdef USE_BUTTON1
             if(GPIO_PIN == button1.pin){
-              // 按键1：电路开关功能
-              circuit_enabled = !circuit_enabled; // 切换电路开关状态
-              
-              if (!circuit_enabled) {
-                // 电路关闭时，强制设置DAC为0V
-                printf("\n[button_handler_task] Circuit disabled, setting DAC to 0V");
-                lv_obj_set_style_text_color(guider_ui.main_page_measure_current_label, lv_color_hex(0xc4c4c4), LV_PART_MAIN|LV_STATE_DEFAULT);
-                lv_obj_clear_state(guider_ui.main_page_ONOFF, LV_STATE_CHECKED); // 取消电路开关的选中状态
-                #ifdef USE_IIC_DEVICE
-                  if (xSemaphoreTake(i2c_device_mutex, 50 / portTICK_PERIOD_MS) == pdTRUE) {
-                    MCP4725_device.setVoltage(0.0); // 设置输出电压为0V
-                    xSemaphoreGive(i2c_device_mutex);
+              // 按键1：短按 - 电路开关功能，长按 - 负载模式切换
+              if (long_press == pdFALSE) {
+                // 短按：电路开关功能
+                circuit_enabled = !circuit_enabled; // 切换电路开关状态
+                
+                if (!circuit_enabled) {
+                  // 电路关闭时，强制设置DAC为0V
+                  printf("\n[button_handler_task] Circuit disabled, setting DAC to 0V");
+                  lv_obj_set_style_text_color(guider_ui.main_page_measure_current_label, lv_color_hex(0xc4c4c4), LV_PART_MAIN|LV_STATE_DEFAULT);
+                  lv_obj_clear_state(guider_ui.main_page_ONOFF, LV_STATE_CHECKED); // 取消电路开关的选中状态
+                  #ifdef USE_IIC_DEVICE
+                    if (xSemaphoreTake(i2c_device_mutex, 50 / portTICK_PERIOD_MS) == pdTRUE) {
+                      MCP4725_device.setVoltage(0.0); // 设置输出电压为0V
+                      xSemaphoreGive(i2c_device_mutex);
+                    }
+                  #endif
+                  
+                  #ifdef USE_PID_CONTROLLER
+                    current_ctrl.process_variable.target = 0.0; // 设置目标电流为0
+                  #endif
+                } else {
+                  // 电路开启时，输出日志
+                  printf("\n[button_handler_task] Circuit enabled");
+                  if (over_voltage_protection_flag == pdFALSE) {
+                    lv_obj_set_style_text_color(guider_ui.main_page_measure_current_label, lv_color_hex(0xff9600), LV_PART_MAIN|LV_STATE_DEFAULT);
+                    lv_obj_add_state(guider_ui.main_page_ONOFF, LV_STATE_CHECKED);  
+                  }
+                }
+                
+                #ifdef USE_CURRENT_OPEN_LOOP_TEST
+                  // 仅在电路开启时才进行开环测试
+                  if (circuit_enabled) {
+                    xSemaphoreGive(open_loop_test_xBinarySemaphore); // 释放二值信号量，触发开环测试
                   }
                 #endif
                 
-                #ifdef USE_PID_CONTROLLER
-                  current_ctrl.process_variable.target = 0.0; // 设置目标电流为0
+                #ifdef USE_OUTPUT_CALIBRATION
+                  // 仅在电路开启时才进行输出标定
+                  if (circuit_enabled) {
+                    xSemaphoreGive(output_calibration_xBinarySemaphore); // 释放二值信号量，触发输出标定
+                  }
                 #endif
+                
+                // 原有功能保留
+                if (circuit_enabled) {
+                  xSemaphoreGive(startup_xBinarySemaphore);
+                }
               } else {
-                // 电路开启时，输出日志
-                printf("\n[button_handler_task] Circuit enabled");
-                if (over_voltage_protection_flag == pdFALSE) {
-                  lv_obj_set_style_text_color(guider_ui.main_page_measure_current_label, lv_color_hex(0xff9600), LV_PART_MAIN|LV_STATE_DEFAULT);
-                  lv_obj_add_state(guider_ui.main_page_ONOFF, LV_STATE_CHECKED);  
-                }
-              }
-              
-              #ifdef USE_CURRENT_OPEN_LOOP_TEST
-                // 仅在电路开启时才进行开环测试
-                if (circuit_enabled) {
-                  xSemaphoreGive(open_loop_test_xBinarySemaphore); // 释放二值信号量，触发开环测试
-                }
-              #endif
-              
-              #ifdef USE_OUTPUT_CALIBRATION
-                // 仅在电路开启时才进行输出标定
-                if (circuit_enabled) {
-                  xSemaphoreGive(output_calibration_xBinarySemaphore); // 释放二值信号量，触发输出标定
-                }
-              #endif
-              
-              // 原有功能保留
-              if (circuit_enabled) {
-                xSemaphoreGive(startup_xBinarySemaphore);
+                // 长按：负载模式切换功能
+                printf("\n[button_handler_task] Long press detected - switching load mode");
+                switch_load_mode(); // 切换负载模式
+                
+                // 更新当前目标电流以适应新模式
+                #ifdef USE_PID_CONTROLLER
+                  if (circuit_enabled) {
+                    double new_target = calculate_target_current_for_mode();
+                    current_ctrl.process_variable.target = new_target;
+                    printf("\n[button_handler_task] Target current updated to %.3f mA for new mode", new_target);
+                  }
+                #endif
               }
             }
           #endif // USE_BUTTON1
@@ -837,7 +866,7 @@ void button_handler_task(void *pvParameters){
           #endif // USE_BUTTON3
           #ifdef USE_BUTTON4
             if(GPIO_PIN == button4.pin){
-              // 降低过压阈值
+              // 降低过压阈值            
               if (Warning_Voltage > 5.0) {
                 Warning_Voltage -= 1; // 减少过压阈值
                 printf("\n[button_handler_task] Warning_Voltage decreased to: %.3f V", Warning_Voltage);
@@ -861,12 +890,11 @@ void button_handler_task(void *pvParameters){
 TaskHandle_t encoder1_task_handle; // 旋转编码器任务结构句柄
 
 /**
- * @brief 获取编码器数据的任务函数，用来设置电流
+ * @brief 获取编码器数据的任务函数，用来设置负载参数
  * @author skyswordx
  * @param pvParameters 任务参数
- * @details 仅在 setup 调用一次即可，该任务会一直运行，获取编码器的增量数据并更新电流设定值
- *          使用增量方式避免电流设置值与编码器传递过来的值不一致的问题
- *          并把期望电流数据发送到消息队列中给 LVGL 更新
+ * @details 根据当前负载模式调整相应的设定值：恒流模式调整电流，恒功率模式调整功率，恒阻模式调整电阻
+ *          使用增量方式避免设置值与编码器传递过来的值不一致的问题
  */
 void get_encoder1_data_task(void *pvParameters)
 {
@@ -875,40 +903,81 @@ void get_encoder1_data_task(void *pvParameters)
   
   while(1)
   {
-    // printf("\n[get_encoder1_data_task] running on core: %d, Free stack space: %d", xPortGetCoreID(), uxTaskGetStackHighWaterMark(NULL));    // 获取旋转编码器增量数据
     increment = encoder1.read_count_increment(); // 获取编码器相对于上次的增量值
     
     // 只有当有增量时才更新设定值
     if (increment != 0.0) {
-      // 使用全局函数更新设定值（内部会处理限幅和互斥锁）
-      double current_setpoint = get_encoder_current_setpoint();
-      current_setpoint += increment;
-      set_encoder_current_setpoint(current_setpoint);
-      
-      printf("\n[get_encoder1_data_task] encoder increment: %.3f, new setpoint: %.3f mA", increment, current_setpoint);
-    }                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
+      // 根据当前负载模式调整相应的设定值
+      switch(current_load_mode) {
+        case CONSTANT_CURRENT:
+          {
+            // 恒流模式：调整电流设定值
+            double current_setpoint = get_encoder_current_setpoint();
+            current_setpoint += increment;
+            set_encoder_current_setpoint(current_setpoint);
+            load_setpoint_current_mA = current_setpoint; // 同步到负载模式设定值
+            printf("\n[get_encoder1_data_task] CC mode - current setpoint: %.3f mA", current_setpoint);
+          }
+          break;
+          
+        case CONSTANT_POWER:
+          {
+            // 恒功率模式：调整功率设定值
+            load_setpoint_power_W += (increment * 0.001); // 每增量0.001W
+            if (load_setpoint_power_W > 50.0) load_setpoint_power_W = 50.0;   // 限制最大功率
+            if (load_setpoint_power_W < 0.1) load_setpoint_power_W = 0.1;     // 限制最小功率
+            printf("\n[get_encoder1_data_task] CP mode - power setpoint: %.3f W", load_setpoint_power_W);
+          }
+          break;
+          
+        case CONSTANT_RESISTANCE:
+          {
+            // 恒阻模式：调整电阻设定值
+            load_setpoint_resistance_ohm += (increment * 1); // 每增量1Ω
+            if (load_setpoint_resistance_ohm > 1000.0) load_setpoint_resistance_ohm = 1000.0; // 限制最大电阻
+            if (load_setpoint_resistance_ohm < 1.0) load_setpoint_resistance_ohm = 1.0;       // 限制最小电阻
+            printf("\n[get_encoder1_data_task] CR mode - resistance setpoint: %.3f Ω", load_setpoint_resistance_ohm);
+          }
+          break;
+      }
+    }
 
-    /* 实现电流调节 */
+    /* 实现负载调节 */
     #ifdef USE_IIC_DEVICE
-      double current_setpoint = get_encoder_current_setpoint(); // 获取当前设定值
-      queue_element1.data = current_setpoint; // 把当前设定值传递给 LVGL 队列的元素
+      // 根据模式获取当前显示值和队列数据
+      double display_value = 0.0;
+      switch(current_load_mode) {
+        case CONSTANT_CURRENT:
+          display_value = load_setpoint_current_mA;
+          break;
+        case CONSTANT_POWER:
+          display_value = load_setpoint_power_W * 1000; // 转换为mW显示
+          break;
+        case CONSTANT_RESISTANCE:
+          display_value = load_setpoint_resistance_ohm;
+          break;
+      }
+      
+      queue_element1.data = display_value; // 把当前设定值传递给 LVGL 队列的元素
 
       if (testing_load_flag == pdFALSE && circuit_enabled == true) {
         #ifdef USE_PID_CONTROLLER
-          // 这里是 PID 控制器的电流值
-          current_ctrl.process_variable.target = current_setpoint; // 设置 PID 控制器的目标值
-          if (increment != 0.0) {
-            printf("\n[get_encoder1_data_task] PID target updated to: %.3f mA", current_setpoint);
+          // 在恒流模式下直接设置目标电流，其他模式由set_current_task计算
+          if (current_load_mode == CONSTANT_CURRENT) {
+            current_ctrl.process_variable.target = load_setpoint_current_mA;
+            if (increment != 0.0) {
+              printf("\n[get_encoder1_data_task] CC mode - PID target updated to: %.3f mA", load_setpoint_current_mA);
+            }
           }
+          // 恒功率和恒阻模式的目标电流由set_current_task动态计算
         #else
-          // 未启用 PID 控制器
-          if (increment != 0.0) {
-            printf("\n[get_encoder1_data_task] setpoint current(mA): %.3f", current_setpoint);
-            MCP4725_device.setVoltage(from_set_current2voltage_V(current_setpoint/1000.0)); // 设置 DAC 的目标值
+          // 未启用 PID 控制器的情况
+          if (current_load_mode == CONSTANT_CURRENT && increment != 0.0) {
+            printf("\n[get_encoder1_data_task] setpoint current(mA): %.3f", load_setpoint_current_mA);
+            MCP4725_device.setVoltage(from_set_current2voltage_V(load_setpoint_current_mA/1000.0));
           }
         #endif
       } else {
-        // printf("\n[get_encoder1_data_task] testing_load_flag: %d, circuit_enabled: %d", testing_load_flag, circuit_enabled);
         if (!circuit_enabled) {
           //TODO: 每次都灰色化当前电流显示（无法初始化为灰色的妥协）
           lv_obj_set_style_text_color(guider_ui.main_page_measure_current_label, lv_color_hex(0xc4c4c4), LV_PART_MAIN|LV_STATE_DEFAULT);
@@ -920,8 +989,7 @@ void get_encoder1_data_task(void *pvParameters)
           #else
             MCP4725_device.setVoltage(0.0);
           #endif
-          
-          if (increment != 0.0) {
+            if (increment != 0.0) {
             printf("\n[get_encoder1_data_task] Circuit disabled, encoder input stored but not applied");
           }
         }
@@ -957,3 +1025,119 @@ void get_encoder1_data_task(void *pvParameters)
 #endif
 
 #endif // USE_ENCODER1
+
+/*********************************** Load Mode Setup *********************************/
+LoadMode current_load_mode = CONSTANT_CURRENT; // 默认恒流模式
+double load_setpoint_current_mA = 100.0;       // 恒流模式设定值，默认100mA
+double load_setpoint_power_W = 1.0;            // 恒功率模式设定值，默认1W
+double load_setpoint_resistance_ohm = 100.0;    // 恒阻模式设定值，默认100Ω
+
+/**
+ * @brief 切换负载模式
+ * @author skyswordx
+ * @details 在三种负载模式之间循环切换：恒流 -> 恒功率 -> 恒阻 -> 恒流
+ */
+void switch_load_mode() {
+    switch(current_load_mode) {
+        case CONSTANT_CURRENT:
+            current_load_mode = CONSTANT_POWER;
+            printf("\n[switch_load_mode] Switched to CONSTANT_POWER mode");
+            break;
+        case CONSTANT_POWER:
+            current_load_mode = CONSTANT_RESISTANCE;
+            printf("\n[switch_load_mode] Switched to CONSTANT_RESISTANCE mode");
+            break;
+        case CONSTANT_RESISTANCE:
+            current_load_mode = CONSTANT_CURRENT;
+            printf("\n[switch_load_mode] Switched to CONSTANT_CURRENT mode");
+            break;
+    }
+    update_load_mode_display();
+}
+
+/**
+ * @brief 更新负载模式显示
+ * @author skyswordx
+ * @details 更新GUI上的负载模式显示
+ */
+void update_load_mode_display() {
+    #ifdef USE_LCD_DISPLAY
+    if (xSemaphoreTake(gui_xMutex,portMAX_DELAY) == pdTRUE) {
+        switch(current_load_mode) {
+            case CONSTANT_CURRENT:
+                // 更新显示为恒流模式，可以在这里更新相关GUI元素
+                printf("\n[update_load_mode_display] Display updated for CONSTANT_CURRENT");
+                lv_label_set_text(guider_ui.main_page_set_current_description, "设置电流(mA)");
+                lv_dropdown_set_selected(guider_ui.main_page_ddlist_1, 0); // 0是恒流模式的索引
+                break;
+            case CONSTANT_POWER:
+                // 更新显示为恒功率模式
+                printf("\n[update_load_mode_display] Display updated for CONSTANT_POWER");
+                lv_label_set_text(guider_ui.main_page_set_current_description, "设置功率(mW)");
+                lv_dropdown_set_selected(guider_ui.main_page_ddlist_1, 1); // 0是恒功率模式的索引
+                break;
+            case CONSTANT_RESISTANCE:
+                // 更新显示为恒阻模式
+                printf("\n[update_load_mode_display] Display updated for CONSTANT_RESISTANCE");
+                lv_label_set_text(guider_ui.main_page_set_current_description, "设置电阻(Ohm)");
+                
+                lv_dropdown_set_selected(guider_ui.main_page_ddlist_1, 2); // 0是恒阻模式的索引
+                break;
+        }
+        xSemaphoreGive(gui_xMutex);
+    } else {
+        printf("\n[ERROR] Failed to acquire GUI mutex for mode display update");
+    }
+    #endif
+}
+
+/**
+ * @brief 根据当前模式计算目标电流
+ * @author skyswordx
+ * @return 目标电流值(mA)
+ * @details 根据不同的负载模式和当前测量值计算所需的目标电流
+ */
+double calculate_target_current_for_mode() {
+    double target_current_mA = 0.0;
+    
+    switch(current_load_mode) {
+        case CONSTANT_CURRENT:
+            // 恒流模式：直接返回设定电流
+            target_current_mA = load_setpoint_current_mA;
+            break;
+            
+        case CONSTANT_POWER:
+            {
+                // 恒功率模式：P = U * I，因此 I = P / U
+                double current_voltage_V = safe_read_ina226_voltage_V();
+                if (current_voltage_V > 0.1) { // 避免除零错误
+                    target_current_mA = (load_setpoint_power_W / current_voltage_V) * 1000; // 转换为mA
+                    // 限制电流范围，避免过大电流
+                    if (target_current_mA > 2000.0) target_current_mA = 2000.0;
+                    if (target_current_mA < 10.0) target_current_mA = 10.0;
+                } else {
+                    target_current_mA = 10.0; // 电压过低时设为最小电流
+                }
+            }
+            break;
+            
+        case CONSTANT_RESISTANCE:
+            {
+                // 恒阻模式：I = U / R
+                double current_voltage_V = safe_read_ina226_voltage_V();
+                if (load_setpoint_resistance_ohm > 0.1) { // 避免除零错误
+                    target_current_mA = (current_voltage_V / load_setpoint_resistance_ohm) * 1000; // 转换为mA
+                    // 限制电流范围
+                    if (target_current_mA > 2000.0) target_current_mA = 2000.0;
+                    if (target_current_mA < 10.0) target_current_mA = 10.0;
+                } else {
+                    target_current_mA = 10.0; // 电阻过小时设为最小电流
+                }
+            }
+            break;
+    }
+    
+    return target_current_mA;
+}
+
+/******************************  ESP32S3 Setup ***********************************/
