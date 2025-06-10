@@ -4,6 +4,7 @@
 // This setup information uses simple 8-bit SPI writecommand() and writedata() functions
 //
 // See ST7735_Setup.h file for an alternative format
+// 备份的ili9488初始化代码
 
 
 // Configure ILI9488 display
@@ -87,7 +88,7 @@
     writedata(0x2C);
     writedata(0x82);
 
-    writecommand(TFT_INVON); // Inversion ON
+    // writecommand(TFT_INVON); // Inversion ON
 
     writecommand(TFT_SLPOUT);  //Exit Sleep
 delay(120);
