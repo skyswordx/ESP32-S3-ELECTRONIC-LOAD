@@ -2847,7 +2847,7 @@ void setup_scr_main_page(lv_ui *ui)
 
     //Write codes main_page_over_voltage_warning_msgbox
     static const char * main_page_over_voltage_warning_msgbox_btns[] = {""};
-    ui->main_page_over_voltage_warning_msgbox = lv_msgbox_create(ui->main_page, "OVER  VOLATGE  WARNING", "\n极限过压了\n\n\n\n", main_page_over_voltage_warning_msgbox_btns, false);
+    ui->main_page_over_voltage_warning_msgbox = lv_msgbox_create(ui->main_page, "过压警告", "\n达到过压保护阈值，已关闭电流输入。\n等待电压回落......\n\n", main_page_over_voltage_warning_msgbox_btns, false);
     lv_obj_set_size(lv_msgbox_get_btns(ui->main_page_over_voltage_warning_msgbox), 0, 30);
     lv_obj_set_pos(ui->main_page_over_voltage_warning_msgbox, 101, 83);
     lv_obj_set_size(ui->main_page_over_voltage_warning_msgbox, 280, 150);
