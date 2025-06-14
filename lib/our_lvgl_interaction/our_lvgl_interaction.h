@@ -17,6 +17,7 @@
 #include <Arduino.h>
 #include "gui_guider.h"
 #include "our_queque.hpp" // 消息队列头文件
+#include "our_tasks_config.hpp" // 任务配置头文件，包含button模式定义
 
 
 extern SemaphoreHandle_t gui_xMutex;  // gui 互斥锁句柄，LVGL 线程不安全，需要加锁

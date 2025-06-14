@@ -131,7 +131,7 @@ uint8_t Warning_Voltage = 12; // 过压保护阈值，单位为 V
 
       /**
        * @brief PID 控制器的开环阶跃测试函数
-       * @author skyswordx
+       * @author Triwalt
        * @details 该函数应该在任务中循环调用，进行 PID 控制器的开环阶跃测试
        *          主要用于获取阶跃响应中的过程变量和控制器输出的数据
        *          以便使用 Lambda 整定法进行参数整定
@@ -523,22 +523,20 @@ void get_load_changing_rate_task(void *pvParameters){
         check_voltage_L_V = safe_read_ina226_voltage_V(); // 读取电压值
         printf("\n[get_load_changing_rate_task] check_voltage_L: %.3f (V), check_current_L: %.3f (A)", check_voltage_L_V, check_current_L_A);
         check_L = pdTRUE;
-      }
-
-      
+      }      
       #ifdef USE_PID_CONTROLLER
           // 这里是 PID 控制器的电流值
-          current_ctrl.process_variable.target = TESING_MAX_CURRENT_A * 1000; // 设置 PID 控制器的目标值
+          current_ctrl.process_variable.target = (load_test_high_current_mA / 1000.0) * 1000; // 使用动态高电流值设置 PID 控制器的目标值
       #else
           // 这里是 DAC 的电流值
-          MCP4725_device.setVoltage(from_set_current2voltage_V(TESING_MAX_CURRENT_A)); // 设置输出电压为第一个电流值
+          MCP4725_device.setVoltage(from_set_current2voltage_V(load_test_high_current_mA / 1000.0)); // 使用动态高电流值设置输出电压
       #endif  // 设置输出电压为第二个电流值
       vTaskDelay(200 / portTICK_PERIOD_MS); // 延时 200 ms
-      printf("\n From TEST_MAX_CURRENT to set DAC: %.3f (V)", MCP4725_device.getVoltage());
+      printf("\n From TEST_HIGH_CURRENT to set DAC: %.3f (V)", MCP4725_device.getVoltage());
 
       check_current_H_A = safe_read_ina226_current_mA() / 1000; // 读取电流值
       printf("\n[get_load_changing_rate_task] check_current_H: %.3f (A)", check_current_H_A);
-      if ( abs(check_current_H_A - TESING_MAX_CURRENT_A) < THRESHOLD_A){
+      if ( abs(check_current_H_A - (load_test_high_current_mA / 1000.0)) < THRESHOLD_A){
         check_voltage_H_V = safe_read_ina226_voltage_V(); // 读取电压值
         printf("\n[get_load_changing_rate_task] check_voltage_H: %.3f (V), check_current_H: %.3f (A)", check_voltage_H_V, check_current_H_A);
         check_H = pdTRUE;
@@ -846,34 +844,109 @@ void button_handler_task(void *pvParameters){
           #endif // USE_BUTTON1
           #ifdef USE_BUTTON2
             if(GPIO_PIN == button2.pin){
-              #ifdef USE_IIC_DEVICE
-                xSemaphoreGive(load_testing_xBinarySemaphore); // 释放二值信号量，触发负载测试
-              #endif // IIC_DEVICE
-              
+              // 按键2：短按 - 负载测试功能，长按 - button3/4功能模式切换
+              if (long_press == pdFALSE) {
+                // 短按：负载测试功能（保持原有功能）
+                #ifdef USE_IIC_DEVICE
+                  xSemaphoreGive(load_testing_xBinarySemaphore); // 释放二值信号量，触发负载测试
+                #endif // IIC_DEVICE
+                printf("\n[button_handler_task] Button2 short press - Load testing triggered");
+              } else {
+                // 长按：button3/4功能模式切换
+                printf("\n[button_handler_task] Long press detected - switching button3/4 function mode");
+                switch_button34_mode(); // 切换button3/4功能模式
+              }
             }
           #endif // USE_BUTTON2
+          
           #ifdef USE_BUTTON3
             if(GPIO_PIN == button3.pin){
-              // 提高过压阈值
-              if (Warning_Voltage < 20.0) {
-                Warning_Voltage += 1; // 增加过压阈值
-                printf("\n[button_handler_task] Warning_Voltage increased to: %.3f V", Warning_Voltage);
-              } else {
-                printf("\n[button_handler_task] Warning_Voltage already at maximum: %.3f V", Warning_Voltage);
+              // button3功能根据当前模式而定
+              switch(current_button34_mode) {
+                case VOLTAGE_ADJUSTMENT:
+                  // 过压阈值调节模式：提高过压阈值
+                  if (Warning_Voltage < 20.0) {
+                    Warning_Voltage += 1; // 增加过压阈值
+                    printf("\n[button_handler_task] Warning_Voltage increased to: %.1f V", (double)Warning_Voltage);
+                    // 更新GUI显示
+                    #ifdef USE_LCD_DISPLAY
+                    if (xSemaphoreTake(gui_xMutex, 50 / portTICK_PERIOD_MS) == pdTRUE) {
+                      if (guider_ui.main_page_over_voltage_box != NULL) {
+                        lv_spinbox_set_value(guider_ui.main_page_over_voltage_box, (int32_t)Warning_Voltage);
+                      }
+                      xSemaphoreGive(gui_xMutex);
+                    }
+                    #endif
+                  } else {
+                    printf("\n[button_handler_task] Warning_Voltage already at maximum: %.1f V", (double)Warning_Voltage);
+                  }
+                  break;
+                  
+                case CURRENT_ADJUSTMENT:
+                  // 负载测试电流调节模式：增加高电流值
+                  if (load_test_high_current_mA < 1800.0) {
+                    load_test_high_current_mA += 100.0; // 增加100mA
+                    if (load_test_high_current_mA > 1800.0) load_test_high_current_mA = 1800.0; // 限制上限
+                    printf("\n[button_handler_task] Load test high current increased to: %.0f mA", load_test_high_current_mA);
+                    // 更新GUI显示
+                    #ifdef USE_LCD_DISPLAY
+                    if (xSemaphoreTake(gui_xMutex, 50 / portTICK_PERIOD_MS) == pdTRUE) {
+                      if (guider_ui.main_page_over_voltage_box != NULL) {
+                        lv_spinbox_set_value(guider_ui.main_page_over_voltage_box, (int32_t)load_test_high_current_mA);
+                      }
+                      xSemaphoreGive(gui_xMutex);
+                    }
+                    #endif
+                  } else {
+                    printf("\n[button_handler_task] Load test high current already at maximum: %.0f mA", load_test_high_current_mA);
+                  }
+                  break;
               }
-
             }
           #endif // USE_BUTTON3
           #ifdef USE_BUTTON4
             if(GPIO_PIN == button4.pin){
-              // 降低过压阈值            
-              if (Warning_Voltage > 5.0) {
-                Warning_Voltage -= 1; // 减少过压阈值
-                printf("\n[button_handler_task] Warning_Voltage decreased to: %.3f V", Warning_Voltage);
-              } else {
-                printf("\n[button_handler_task] Warning_Voltage already at minimum: %.3f V", Warning_Voltage);
+              // button4功能根据当前模式而定
+              switch(current_button34_mode) {
+                case VOLTAGE_ADJUSTMENT:
+                  // 过压阈值调节模式：降低过压阈值
+                  if (Warning_Voltage > 5.0) {
+                    Warning_Voltage -= 1; // 减少过压阈值
+                    printf("\n[button_handler_task] Warning_Voltage decreased to: %.1f V", (double)Warning_Voltage);
+                    // 更新GUI显示
+                    #ifdef USE_LCD_DISPLAY
+                    if (xSemaphoreTake(gui_xMutex, 50 / portTICK_PERIOD_MS) == pdTRUE) {
+                      if (guider_ui.main_page_over_voltage_box != NULL) {
+                        lv_spinbox_set_value(guider_ui.main_page_over_voltage_box, (int32_t)Warning_Voltage);
+                      }
+                      xSemaphoreGive(gui_xMutex);
+                    }
+                    #endif
+                  } else {
+                    printf("\n[button_handler_task] Warning_Voltage already at minimum: %.1f V", (double)Warning_Voltage);
+                  }
+                  break;
+                  
+                case CURRENT_ADJUSTMENT:
+                  // 负载测试电流调节模式：减少高电流值
+                  if (load_test_high_current_mA > 200.0) {
+                    load_test_high_current_mA -= 100.0; // 减少100mA
+                    if (load_test_high_current_mA < 200.0) load_test_high_current_mA = 200.0; // 限制下限
+                    printf("\n[button_handler_task] Load test high current decreased to: %.0f mA", load_test_high_current_mA);
+                    // 更新GUI显示
+                    #ifdef USE_LCD_DISPLAY
+                    if (xSemaphoreTake(gui_xMutex, 50 / portTICK_PERIOD_MS) == pdTRUE) {
+                      if (guider_ui.main_page_over_voltage_box != NULL) {
+                        lv_spinbox_set_value(guider_ui.main_page_over_voltage_box, (int32_t)load_test_high_current_mA);
+                      }
+                      xSemaphoreGive(gui_xMutex);
+                    }
+                    #endif
+                  } else {
+                    printf("\n[button_handler_task] Load test high current already at minimum: %.0f mA", load_test_high_current_mA);
+                  }
+                  break;
               }
-              
             }
           #endif // USE_BUTTON4
           }
@@ -1138,6 +1211,71 @@ double calculate_target_current_for_mode() {
     }
     
     return target_current_mA;
+}
+
+/*********************************** Button34 Function Mode Setup *******************/
+Button34Mode current_button34_mode = VOLTAGE_ADJUSTMENT; // 默认过压阈值调节模式
+double load_test_high_current_mA = 1000.0;               // 负载测试高电流值，默认1000mA
+
+/**
+ * @brief 切换button3/4功能模式
+ * @author skyswordx
+ * @details 在两种功能模式之间切换：过压阈值调节 <-> 负载测试电流调节
+ */
+void switch_button34_mode() {
+    switch(current_button34_mode) {
+        case VOLTAGE_ADJUSTMENT:
+            current_button34_mode = CURRENT_ADJUSTMENT;
+            printf("\n[switch_button34_mode] Switched to CURRENT_ADJUSTMENT mode");
+            break;
+        case CURRENT_ADJUSTMENT:
+            current_button34_mode = VOLTAGE_ADJUSTMENT;
+            printf("\n[switch_button34_mode] Switched to VOLTAGE_ADJUSTMENT mode");
+            break;
+    }
+    update_button34_mode_display();
+}
+
+/**
+ * @brief 更新button3/4功能模式显示
+ * @author skyswordx
+ * @details 更新GUI上的button3/4功能模式显示和相关控件的单位、范围等
+ */
+void update_button34_mode_display() {
+    #ifdef USE_LCD_DISPLAY
+    if (xSemaphoreTake(gui_xMutex, 100 / portTICK_PERIOD_MS) == pdTRUE) {
+        switch(current_button34_mode) {
+            case VOLTAGE_ADJUSTMENT:
+                // 更新显示为过压阈值调节模式
+                if (guider_ui.main_page_over_volatge_description != NULL) {
+                    lv_label_set_text(guider_ui.main_page_over_volatge_description, "过压阈值(V)");
+                }
+                if (guider_ui.main_page_over_voltage_box != NULL) {
+                    lv_spinbox_set_value(guider_ui.main_page_over_voltage_box, (int32_t)Warning_Voltage);
+                    lv_spinbox_set_step(guider_ui.main_page_over_voltage_box, 1);       // 步长1V
+                    lv_spinbox_set_range(guider_ui.main_page_over_voltage_box, 5, 20);  // 范围5-20V
+                }
+                printf("\n[update_button34_mode_display] Display updated for VOLTAGE_ADJUSTMENT");
+                break;
+                
+            case CURRENT_ADJUSTMENT:
+                // 更新显示为负载测试电流调节模式
+                if (guider_ui.main_page_over_volatge_description != NULL) {
+                    lv_label_set_text(guider_ui.main_page_over_volatge_description, "测试电流(mA)");
+                }
+                if (guider_ui.main_page_over_voltage_box != NULL) {
+                    lv_spinbox_set_value(guider_ui.main_page_over_voltage_box, (int32_t)load_test_high_current_mA);
+                    lv_spinbox_set_step(guider_ui.main_page_over_voltage_box, 100);       // 步长100mA
+                    lv_spinbox_set_range(guider_ui.main_page_over_voltage_box, 200, 1800); // 范围200-1800mA
+                }
+                printf("\n[update_button34_mode_display] Display updated for CURRENT_ADJUSTMENT");
+                break;
+        }
+        xSemaphoreGive(gui_xMutex);
+    } else {
+        printf("\n[ERROR] Failed to acquire GUI mutex for button34 mode display update");
+    }
+    #endif
 }
 
 /******************************  ESP32S3 Setup ***********************************/

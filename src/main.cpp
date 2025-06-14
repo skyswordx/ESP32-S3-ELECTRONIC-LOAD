@@ -210,10 +210,12 @@ void startup_task(void *pvParameters) {
                     1
                   );
       #endif
-    
       #ifdef USE_PID_CONTROLLER
       // 使用线程安全的PID控制器初始化函数
       init_pid_controller();
+      
+      // 初始化button3/4功能模式显示
+      update_button34_mode_display();
     
       xTaskCreatePinnedToCore(set_current_task,
                   "set_current_task",

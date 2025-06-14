@@ -56,7 +56,7 @@ extern SemaphoreHandle_t startup_xBinarySemaphore; // 启动二值信号量
 /*********************************** Current PID Setup ***********************************/
 // 包含自定义的 PID 控制器类和 VOFA 下位机
 #ifdef USE_PID_CONTROLLER
-    #include "our_pid_controller.hpp"
+    #include "../our_pid_controller/our_pid_controller.hpp"
     // #include "our_vofa_debuger.hpp"
 
     extern PID_controller_t<double> current_ctrl;
@@ -283,9 +283,9 @@ extern bool circuit_enabled; // 电路开关状态（true=开启，false=关闭�
  * @details 支持三种负载模式：恒流、恒功率、恒阻
  */
 enum LoadMode {
-    CONSTANT_CURRENT = 0,   // 恒流模式
-    CONSTANT_POWER = 1,     // 恒功率模式  
-    CONSTANT_RESISTANCE = 2  // 恒阻模式
+    CONSTANT_CURRENT,     // 恒流模式
+    CONSTANT_POWER,       // 恒功率模式
+    CONSTANT_RESISTANCE   // 恒阻模式
 };
 
 // 全局变量声明
@@ -298,5 +298,19 @@ extern double load_setpoint_resistance_ohm; // 恒阻模式设定值(Ω)
 void switch_load_mode();                 // 切换负载模式
 void update_load_mode_display();         // 更新负载模式显示
 double calculate_target_current_for_mode(); // 根据当前模式计算目标电流
+
+/*********************************** Button34 Function Mode Setup *******************/
+enum Button34Mode {
+    VOLTAGE_ADJUSTMENT,   // 过压阈值调节模式（默认）
+    CURRENT_ADJUSTMENT    // 负载测试电流调节模式
+};
+
+// Button3/4功能模式相关变量声明
+extern Button34Mode current_button34_mode;     // 当前button3/4功能模式
+extern double load_test_high_current_mA;       // 负载测试高电流值(mA)
+
+// Button3/4功能模式相关函数声明
+void switch_button34_mode();                   // 切换button3/4功能模式
+void update_button34_mode_display();           // 更新button3/4功能模式显示
 
 #endif // OUR_CONFIG_HPP
