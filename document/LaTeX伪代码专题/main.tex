@@ -1,0 +1,58 @@
+
+
+
+% 卡尔曼 1
+\begin{algorithm}
+\caption{Kalman Filter Update Algorithm}
+\label{alg:kalman_update}
+\begin{algorithmic}[1]
+\REQUIRE measurement $z_k$, previous state $x_{k-1}$, covariance $p_{k-1}$
+\ENSURE filtered estimate $\hat{x}_k$, updated covariance $p_k$
+\STATE \textbf{function} $\text{update}(z_k)$
+\IF{$\neg \text{initialized}$}
+    \STATE $x \leftarrow z_k$ \COMMENT{Initialize with first measurement}
+    \STATE $\text{initialized} \leftarrow \text{true}$
+    \STATE \textbf{return} $x$
+\ENDIF
+\STATE
+\STATE \COMMENT{--- Prediction Step ---}
+\STATE $x_{pred} \leftarrow x$ \COMMENT{State prediction (constant model)}
+\STATE $p_{pred} \leftarrow p + q$ \COMMENT{Covariance prediction}
+\STATE
+\COMMENT{q: Process noise covariance, p: Error covariance}
+\STATE
+\STATE \COMMENT{--- Update Step ---}
+\STATE $k \leftarrow \frac{p_{pred}}{p_{pred} + r}$ \COMMENT{Optimal Kalman gain}
+\STATE $x \leftarrow x_{pred} + k \cdot (z_k - x_{pred})$ \COMMENT{State update}
+\STATE $p \leftarrow (1 - k) \cdot p_{pred}$ \COMMENT{Covariance update}
+\STATE
+\STATE \textbf{return} $x$
+\STATE \textbf{end function}
+\end{algorithmic}
+\end{algorithm}
+
+% 卡尔曼 2
+\begin{algorithm}
+\caption{Kalman Filter Integration in PID Control System}
+\label{alg:kalman_pid_integration}
+\begin{algorithmic}[1]
+\REQUIRE Raw sensor measurement, PID controller instance, filter enable flag
+\ENSURE Filtered measurement for PID control
+\STATE \textbf{function} $\text{pid\_control\_service}()$
+\WHILE{control loop active}
+    \STATE $z_{raw} \leftarrow \text{read\_sensor}()$ \COMMENT{Get raw current measurement}
+    \IF{$\text{enable\_kalman\_filter}$}
+        \STATE $y_{filtered} \leftarrow \text{kalman\_filter.update}(z_{raw})$
+        \STATE $\text{process\_variable.measure} \leftarrow y_{filtered}$
+    \ELSE
+        \STATE $\text{process\_variable.measure} \leftarrow z_{raw}$
+    \ENDIF
+    \STATE
+    \STATE $e \leftarrow \text{process\_variable.target} - \text{process\_variable.measure}$
+    \STATE $\text{pid\_output} \leftarrow \text{PID\_compute}(e)$
+    \STATE $\text{convert\_output}(\text{pid\_output})$ \COMMENT{Output to DAC}
+    \STATE $\text{vTaskDelay}(10\text{ms})$ \COMMENT{10ms control period}
+\ENDWHILE
+\STATE \textbf{end function}
+\end{algorithmic}
+\end{algorithm}
