@@ -1,0 +1,211 @@
+\documentclass{article}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\begin{document}
+
+\section{Thread-Safe Interface Protection Using Mutex}
+
+\subsection{Overview}
+
+This system implements comprehensive mutex-based protection paradigms for thread-unsafe interfaces including LVGL graphics library, INA226 current sensor, and MCP4725 DAC. The design provides universal patterns to ensure data integrity and prevent race conditions in multi-task environments.
+
+\begin{algorithm}
+\caption{Universal Mutex Protection Paradigm}
+\label{alg:universal_mutex_paradigm}
+\begin{algorithmic}[1]
+\REQUIRE Thread-unsafe resource, corresponding mutex handle, timeout value
+\ENSURE Thread-safe resource access with error handling
+\STATE \textbf{function} $thread\_safe\_resource\_access(resource, mutex, timeout, operation)$
+\STATE $result \leftarrow \text{OPERATION\_FAILED}$
+\STATE $mutex\_acquired \leftarrow \text{xSemaphoreTake}(mutex, timeout)$
+\IF{$mutex\_acquired == \text{pdTRUE}$}
+    \STATE \textbf{try:}
+    \STATE \quad $result \leftarrow \text{execute\_operation}(resource, operation)$
+    \STATE \textbf{finally:}
+    \STATE \quad $\text{xSemaphoreGive}(mutex)$ \COMMENT{Always release mutex}
+\ELSE
+    \STATE Log mutex acquisition timeout
+    \STATE $result \leftarrow \text{MUTEX\_TIMEOUT\_ERROR}$
+\ENDIF
+\STATE \textbf{return} $result$
+\STATE \textbf{end function}
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+\caption{Task-Based Mutex Protection Pattern}
+\label{alg:task_mutex_pattern}
+\begin{algorithmic}[1]
+\REQUIRE Data source (queue/interrupt), resource mutex, protected resource
+\ENSURE Thread-safe task execution with proper synchronization
+\STATE \textbf{function} $task\_with\_mutex\_protection()$
+\STATE $data\_item: \text{DataType}$
+\WHILE{task active}
+    \STATE $result \leftarrow \text{receive\_data}(data\_source, \&data\_item, timeout)$
+    \IF{$result == \text{SUCCESS}$}
+        \STATE $mutex\_acquired \leftarrow \text{xSemaphoreTake}(resource\_mutex, timeout)$
+        \IF{$mutex\_acquired == \text{pdTRUE}$}
+            \STATE \textbf{try:}
+            \STATE \quad $\text{process\_data\_safely}(protected\_resource, data\_item)$
+            \STATE \textbf{finally:}
+            \STATE \quad $\text{xSemaphoreGive}(resource\_mutex)$ \COMMENT{Always release}
+        \ELSE
+            \STATE Log mutex acquisition failure
+            \STATE Handle degradation gracefully
+        \ENDIF
+    \ENDIF
+\ENDWHILE
+\STATE \textbf{end function}
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+\caption{Device Access Protection Pattern}
+\label{alg:device_access_pattern}
+\begin{algorithmic}[1]
+\REQUIRE Hardware device interface, device mutex, operation parameters
+\ENSURE Exclusive device access preventing bus conflicts
+\STATE \textbf{function} $safe\_device\_operation(device, mutex, operation, params)$
+\STATE $result \leftarrow \text{OPERATION\_FAILED}$
+\STATE $return\_value \leftarrow \text{default\_value}$
+\STATE 
+\STATE $mutex\_acquired \leftarrow \text{xSemaphoreTake}(mutex, timeout)$
+\IF{$mutex\_acquired == \text{pdTRUE}$}
+    \STATE \textbf{try:}
+    \STATE \quad $return\_value \leftarrow \text{device.execute\_operation}(operation, params)$
+    \STATE \quad $result \leftarrow \text{OPERATION\_SUCCESS}$
+    \STATE \textbf{finally:}
+    \STATE \quad $\text{xSemaphoreGive}(mutex)$ \COMMENT{Always release mutex}
+\ELSE
+    \STATE Log device access timeout error
+    \STATE $result \leftarrow \text{DEVICE\_ACCESS\_TIMEOUT}$
+\ENDIF
+\STATE 
+\STATE \textbf{return} $(result, return\_value)$
+\STATE \textbf{end function}
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+\caption{Atomic Multi-Operation Pattern}
+\label{alg:atomic_multi_operation}
+\begin{algorithmic}[1]
+\REQUIRE Multiple related operations, shared mutex, error handling strategy
+\ENSURE Atomic execution of correlated operations
+\STATE \textbf{function} $atomic\_multi\_operation(operations\_list, mutex, timeout)$
+\STATE $results \leftarrow \text{empty\_list}$
+\STATE $overall\_success \leftarrow \text{FALSE}$
+\STATE 
+\STATE $mutex\_acquired \leftarrow \text{xSemaphoreTake}(mutex, timeout)$
+\IF{$mutex\_acquired == \text{pdTRUE}$}
+    \STATE \textbf{try:}
+    \STATE \quad $overall\_success \leftarrow \text{TRUE}$
+    \STATE \quad \textbf{for each} $operation$ \textbf{in} $operations\_list$ \textbf{do}
+    \STATE \quad \quad $single\_result \leftarrow \text{execute\_operation}(operation)$
+    \STATE \quad \quad $results.\text{append}(single\_result)$
+    \STATE \quad \quad \textbf{if} $single\_result == \text{FAILED}$ \textbf{then}
+    \STATE \quad \quad \quad $overall\_success \leftarrow \text{FALSE}$
+    \STATE \quad \quad \quad \textbf{break} \COMMENT{Early termination on failure}
+    \STATE \quad \quad \textbf{end if}
+    \STATE \quad \textbf{end for}
+    \STATE \textbf{finally:}
+    \STATE \quad $\text{xSemaphoreGive}(mutex)$ \COMMENT{Always release mutex}
+\ELSE
+    \STATE Log atomic operation timeout
+    \STATE $overall\_success \leftarrow \text{FALSE}$
+\ENDIF
+\STATE 
+\STATE \textbf{return} $(overall\_success, results)$
+\STATE \textbf{end function}
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+\caption{Mutex Initialization and Management}
+\label{alg:mutex_initialization}
+\begin{algorithmic}[1]
+\REQUIRE FreeRTOS kernel, system initialization phase
+\ENSURE Properly configured mutex handles for thread safety
+\STATE \textbf{System mutex initialization:}
+\STATE $gui\_xMutex \leftarrow \text{xSemaphoreCreateMutex()}$
+\STATE $i2c\_device\_mutex \leftarrow \text{xSemaphoreCreateMutex()}$
+\STATE
+\STATE \textbf{Mutex validation:}
+\IF{$gui\_xMutex == \text{NULL}$ OR $i2c\_device\_mutex == \text{NULL}$}
+    \STATE Log critical error: "Mutex creation failure"
+    \STATE Enter system error state
+    \STATE \textbf{return} ERROR
+\ENDIF
+\STATE
+\STATE \textbf{Task creation with mutex dependencies:}
+\STATE $\text{xTaskCreatePinnedToCore}(lvgl\_task, parameters, core\_0)$
+\STATE $\text{xTaskCreatePinnedToCore}(gui\_update\_task, parameters, core\_0)$
+\STATE $\text{xTaskCreatePinnedToCore}(ina226\_data\_task, parameters, core\_1)$
+\STATE
+\STATE \textbf{return} SUCCESS
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Critical Design Principles}
+
+\subsubsection{Deadlock Prevention}
+
+The mutex acquisition strategy prevents deadlock through:
+
+\begin{itemize}
+    \item \textbf{Consistent ordering}: Always acquire mutexes in the same order across tasks
+    \item \textbf{Timeout mechanisms}: Use \texttt{portMAX\_DELAY} only when blocking is acceptable
+    \item \textbf{Resource scoping}: Minimize critical section duration
+    \item \textbf{Error handling}: Graceful degradation when mutex acquisition fails
+\end{itemize}
+
+\subsubsection{Performance Optimization}
+
+\begin{equation}
+T_{critical\_section} = T_{acquire} + T_{operation} + T_{release}
+\end{equation}
+
+where $T_{operation}$ should be minimized to reduce contention.
+
+\subsubsection{Thread Safety Guarantees}
+
+\begin{itemize}
+    \item \textbf{LVGL operations}: Guaranteed atomic execution preventing display corruption
+    \item \textbf{I2C transactions}: Prevented bus conflicts between sensor reads and DAC writes
+    \item \textbf{Shared data structures}: Protected access to calibration coefficients and buffers
+\end{itemize}
+
+\subsection{Mutex Usage Patterns}
+
+
+\subsubsection{Short Critical Sections}
+
+For brief operations requiring protection:
+
+\begin{equation}
+Pattern_{short} = \text{Acquire} \rightarrow \text{Operation} \rightarrow \text{Release}
+\end{equation}
+
+\subsubsection{Conditional Processing}
+
+For operations that may not require mutex protection:
+
+\begin{equation}
+Pattern_{conditional} = \text{Check} \rightarrow \text{Acquire} \rightarrow \text{Verify} \rightarrow \text{Operation} \rightarrow \text{Release}
+\end{equation}
+
+\subsection{Error Recovery and Monitoring}
+
+The system implements comprehensive error detection:
+
+\begin{itemize}
+    \item \textbf{Acquisition timeouts}: Detect potential deadlock conditions
+    \item \textbf{Resource leaks}: Monitor unreleased mutexes
+    \item \textbf{Priority inversion}: Track high-priority task blocking
+    \item \textbf{Performance metrics}: Measure critical section duration
+\end{itemize}
+
+\end{document}
