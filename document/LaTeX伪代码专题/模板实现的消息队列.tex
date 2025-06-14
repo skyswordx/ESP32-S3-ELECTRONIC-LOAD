@@ -1,0 +1,167 @@
+\documentclass{article}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\begin{document}
+
+\section{Template-Based Message Queue Implementation}
+
+\subsection{Overview}
+
+The template-based message queue implementation provides a type-safe, reusable communication infrastructure for FreeRTOS multi-task systems. The design employs C++ templates to achieve compile-time type checking while maintaining runtime efficiency.
+
+\begin{algorithm}
+\caption{Template Message Queue Element Structure}
+\label{alg:queue_element_template}
+\begin{algorithmic}[1]
+\REQUIRE Template parameter T for data type
+\ENSURE Type-safe queue element with task identification and data description
+\STATE \textbf{Template Class Definition:}
+\STATE $\text{QueueElement\_t<T>}$ \COMMENT{Generic queue element}
+\STATE \quad $task\_id: task\_id\_t$ \COMMENT{Task identifier with priority encoding}
+\STATE \quad $data: T$ \COMMENT{Templated data payload}
+\STATE \quad $data\_description: data\_description\_t$ \COMMENT{Data type descriptor}
+\STATE
+\STATE \textbf{Constructor Overloads:}
+\STATE $\text{QueueElement\_t}()$ \COMMENT{Default constructor}
+\STATE \quad $task\_id \leftarrow TASK\_UNKNOWN$
+\STATE \quad $data \leftarrow T()$
+\STATE \quad $data\_description \leftarrow DATA\_DESCRIPTION\_NONE$
+\STATE
+\STATE $\text{QueueElement\_t}(task\_id\_t\ id, data\_description\_t\ desc, T\ value)$
+\STATE \quad $task\_id \leftarrow id$
+\STATE \quad $data \leftarrow value$
+\STATE \quad $data\_description \leftarrow desc$
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+\caption{Priority-Based Task Identification System}
+\label{alg:priority_task_enum}
+\begin{algorithmic}[1]
+\REQUIRE System tasks with different priority levels
+\ENSURE Enumerated task IDs with embedded priority information
+\STATE \textbf{Priority-Encoded Task Enumeration:}
+\STATE $EVENT\_OVER\_VOLTAGE \leftarrow 0$ \COMMENT{Highest priority: Emergency events}
+\STATE $TASK\_ENCODER \leftarrow 1$ \COMMENT{High priority: User input}
+\STATE $TASK\_DUMMY\_SENSOR \leftarrow 2$ \COMMENT{Medium priority: Mock data}
+\STATE $TASK\_INA226 \leftarrow 3$ \COMMENT{Medium priority: Real sensor data}
+\STATE $TASK\_ADC1 \leftarrow 4$ \COMMENT{Low priority: Auxiliary measurements}
+\STATE $EVENT\_TESTING\_LOAD\_RATE \leftarrow 5$ \COMMENT{Low priority: Test functions}
+\STATE $TASK\_UNKNOWN \leftarrow 99$ \COMMENT{Lowest priority: Unclassified}
+\STATE
+\STATE \textbf{Data Type Classification:}
+\STATE $DATA\_DESCRIPTION\_VOLTAGE \leftarrow 1$
+\STATE $DATA\_DESCRIPTION\_CURRENT \leftarrow 2$
+\STATE $DATA\_DESCRIPTION\_POWER \leftarrow 3$
+\STATE $DATA\_DESCRIPTION\_RESISTANCE \leftarrow 4$
+\STATE $DATA\_DESCRIPTION\_CURRENT\_SETPOINT \leftarrow 6$
+\STATE $DATA\_DESCRIPTION\_EMERGENCY\_STOP \leftarrow 7$
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+\caption{Multi-Queue Communication Architecture}
+\label{alg:multi_queue_system}
+\begin{algorithmic}[1]
+\REQUIRE Multiple FreeRTOS tasks requiring different communication patterns
+\ENSURE Efficient message routing with minimal coupling
+\STATE \textbf{Queue Initialization:}
+\STATE $LVGL\_queue \leftarrow \text{xQueueCreate}(1000, \text{sizeof}(\text{QueueElement\_t<double>}))$
+\STATE $current\_control\_queue \leftarrow \text{xQueueCreate}(10, \text{sizeof}(\text{QueueElement\_t<double>}))$
+\STATE $button\_queue \leftarrow \text{xQueueCreate}(2, \text{sizeof}(\text{gpio\_num\_t}))$
+\STATE
+\STATE \textbf{Producer Task Pattern:}
+\STATE \textbf{function} $sensor\_data\_producer()$
+\WHILE{task active}
+    \STATE $element \leftarrow \text{QueueElement\_t<double>}(TASK\_INA226, DATA\_DESCRIPTION\_CURRENT, current\_value)$
+    \STATE $result \leftarrow \text{xQueueSend}(LVGL\_queue, \&element, 0)$
+    \IF{$result == \text{errQUEUE\_FULL}$}
+        \STATE Log queue overflow condition
+    \ENDIF
+    \STATE $\text{vTaskDelay}(sampling\_interval)$
+\ENDWHILE
+\STATE \textbf{end function}
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+\caption{Consumer Task with Type-Safe Processing}
+\label{alg:consumer_task_pattern}
+\begin{algorithmic}[1]
+\REQUIRE Initialized message queues and processing functions
+\ENSURE Type-safe message consumption with routing
+\STATE \textbf{function} $gui\_update\_consumer()$
+\STATE $received\_element: \text{QueueElement\_t<double>}$
+\WHILE{task active}
+    \STATE $result \leftarrow \text{xQueueReceive}(LVGL\_queue, \&received\_element, \text{portMAX\_DELAY})$
+    \IF{$result == \text{pdTRUE}$}
+        \STATE \textbf{Route by task ID and data description:}
+        \IF{$received\_element.task\_id == TASK\_INA226$}
+            \IF{$received\_element.data\_description == DATA\_DESCRIPTION\_CURRENT$}
+                \STATE $\text{update\_current\_display}(received\_element.data)$
+            \ELSIF{$received\_element.data\_description == DATA\_DESCRIPTION\_VOLTAGE$}
+                \STATE $\text{update\_voltage\_display}(received\_element.data)$
+            \ELSIF{$received\_element.data\_description == DATA\_DESCRIPTION\_POWER$}
+                \STATE $\text{update\_power\_display}(received\_element.data)$
+            \ENDIF
+        \ELSIF{$received\_element.task\_id == TASK\_ADC1$}
+            \STATE $\text{update\_temperature\_display}(received\_element.data)$
+        \ENDIF
+    \ENDIF
+\ENDWHILE
+\STATE \textbf{end function}
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Design Advantages}
+
+\subsubsection{Type Safety and Compile-Time Verification}
+
+The template-based approach provides several critical benefits:
+
+\begin{itemize}
+    \item \textbf{Compile-time type checking}: Template instantiation ensures data type consistency
+    \item \textbf{Zero runtime type overhead}: No runtime type information required
+    \item \textbf{Generic reusability}: Same queue structure supports different data types
+    \item \textbf{Memory efficiency}: Optimized memory layout for each instantiated type
+\end{itemize}
+
+\subsubsection{Priority-Embedded Task Identification}
+
+The task ID enumeration embeds priority information directly:
+
+\begin{equation}
+Priority_{effective} = \frac{1}{task\_id + 1}
+\end{equation}
+
+where lower numeric values correspond to higher priority levels.
+
+\subsubsection{Scalable Communication Patterns}
+
+\begin{itemize}
+    \item \textbf{One-to-many broadcasting}: Single producer, multiple consumers
+    \item \textbf{Many-to-one aggregation}: Multiple producers, single consumer  
+    \item \textbf{Priority-based message handling}: Emergency messages bypass normal queuing
+    \item \textbf{Type-specific routing}: Data description enables precise message routing
+\end{itemize}
+
+\subsection{Performance Characteristics}
+
+\begin{equation}
+T_{enqueue} = O(1) + T_{mutex} + T_{notification}
+\end{equation}
+
+\begin{equation}
+T_{dequeue} = O(1) + T_{context\_switch} + T_{processing}
+\end{equation}
+
+\begin{equation}
+Memory_{queue} = queue\_size \times sizeof(QueueElement\_t<T>) + overhead
+\end{equation}
+
+The template-based message queue system achieves predictable O(1) performance for both enqueue and dequeue operations, with memory usage scaling linearly with queue size and element size.
+
+\end{document}
