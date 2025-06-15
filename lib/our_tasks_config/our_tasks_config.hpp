@@ -60,10 +60,6 @@ extern SemaphoreHandle_t startup_xBinarySemaphore; // 启动二值信号量
     // #include "our_vofa_debuger.hpp"
 
     extern PID_controller_t<double> current_ctrl;
-    
-    // 添加优先级状态管理函数声明
-    priority_state_t get_current_priority_state(void);
-    void force_priority_state(priority_state_t force_state);
 
     #define DAC_OUTPUT_V_MAX 5.0 
     #define DAC_OUTPUT_V_MIN 0.0
@@ -75,11 +71,6 @@ extern SemaphoreHandle_t startup_xBinarySemaphore; // 启动二值信号量
     #define CURRENT_TASK_KD 0.001 // 电流控制器微分系数
             
     void set_current_task(void *pvParameters); // 设置电流任务函数
-    
-    // 添加优先级仲裁相关函数声明
-    bool should_accept_message(const QueueElement_t<double>& message);
-    void handle_state_transition(const QueueElement_t<double>& message);
-    bool can_exit_over_voltage_protection(void);
             
     #ifdef USE_CURRENT_OPEN_LOOP_TEST
         void open_loop_data_collection_task(void *pvParameters); // 开环数据采集任务函数
