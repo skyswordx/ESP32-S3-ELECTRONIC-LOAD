@@ -1,0 +1,365 @@
+\documentclass{article}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{mathrsfs}
+\usepackage{bm}
+
+\begin{document}
+
+\section{Kalman Filter Mathematical Foundation and Implementation}
+
+\subsection{Mathematical Derivation of Optimal Kalman Gain}
+
+\subsubsection{Problem Formulation}
+
+The Kalman filter seeks to find the optimal weight $K$ that minimizes the estimation error variance. Consider the linear estimation problem:
+
+\begin{align}
+\hat{x}_{k|k} &= \hat{x}_{k|k-1} + K_k(z_k - \hat{x}_{k|k-1}) \label{eq:state_update}
+\end{align}
+
+where:
+\begin{itemize}
+    \item $\hat{x}_{k|k-1}$: predicted state estimate
+    \item $z_k$: measurement at time $k$
+    \item $K_k$: Kalman gain to be optimized
+    \item $\hat{x}_{k|k}$: updated state estimate
+\end{itemize}
+
+\subsubsection{Error Analysis and Variance Minimization}
+
+Let the true state be $x_k$ and measurement noise be $v_k \sim \mathcal{N}(0, R)$. The measurement model is:
+\begin{equation}
+z_k = x_k + v_k \label{eq:measurement_model}
+\end{equation}
+
+The estimation error is defined as:
+\begin{align}
+e_k &= x_k - \hat{x}_{k|k} \\
+&= x_k - \hat{x}_{k|k-1} - K_k(z_k - \hat{x}_{k|k-1}) \\
+&= x_k - \hat{x}_{k|k-1} - K_k(x_k + v_k - \hat{x}_{k|k-1}) \\
+&= (1-K_k)(x_k - \hat{x}_{k|k-1}) - K_k v_k \label{eq:error_decomposition}
+\end{align}
+
+Let $e_{k|k-1} = x_k - \hat{x}_{k|k-1}$ be the prediction error. Then:
+\begin{equation}
+e_k = (1-K_k)e_{k|k-1} - K_k v_k \label{eq:error_final}
+\end{equation}
+
+\subsubsection{Variance Calculation}
+
+The error variance (mean squared error) is:
+\begin{align}
+P_{k|k} &= \mathbb{E}[e_k^2] \\
+&= \mathbb{E}[(1-K_k)^2 e_{k|k-1}^2] + \mathbb{E}[K_k^2 v_k^2] + 2\mathbb{E}[(1-K_k)e_{k|k-1}(-K_k v_k)] \\
+&= (1-K_k)^2 P_{k|k-1} + K_k^2 R + 0 \label{eq:variance_expanded}
+\end{align}
+
+Note: The cross-term is zero because $e_{k|k-1}$ and $v_k$ are uncorrelated.
+
+\subsubsection{Optimization: Finding Optimal Kalman Gain}
+
+To minimize $P_{k|k}$, we take the derivative with respect to $K_k$ and set it to zero:
+\begin{align}
+\frac{\partial P_{k|k}}{\partial K_k} &= \frac{\partial}{\partial K_k}[(1-K_k)^2 P_{k|k-1} + K_k^2 R] \\
+&= -2(1-K_k)P_{k|k-1} + 2K_k R = 0 \label{eq:derivative}
+\end{align}
+
+Solving for $K_k$:
+\begin{align}
+2(1-K_k)P_{k|k-1} &= 2K_k R \\
+(1-K_k)P_{k|k-1} &= K_k R \\
+P_{k|k-1} - K_k P_{k|k-1} &= K_k R \\
+P_{k|k-1} &= K_k(P_{k|k-1} + R) \\
+K_k &= \frac{P_{k|k-1}}{P_{k|k-1} + R} \label{eq:optimal_gain}
+\end{align}
+
+\textbf{This is the optimal Kalman gain that minimizes estimation error variance!}
+
+\subsubsection{Updated Error Covariance}
+
+Substituting the optimal $K_k$ back into the variance equation:
+\begin{align}
+P_{k|k} &= (1-K_k)^2 P_{k|k-1} + K_k^2 R \\
+&= \left(1-\frac{P_{k|k-1}}{P_{k|k-1} + R}\right)^2 P_{k|k-1} + \left(\frac{P_{k|k-1}}{P_{k|k-1} + R}\right)^2 R \\
+&= \left(\frac{R}{P_{k|k-1} + R}\right)^2 P_{k|k-1} + \frac{P_{k|k-1}^2 R}{(P_{k|k-1} + R)^2} \\
+&= \frac{R^2 P_{k|k-1} + P_{k|k-1}^2 R}{(P_{k|k-1} + R)^2} \\
+&= \frac{P_{k|k-1} R (R + P_{k|k-1})}{(P_{k|k-1} + R)^2} \\
+&= \frac{P_{k|k-1} R}{P_{k|k-1} + R} \\
+&= (1-K_k)P_{k|k-1} \label{eq:covariance_update}
+\end{align}
+
+\subsection{Real-time Performance Analysis}
+
+\subsubsection{Computational Complexity Comparison}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Filter Type} & \textbf{Time Complexity} & \textbf{Memory} & \textbf{Delay} & \textbf{Adaptivity} \\
+\hline
+Moving Average & $\mathcal{O}(N)$ & $\mathcal{O}(N)$ & $N/2$ samples & Fixed \\
+Low-pass Filter & $\mathcal{O}(1)$ & $\mathcal{O}(1)$ & $\tau$ (time constant) & Fixed \\
+\textbf{Kalman Filter} & $\mathcal{O}(1)$ & $\mathcal{O}(1)$ & $<1$ sample & Adaptive \\
+\hline
+\end{tabular}
+\caption{Filter Performance Comparison}
+\end{table}
+
+\subsubsection{Delay Analysis}
+
+\textbf{Moving Average Filter:}
+\begin{equation}
+y[n] = \frac{1}{N}\sum_{i=0}^{N-1} x[n-i] \quad \text{Delay} = \frac{N-1}{2} \text{ samples}
+\end{equation}
+
+\textbf{Low-pass Filter:}
+\begin{equation}
+y[n] = \alpha x[n] + (1-\alpha)y[n-1] \quad \text{Phase delay} = \frac{\tau \omega}{1+(\tau \omega)^2}
+\end{equation}
+
+\textbf{Kalman Filter:}
+\begin{equation}
+\hat{x}_k = \hat{x}_{k-1} + K_k(z_k - \hat{x}_{k-1}) \quad \text{Delay} \approx 0
+\end{equation}
+
+The Kalman filter processes each measurement immediately without storing a buffer, resulting in minimal delay.
+
+\subsubsection{Adaptive Response Characteristics}
+
+The Kalman gain automatically adapts based on confidence levels:
+\begin{align}
+K_k &= \frac{P_{k|k-1}}{P_{k|k-1} + R} \\
+\text{When } P_{k|k-1} \gg R: \quad K_k &\approx 1 \quad \text{(Trust measurement)} \\
+\text{When } P_{k|k-1} \ll R: \quad K_k &\approx 0 \quad \text{(Trust prediction)} \\
+\text{When } P_{k|k-1} = R: \quad K_k &= 0.5 \quad \text{(Equal weight)}
+\end{align}
+
+\subsection{Template-based Kalman Filter Implementation}
+
+\begin{algorithm}
+\caption{Template Kalman Filter Class Implementation}
+\label{alg:template_kalman}
+\begin{algorithmic}[1]
+\STATE \textbf{Template Class Definition:}
+\STATE $\text{template}<\text{typename T}>$ 
+\STATE $\text{class KalmanFilter\_t}$ \{
+\STATE \quad \textbf{private:}
+\STATE \quad \quad $T \, q;$ \COMMENT{Process noise covariance}
+\STATE \quad \quad $T \, r;$ \COMMENT{Measurement noise covariance}
+\STATE \quad \quad $T \, x;$ \COMMENT{State estimate}
+\STATE \quad \quad $T \, p;$ \COMMENT{Error covariance}
+\STATE \quad \quad $T \, k;$ \COMMENT{Kalman gain}
+\STATE \quad \quad $\text{bool initialized};$ \COMMENT{Initialization flag}
+\STATE
+\STATE \quad \textbf{public:}
+\STATE \quad \quad \textbf{Constructor:} $\text{KalmanFilter\_t}(T \, q_{default} = 0.001, T \, r_{default} = 0.1)$
+\STATE \quad \quad \quad $q \leftarrow q_{default}$
+\STATE \quad \quad \quad $r \leftarrow r_{default}$
+\STATE \quad \quad \quad $x \leftarrow 0$
+\STATE \quad \quad \quad $p \leftarrow 1.0$ \COMMENT{High initial uncertainty}
+\STATE \quad \quad \quad $\text{initialized} \leftarrow \text{false}$
+\STATE \}
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+\caption{Kalman Filter Update Algorithm}
+\label{alg:kalman_update}
+\begin{algorithmic}[1]
+\REQUIRE measurement $z_k$, previous state $x_{k-1}$, covariance $p_{k-1}$
+\ENSURE filtered estimate $\hat{x}_k$, updated covariance $p_k$
+\STATE \textbf{function} $\text{update}(z_k)$
+\IF{$\neg \text{initialized}$}
+    \STATE $x \leftarrow z_k$ \COMMENT{Initialize with first measurement}
+    \STATE $\text{initialized} \leftarrow \text{true}$
+    \STATE \textbf{return} $x$
+\ENDIF
+\STATE
+\STATE \COMMENT{--- Prediction Step ---}
+\STATE $x_{pred} \leftarrow x$ \COMMENT{State prediction (constant model)}
+\STATE $p_{pred} \leftarrow p + q$ \COMMENT{Covariance prediction}
+\STATE
+\STATE \COMMENT{--- Update Step ---}
+\STATE $k \leftarrow \frac{p_{pred}}{p_{pred} + r}$ \COMMENT{Optimal Kalman gain}
+\STATE $x \leftarrow x_{pred} + k \cdot (z_k - x_{pred})$ \COMMENT{State update}
+\STATE $p \leftarrow (1 - k) \cdot p_{pred}$ \COMMENT{Covariance update}
+\STATE
+\STATE \textbf{return} $x$
+\STATE \textbf{end function}
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+\caption{Kalman Filter Integration in PID Control System}
+\label{alg:kalman_pid_integration}
+\begin{algorithmic}[1]
+\REQUIRE Raw sensor measurement, PID controller instance, filter enable flag
+\ENSURE Filtered measurement for PID control
+\STATE \textbf{function} $\text{pid\_control\_service}()$
+\WHILE{control loop active}
+    \STATE $z_{raw} \leftarrow \text{read\_sensor}()$ \COMMENT{Get raw current measurement}
+    \IF{$\text{enable\_kalman\_filter}$}
+        \STATE $y_{filtered} \leftarrow \text{kalman\_filter.update}(z_{raw})$
+        \STATE $\text{process\_variable.measure} \leftarrow y_{filtered}$
+    \ELSE
+        \STATE $\text{process\_variable.measure} \leftarrow z_{raw}$
+    \ENDIF
+    \STATE
+    \STATE $e \leftarrow \text{process\_variable.target} - \text{process\_variable.measure}$
+    \STATE $\text{pid\_output} \leftarrow \text{PID\_compute}(e)$
+    \STATE $\text{convert\_output}(\text{pid\_output})$ \COMMENT{Output to DAC}
+    \STATE $\text{vTaskDelay}(10\text{ms})$ \COMMENT{10ms control period}
+\ENDWHILE
+\STATE \textbf{end function}
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Parameter Tuning Theory}
+
+\subsubsection{Process Noise Covariance (Q)}
+
+The process noise $Q$ represents the uncertainty in the system model:
+\begin{equation}
+Q = \mathbb{E}[w_k w_k^T] \quad \text{where } w_k \sim \mathcal{N}(0, Q)
+\end{equation}
+
+\textbf{Physical Interpretation for Current Control:}
+\begin{itemize}
+    \item Small $Q$ (0.001-0.01): Assumes current changes slowly, smooth output
+    \item Large $Q$ (0.1-1.0): Allows rapid current changes, fast response
+    \item Optimal range for stable loads: $Q \in [0.001, 0.01]$
+\end{itemize}
+
+\subsubsection{Measurement Noise Covariance (R)}
+
+The measurement noise $R$ characterizes sensor uncertainty:
+\begin{equation}
+R = \mathbb{E}[v_k v_k^T] \quad \text{where } v_k \sim \mathcal{N}(0, R)
+\end{equation}
+
+\textbf{Tuning Strategy:}
+\begin{align}
+R_{optimal} &= \text{Var}(\text{sensor noise}) \\
+&\approx \left(\frac{\text{ADC resolution}}{2\sqrt{3}}\right)^2 + \sigma_{thermal}^2 + \sigma_{quantization}^2
+\end{align}
+
+\subsubsection{Steady-state Analysis}
+
+At steady state, the Kalman gain converges to:
+\begin{equation}
+K_{\infty} = \frac{\sqrt{Q^2 + 4QR} - Q}{2R}
+\end{equation}
+
+And the steady-state error covariance is:
+\begin{equation}
+P_{\infty} = \frac{\sqrt{Q^2 + 4QR} - Q}{2}
+\end{equation}
+
+\subsection{Real-time Performance Advantages}
+
+\subsubsection{Memory Efficiency}
+
+Unlike moving average filters that require storing $N$ samples:
+\begin{align}
+\text{Moving Average:} \quad &\text{Memory} = N \times \text{sizeof}(\text{sample}) \\
+\text{Kalman Filter:} \quad &\text{Memory} = 5 \times \text{sizeof}(\text{float}) = 20 \text{ bytes}
+\end{align}
+
+\subsubsection{Computational Efficiency}
+
+Per-sample computational cost:
+\begin{align}
+\text{Moving Average:} \quad &N \text{ additions} + 1 \text{ division} = \mathcal{O}(N) \\
+\text{Low-pass Filter:} \quad &1 \text{ multiplication} + 1 \text{ addition} = \mathcal{O}(1) \\
+\text{Kalman Filter:} \quad &4 \text{ multiplications} + 3 \text{ additions} = \mathcal{O}(1)
+\end{align}
+
+\subsubsection{Response Time Analysis}
+
+For a step input, the response characteristics are:
+\begin{align}
+\text{Moving Average:} \quad &\tau_{response} = \frac{N \cdot T_s}{2} \\
+\text{Low-pass Filter:} \quad &\tau_{response} = \frac{1-\alpha}{\alpha} \cdot T_s \\
+\text{Kalman Filter:} \quad &\tau_{response} \approx \frac{R}{Q} \cdot T_s
+\end{align}
+
+where $T_s$ is the sampling period.
+
+\subsection{Theoretical Optimality}
+
+\subsubsection{BLUE Property}
+
+The Kalman filter is the Best Linear Unbiased Estimator (BLUE), meaning:
+\begin{enumerate}
+    \item \textbf{Best}: Minimizes mean squared error among all linear estimators
+    \item \textbf{Linear}: Output is a linear combination of measurements
+    \item \textbf{Unbiased}: $\mathbb{E}[\hat{x}_k] = \mathbb{E}[x_k]$
+\end{enumerate}
+
+\subsubsection{Optimality Proof Summary}
+
+The Kalman filter minimizes the trace of the error covariance matrix:
+\begin{equation}
+\min_{K_k} \text{tr}(\mathbb{E}[(x_k - \hat{x}_{k|k})(x_k - \hat{x}_{k|k})^T])
+\end{equation}
+
+Subject to the linear constraint $\hat{x}_{k|k} = \hat{x}_{k|k-1} + K_k(z_k - H\hat{x}_{k|k-1})$.
+
+\subsection{Practical Implementation Considerations}
+
+\subsubsection{Numerical Stability}
+
+To ensure numerical stability in embedded systems:
+\begin{itemize}
+    \item Use Joseph form covariance update: $P_k = (I-K_kH)P_{k|k-1}(I-K_kH)^T + K_kRK_k^T$
+    \item Implement square-root filtering for better precision
+    \item Add lower bounds: $P_k \geq P_{min}$ to prevent filter divergence
+\end{itemize}
+
+\subsubsection{Adaptive Parameter Tuning}
+
+For varying operating conditions:
+\begin{algorithm}
+\caption{Adaptive Parameter Adjustment}
+\label{alg:adaptive_tuning}
+\begin{algorithmic}[1]
+\STATE \textbf{function} $\text{adaptive\_tune}()$
+\STATE $\text{innovation} \leftarrow |z_k - \hat{x}_{k|k-1}|$
+\IF{$\text{innovation} > 3\sqrt{p + r}$} \COMMENT{Outlier detection}
+    \STATE $q \leftarrow q \times 1.1$ \COMMENT{Increase process noise}
+\ELSIF{$\text{innovation} < 0.5\sqrt{p + r}$} \COMMENT{Very stable}
+    \STATE $q \leftarrow q \times 0.99$ \COMMENT{Decrease process noise}
+\ENDIF
+\STATE \textbf{end function}
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{System Integration}
+
+For optimal integration in embedded control systems:
+\begin{enumerate}
+    \item Initialize filter with first valid measurement
+    \item Implement filter reset capability for mode changes
+    \item Add innovation-based outlier rejection
+    \item Monitor filter convergence through gain tracking
+\end{enumerate}
+
+\subsection{Conclusion}
+
+The Kalman filter provides optimal real-time filtering through:
+\begin{itemize}
+    \item Mathematical optimality via variance minimization
+    \item $\mathcal{O}(1)$ computational complexity
+    \item Minimal memory requirements (constant storage)
+    \item Zero-delay processing with adaptive weighting
+    \item Superior noise rejection compared to traditional filters
+\end{itemize}
+
+This makes it ideal for embedded control applications requiring high performance with limited computational resources.
+
+\end{document}

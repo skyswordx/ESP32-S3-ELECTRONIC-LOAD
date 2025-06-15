@@ -1,0 +1,143 @@
+\documentclass{article}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{xeCJK}
+
+\begin{document}
+
+\section{Kalman Filter for Current Measurement in PID Control System}
+
+\subsection{Algorithm Description}
+
+This Kalman filter implements a one-dimensional recursive filter designed for current measurement filtering in electronic load systems. The filter provides optimal state estimation by combining predictions with noisy measurements, reducing measurement noise while maintaining system responsiveness.
+
+\begin{algorithm}
+\caption{One-Dimensional Kalman Filter for Current Measurement}
+\label{alg:kalman_filter}
+\begin{algorithmic}[1]
+\REQUIRE $z(k)$: noisy measurement, $Q$: process noise covariance, $R$: measurement noise covariance
+\ENSURE $\hat{x}(k)$: filtered estimate
+\STATE Initialize: $\hat{x} \leftarrow 0$, $P \leftarrow 1.0$, $K \leftarrow 0$, $initialized \leftarrow false$
+\STATE Set noise parameters: $Q \leftarrow 0.001$, $R \leftarrow 0.1$ \COMMENT{Default values}
+\WHILE{new measurement available}
+    \IF{$\neg initialized$}
+        \STATE $\hat{x} \leftarrow z(k)$ \COMMENT{Initialize with first measurement}
+        \STATE $initialized \leftarrow true$
+        \STATE \textbf{return} $\hat{x}$
+    \ENDIF
+    \STATE \COMMENT{--- Prediction Step ---}
+    \STATE $\hat{x}^{-}(k) \leftarrow \hat{x}(k-1)$ \COMMENT{State prediction (constant model)}
+    \STATE $P^{-}(k) \leftarrow P(k-1) + Q$ \COMMENT{Error covariance prediction}
+    \STATE \COMMENT{--- Update Step ---}
+    \STATE $K(k) \leftarrow \frac{P^{-}(k)}{P^{-}(k) + R}$ \COMMENT{Kalman gain calculation}
+    \STATE $\hat{x}(k) \leftarrow \hat{x}^{-}(k) + K(k) \cdot [z(k) - \hat{x}^{-}(k)]$ \COMMENT{State update}
+    \STATE $P(k) \leftarrow [1 - K(k)] \cdot P^{-}(k)$ \COMMENT{Error covariance update}
+    \STATE \textbf{return} $\hat{x}(k)$
+\ENDWHILE
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Integration with PID Controller}
+
+The Kalman filter is seamlessly integrated into the PID control loop to provide filtered current measurements:
+
+\begin{algorithm}
+\caption{PID Controller with Kalman Filtered Measurements}
+\label{alg:pid_with_kalman}
+\begin{algorithmic}[1]
+\REQUIRE $r(k)$: current setpoint, $z(k)$: raw current measurement
+\ENSURE $u(k)$: DAC output voltage
+\STATE Initialize Kalman filter with parameters $(Q, R)$
+\STATE Initialize PID parameters: $K_p$, $K_i$, $K_d$
+\WHILE{control loop active}
+    \STATE $z_{raw}(k) \leftarrow$ read\_sensor() \COMMENT{Get raw current measurement}
+    \IF{Kalman filter enabled}
+        \STATE $y(k) \leftarrow$ KalmanFilter.update($z_{raw}(k)$) \COMMENT{Apply filtering}
+    \ELSE
+        \STATE $y(k) \leftarrow z_{raw}(k)$ \COMMENT{Use raw measurement}
+    \ENDIF
+    \STATE $e(k) \leftarrow r(k) - y(k)$ \COMMENT{Calculate error}
+    \STATE $u(k) \leftarrow$ PID\_compute($e(k)$, $y(k)$) \COMMENT{PID calculation}
+    \STATE convert\_output($u(k)$) \COMMENT{Output to DAC}
+\ENDWHILE
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Mathematical Formulation}
+
+The discrete-time Kalman filter for current measurement can be expressed as:
+
+\subsubsection{State Model}
+For current measurement filtering, we use a simple constant model:
+\begin{align}
+x(k) &= x(k-1) + w(k-1) \quad \text{(State equation)} \\
+z(k) &= x(k) + v(k) \quad \text{(Measurement equation)}
+\end{align}
+
+where:
+\begin{itemize}
+    \item $x(k)$ is the true current at time $k$
+    \item $z(k)$ is the noisy measurement
+    \item $w(k-1) \sim \mathcal{N}(0, Q)$ is the process noise
+    \item $v(k) \sim \mathcal{N}(0, R)$ is the measurement noise
+\end{itemize}
+
+\subsubsection{Recursive Equations}
+
+\textbf{Prediction Step:}
+\begin{align}
+\hat{x}^{-}(k) &= \hat{x}(k-1) \\
+P^{-}(k) &= P(k-1) + Q
+\end{align}
+
+\textbf{Update Step:}
+\begin{align}
+K(k) &= \frac{P^{-}(k)}{P^{-}(k) + R} \\
+\hat{x}(k) &= \hat{x}^{-}(k) + K(k)[z(k) - \hat{x}^{-}(k)] \\
+P(k) &= [1 - K(k)]P^{-}(k)
+\end{align}
+
+\subsection{Parameter Tuning Guidelines}
+
+\subsubsection{Process Noise Covariance (Q)}
+\begin{itemize}
+    \item \textbf{Small Q (0.001-0.01)}: Assumes current changes slowly, provides smoother output
+    \item \textbf{Large Q (0.1-1.0)}: Allows for rapid current changes, less filtering
+    \item \textbf{Recommended}: Start with $Q = 0.001$ for stable current applications
+\end{itemize}
+
+\subsubsection{Measurement Noise Covariance (R)}
+\begin{itemize}
+    \item \textbf{Small R (0.01-0.1)}: Trusts measurements more, faster response
+    \item \textbf{Large R (0.5-2.0)}: Filters out more noise, slower response
+    \item \textbf{Recommended}: Start with $R = 0.1$ and adjust based on measurement quality
+\end{itemize}
+
+\subsubsection{Tuning Strategy}
+\begin{enumerate}
+    \item \textbf{High noise environment}: Increase $R$ to $0.5-1.0$
+    \item \textbf{Fast response needed}: Decrease $R$ to $0.05-0.1$
+    \item \textbf{Very stable system}: Decrease $Q$ to $0.0001-0.001$
+    \item \textbf{Dynamic system}: Increase $Q$ to $0.01-0.1$
+\end{enumerate}
+
+\subsection{Performance Characteristics}
+
+\subsubsection{Advantages}
+\begin{itemize}
+    \item \textbf{Optimal estimation}: Minimizes mean squared error under Gaussian assumptions
+    \item \textbf{Real-time capability}: Recursive implementation suitable for embedded systems
+    \item \textbf{Adaptive}: Kalman gain automatically balances prediction vs. measurement
+    \item \textbf{Memory efficient}: Only requires storing previous state and covariance
+\end{itemize}
+
+\subsubsection{Computational Complexity}
+\begin{itemize}
+    \item \textbf{Time complexity}: $O(1)$ per update (constant time)
+    \item \textbf{Space complexity}: $O(1)$ memory usage
+    \item \textbf{Suitable for}: Real-time embedded applications with limited resources
+\end{itemize}
+
+\end{document}

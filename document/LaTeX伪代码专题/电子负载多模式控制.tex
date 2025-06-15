@@ -1,0 +1,244 @@
+\documentclass{article}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\begin{document}
+
+\section{Electronic Load Multi-Mode Control System}
+
+\subsection{Overview}
+
+This system implements a modular electronic load control system with three operational modes: Constant Current (CC), Constant Power (CP), and Constant Resistance (CR). The design utilizes a unified PID current control core with dynamic setpoint calculation based on operational mode, enabling software-based implementation of different load characteristics through real-time parameter adjustment.
+
+\begin{algorithm}
+\caption{Load Mode Switching Control Pattern}
+\label{alg:load_mode_switching}
+\begin{algorithmic}[1]
+\REQUIRE Button input, encoder interface, current load mode state
+\ENSURE Mode transition with parameter preservation and display update
+\STATE \textbf{Global Variables:}
+\STATE $current\_load\_mode \leftarrow CONSTANT\_CURRENT$ \COMMENT{Default mode}
+\STATE $load\_setpoint\_current\_mA \leftarrow 100.0$ \COMMENT{CC mode setpoint}
+\STATE $load\_setpoint\_power\_W \leftarrow 1.0$ \COMMENT{CP mode setpoint}
+\STATE $load\_setpoint\_resistance\_ohm \leftarrow 100.0$ \COMMENT{CR mode setpoint}
+\STATE
+\STATE \textbf{function} $button\_long\_press\_handler()$
+\STATE \textbf{switch} $current\_load\_mode$ \textbf{do}
+    \STATE \textbf{case} $CONSTANT\_CURRENT$:
+    \STATE \quad $current\_load\_mode \leftarrow CONSTANT\_POWER$
+    \STATE \quad Log "Mode switched to Constant Power"
+    \STATE \textbf{case} $CONSTANT\_POWER$:
+    \STATE \quad $current\_load\_mode \leftarrow CONSTANT\_RESISTANCE$
+    \STATE \quad Log "Mode switched to Constant Resistance"
+    \STATE \textbf{case} $CONSTANT\_RESISTANCE$:
+    \STATE \quad $current\_load\_mode \leftarrow CONSTANT\_CURRENT$
+    \STATE \quad Log "Mode switched to Constant Current"
+\STATE \textbf{end switch}
+\STATE $update\_load\_mode\_display()$
+\STATE \textbf{end function}
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+\caption{Encoder Parameter Adjustment Pattern}
+\label{alg:encoder_parameter_adjustment}
+\begin{algorithmic}[1]
+\REQUIRE Encoder count increment, current load mode, parameter limits
+\ENSURE Mode-specific parameter adjustment with safety constraints
+\STATE \textbf{function} $encoder\_parameter\_adjustment(increment)$
+\STATE \textbf{switch} $current\_load\_mode$ \textbf{do}
+    \STATE \textbf{case} $CONSTANT\_CURRENT$:
+    \STATE \quad $load\_setpoint\_current\_mA \leftarrow load\_setpoint\_current\_mA + (increment \times 5.0)$
+    \STATE \quad \textbf{if} $load\_setpoint\_current\_mA > 1800.0$ \textbf{then} $load\_setpoint\_current\_mA \leftarrow 1800.0$
+    \STATE \quad \textbf{if} $load\_setpoint\_current\_mA < 50.0$ \textbf{then} $load\_setpoint\_current\_mA \leftarrow 50.0$
+    \STATE \quad $send\_to\_queue(CURRENT\_QUEUE, load\_setpoint\_current\_mA, CURRENT\_DATA)$
+    \STATE
+    \STATE \textbf{case} $CONSTANT\_POWER$:
+    \STATE \quad $load\_setpoint\_power\_W \leftarrow load\_setpoint\_power\_W + (increment \times 0.01)$
+    \STATE \quad \textbf{if} $load\_setpoint\_power\_W > 50.0$ \textbf{then} $load\_setpoint\_power\_W \leftarrow 50.0$
+    \STATE \quad \textbf{if} $load\_setpoint\_power\_W < 0.1$ \textbf{then} $load\_setpoint\_power\_W \leftarrow 0.1$
+    \STATE \quad $send\_to\_queue(POWER\_QUEUE, load\_setpoint\_power\_W, POWER\_DATA)$
+    \STATE
+    \STATE \textbf{case} $CONSTANT\_RESISTANCE$:
+    \STATE \quad $load\_setpoint\_resistance\_ohm \leftarrow load\_setpoint\_resistance\_ohm + (increment \times 0.1)$
+    \STATE \quad \textbf{if} $load\_setpoint\_resistance\_ohm > 1000.0$ \textbf{then} $load\_setpoint\_resistance\_ohm \leftarrow 1000.0$
+    \STATE \quad \textbf{if} $load\_setpoint\_resistance\_ohm < 1.0$ \textbf{then} $load\_setpoint\_resistance\_ohm \leftarrow 1.0$
+    \STATE \quad $send\_to\_queue(RESISTANCE\_QUEUE, load\_setpoint\_resistance\_ohm, RESISTANCE\_DATA)$
+\STATE \textbf{end switch}
+\STATE \textbf{end function}
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+\caption{Dynamic Target Current Calculation}
+\label{alg:dynamic_target_calculation}
+\begin{algorithmic}[1]
+\REQUIRE Current voltage measurement, load mode, setpoint values
+\ENSURE Calculated target current for PID controller
+\STATE \textbf{function} $calculate\_target\_current\_for\_mode()$
+\STATE $target\_current\_mA \leftarrow 0.0$
+\STATE $current\_voltage\_V \leftarrow safe\_read\_ina226\_voltage\_V()$
+\STATE
+\STATE \textbf{switch} $current\_load\_mode$ \textbf{do}
+    \STATE \textbf{case} $CONSTANT\_CURRENT$:
+    \STATE \quad $target\_current\_mA \leftarrow load\_setpoint\_current\_mA$ \COMMENT{Direct setpoint}
+    \STATE
+    \STATE \textbf{case} $CONSTANT\_POWER$:
+    \STATE \quad \textbf{if} $current\_voltage\_V > 0.1$ \textbf{then} \COMMENT{Avoid division by zero}
+    \STATE \quad \quad $target\_current\_mA \leftarrow \frac{load\_setpoint\_power\_W}{current\_voltage\_V} \times 1000$ \COMMENT{P = UI → I = P/U}
+    \STATE \quad \quad \textbf{if} $target\_current\_mA > 2000.0$ \textbf{then} $target\_current\_mA \leftarrow 2000.0$
+    \STATE \quad \quad \textbf{if} $target\_current\_mA < 10.0$ \textbf{then} $target\_current\_mA \leftarrow 10.0$
+    \STATE \quad \textbf{else}
+    \STATE \quad \quad $target\_current\_mA \leftarrow 10.0$ \COMMENT{Minimum safe current}
+    \STATE \quad \textbf{end if}
+    \STATE
+    \STATE \textbf{case} $CONSTANT\_RESISTANCE$:
+    \STATE \quad \textbf{if} $load\_setpoint\_resistance\_ohm > 0.1$ \textbf{then} \COMMENT{Avoid division by zero}
+    \STATE \quad \quad $target\_current\_mA \leftarrow \frac{current\_voltage\_V}{load\_setpoint\_resistance\_ohm} \times 1000$ \COMMENT{R = U/I → I = U/R}
+    \STATE \quad \quad \textbf{if} $target\_current\_mA > 2000.0$ \textbf{then} $target\_current\_mA \leftarrow 2000.0$
+    \STATE \quad \quad \textbf{if} $target\_current\_mA < 10.0$ \textbf{then} $target\_current\_mA \leftarrow 10.0$
+    \STATE \quad \textbf{else}
+    \STATE \quad \quad $target\_current\_mA \leftarrow 10.0$ \COMMENT{Minimum safe current}
+    \STATE \quad \textbf{end if}
+\STATE \textbf{end switch}
+\STATE
+\STATE \textbf{return} $target\_current\_mA$
+\STATE \textbf{end function}
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+\caption{Unified PID Current Control Task}
+\label{alg:unified_pid_control}
+\begin{algorithmic}[1]
+\REQUIRE PID controller instance, circuit enable state, protection flags
+\ENSURE Continuous current control with mode-adaptive target calculation
+\STATE \textbf{function} $set\_current\_control\_task()$
+\WHILE{task active}
+    \STATE \textbf{if} $circuit\_enabled == FALSE$ \textbf{or} $over\_voltage\_protection == TRUE$ \textbf{then}
+    \STATE \quad $force\_output\_to\_zero()$ \COMMENT{Safety shutdown}
+    \STATE \quad $current\_controller.target \leftarrow 0.0$
+    \STATE \quad $vTaskDelay(100ms)$
+    \STATE \quad \textbf{continue}
+    \STATE \textbf{end if}
+    \STATE
+    \STATE \textbf{if} $current\_load\_mode == CONSTANT\_POWER$ \textbf{or} $current\_load\_mode == CONSTANT\_RESISTANCE$ \textbf{then}
+    \STATE \quad $calculated\_target \leftarrow calculate\_target\_current\_for\_mode()$
+    \STATE \quad \textbf{if} $|calculated\_target - current\_controller.target| > 5.0$ \textbf{then} \COMMENT{5mA dead zone}
+    \STATE \quad \quad $current\_controller.target \leftarrow calculated\_target$
+    \STATE \quad \quad Log "Target updated to: " + calculated\_target + " mA"
+    \STATE \quad \textbf{end if}
+    \STATE \textbf{end if}
+    \STATE \COMMENT{CC mode target is set directly by encoder task}
+    \STATE
+    \STATE $current\_controller.pid\_control\_service()$ \COMMENT{Execute PID control}
+    \STATE $vTaskDelay(10ms)$ \COMMENT{10ms control period}
+\ENDWHILE
+\STATE \textbf{end function}
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+\caption{Template Queue Message Processing}
+\label{alg:template_queue_processing}
+\begin{algorithmic}[1]
+\REQUIRE Template message queue, data type enumeration, display update
+\ENSURE Thread-safe parameter communication between tasks
+\STATE \textbf{function} $process\_parameter\_queue\_messages()$
+\STATE $queue\_element: \text{QueueElement\_t<double>}$
+\WHILE{queue not empty}
+    \STATE $result \leftarrow receive\_from\_queue(parameter\_queue, \&queue\_element, timeout)$
+    \STATE \textbf{if} $result == SUCCESS$ \textbf{then}
+    \STATE \quad \textbf{switch} $queue\_element.data\_description$ \textbf{do}
+    \STATE \quad \textbf{case} $CURRENT\_DATA$:
+    \STATE \quad \quad $update\_current\_display(queue\_element.data)$
+    \STATE \quad \textbf{case} $POWER\_DATA$:
+    \STATE \quad \quad $update\_power\_display(queue\_element.data)$
+    \STATE \quad \textbf{case} $RESISTANCE\_DATA$:
+    \STATE \quad \quad $update\_resistance\_display(queue\_element.data)$
+    \STATE \quad \textbf{case} $VOLTAGE\_DATA$:
+    \STATE \quad \quad $update\_voltage\_display(queue\_element.data)$
+    \STATE \quad \textbf{end switch}
+    \STATE \textbf{end if}
+\ENDWHILE
+\STATE \textbf{end function}
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Mathematical Foundation}
+
+The multi-mode control system is based on fundamental electrical relationships:
+
+\subsubsection{Constant Current Mode}
+\begin{equation}
+I_{target} = I_{setpoint}
+\end{equation}
+
+Direct current control where the encoder setpoint is used as the PID target.
+
+\subsubsection{Constant Power Mode}
+\begin{equation}
+P = U \times I \Rightarrow I_{target} = \frac{P_{setpoint}}{U_{measured}}
+\end{equation}
+
+Power is maintained constant by dynamically adjusting current based on measured voltage.
+
+\subsubsection{Constant Resistance Mode}
+\begin{equation}
+R = \frac{U}{I} \Rightarrow I_{target} = \frac{U_{measured}}{R_{setpoint}}
+\end{equation}
+
+Resistance is emulated by calculating required current from measured voltage and setpoint resistance.
+
+\subsection{Safety and Protection Mechanisms}
+
+\subsubsection{Parameter Limiting}
+\begin{itemize}
+    \item \textbf{Current Range}: 50-1800 mA
+    \item \textbf{Power Range}: 0.1-50 W
+    \item \textbf{Resistance Range}: 1-1000 Ω
+    \item \textbf{Calculated Current Limits}: 10-2000 mA
+\end{itemize}
+
+\subsubsection{Dead Zone Control}
+A 5 mA dead zone prevents target current oscillation in CP and CR modes:
+\begin{equation}
+\text{Update Target} = |I_{calculated} - I_{current\_target}| > 5.0 \text{ mA}
+\end{equation}
+
+\subsubsection{Protection States}
+\begin{itemize}
+    \item \textbf{Circuit Disabled}: Force output to zero, target = 0 mA
+    \item \textbf{Over-voltage Protection}: Emergency shutdown, target = 0 mA
+    \item \textbf{Division by Zero Protection}: Minimum values for voltage and resistance
+\end{itemize}
+
+\subsection{System Architecture Benefits}
+
+\subsubsection{Modularity}
+\begin{itemize}
+    \item Single PID controller core for all modes
+    \item Mode-specific parameter calculation
+    \item Unified safety protection
+    \item Template-based message queuing
+\end{itemize}
+
+\subsubsection{Real-time Performance}
+\begin{itemize}
+    \item 10 ms PID control period
+    \item 100 ms encoder sampling
+    \item Thread-safe I2C device access
+    \item Immediate mode switching response
+\end{itemize}
+
+\subsubsection{User Experience}
+\begin{itemize}
+    \item Intuitive long-press mode switching
+    \item Mode-aware parameter adjustment
+    \item Preserved setpoints across mode changes
+    \item Real-time display updates
+\end{itemize}
+
+\end{document}
