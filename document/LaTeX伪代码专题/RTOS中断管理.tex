@@ -1,0 +1,139 @@
+\documentclass{article}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\begin{document}
+
+\section{FreeRTOS Interrupt Management Paradigm}
+
+\subsection{Design Paradigm Overview}
+
+The button handling system strictly follows FreeRTOS manual best practices for interrupt management, implementing a "Minimal ISR, Complex Task Processing" design paradigm. This approach ensures real-time performance while maintaining system responsiveness.
+
+\begin{algorithm}
+\caption{FreeRTOS Button Interrupt System Initialization}
+\label{alg:interrupt_init}
+\begin{algorithmic}[1]
+\REQUIRE GPIO pins, interrupt priorities, queue and semaphore handles
+\ENSURE Configured interrupt system with bound handlers
+\STATE \textbf{System Initialization:}
+\STATE Create message queue: $button\_queue \leftarrow \text{xQueueCreate}(queue\_size, item\_size)$
+\STATE Create binary semaphore: $button\_semaphore \leftarrow \text{xSemaphoreCreateBinary}()$
+\STATE
+\FOR{each button pin $i$ in $button\_pins$}
+    \STATE Configure GPIO: $\text{gpio\_config}(pin_i, \text{INPUT\_PULLUP})$
+    \STATE Install ISR: $\text{gpio\_isr\_handler\_add}(pin_i, button\_isr\_handler, pin_i)$
+    \STATE Set interrupt type: $\text{gpio\_set\_intr\_type}(pin_i, \text{FALLING\_EDGE})$
+\ENDFOR
+\STATE
+\STATE Create button handler task: $\text{xTaskCreate}(button\_handler\_task, ...)$
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+\caption{Minimal Interrupt Service Routine (ISR)}
+\label{alg:minimal_isr}
+\begin{algorithmic}[1]
+\REQUIRE Triggered GPIO pin number
+\ENSURE Message queued and task awakened
+\STATE \textbf{function} $button\_isr\_handler(gpio\_pin)$
+\STATE \quad $higher\_priority\_task\_woken \leftarrow \text{false}$
+\STATE \quad \textbf{Send pin info to queue:}
+\STATE \quad $\text{xQueueSendFromISR}(button\_queue, \&gpio\_pin, \&higher\_priority\_task\_woken)$
+\STATE \quad \textbf{Release semaphore to wake task:}
+\STATE \quad $\text{xSemaphoreGiveFromISR}(button\_semaphore, \&higher\_priority\_task\_woken)$
+\STATE \quad \textbf{Yield if higher priority task awakened:}
+\STATE \quad \textbf{if} $higher\_priority\_task\_woken$ \textbf{then}
+\STATE \quad \quad $\text{portYIELD\_FROM\_ISR}(higher\_priority\_task\_woken)$
+\STATE \quad \textbf{end if}
+\STATE \textbf{end function}
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+\caption{Complex Button Handler Task}
+\label{alg:button_task}
+\begin{algorithmic}[1]
+\REQUIRE Initialized queues and semaphores
+\ENSURE Complete button processing with debouncing and function mapping
+\STATE \textbf{function} $button\_handler\_task()$
+\WHILE{system running}
+    \STATE \textbf{Wait for semaphore (blocking):}
+    \STATE $\text{xSemaphoreTake}(button\_semaphore, \text{portMAX\_DELAY})$
+    \STATE
+    \STATE \textbf{Process all queued button events:}
+    \WHILE{$\text{xQueueReceive}(button\_queue, \&gpio\_pin, 0) == \text{pdTRUE}$}
+        \STATE \textbf{Debouncing:}
+        \STATE $\text{vTaskDelay}(debounce\_time)$ \COMMENT{Hardware settling time}
+        \STATE \textbf{if} $\text{gpio\_get\_level}(gpio\_pin) == \text{LOW}$ \textbf{then}
+            \STATE $press\_start\_time \leftarrow \text{xTaskGetTickCount}()$
+            \STATE \textbf{Wait for release and measure duration:}
+            \WHILE{$\text{gpio\_get\_level}(gpio\_pin) == \text{LOW}$}
+                \STATE $\text{vTaskDelay}(poll\_interval)$
+            \ENDWHILE
+            \STATE $press\_duration \leftarrow \text{xTaskGetTickCount}() - press\_start\_time$
+            \STATE
+            \STATE \textbf{Button type recognition and function mapping:}
+            \IF{$press\_duration < short\_press\_threshold$}
+                \STATE $\text{execute\_short\_press\_function}(gpio\_pin)$
+            \ELSIF{$press\_duration < long\_press\_threshold$}
+                \STATE $\text{execute\_long\_press\_function}(gpio\_pin)$
+            \ELSE
+                \STATE $\text{execute\_extra\_long\_press\_function}(gpio\_pin)$
+            \ENDIF
+        \STATE \textbf{end if}
+    \ENDWHILE
+\ENDWHILE
+\STATE \textbf{end function}
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Design Paradigm Advantages}
+
+This FreeRTOS interrupt management approach provides several critical benefits:
+
+\begin{itemize}
+    \item \textbf{Minimal ISR execution time}: ISR completes within microseconds, maintaining real-time guarantees
+    \item \textbf{Deterministic response}: Interrupt latency is predictable and bounded
+    \item \textbf{Complex processing isolation}: Button logic runs in task context with full RTOS services available
+    \item \textbf{Resource protection}: Queue and semaphore provide thread-safe communication between ISR and task
+    \item \textbf{Power efficiency}: Task can be blocked, allowing CPU to enter low-power states
+    \item \textbf{Scalability}: Additional buttons require only new ISR bindings, no architectural changes
+\end{itemize}
+
+\subsection{Timing Analysis}
+
+\begin{equation}
+T_{ISR} = T_{queue\_send} + T_{semaphore\_give} + T_{context\_switch}
+\end{equation}
+
+\begin{equation}
+T_{total\_response} = T_{ISR} + T_{task\_scheduling} + T_{button\_processing}
+\end{equation}
+
+where $T_{ISR} < 10\mu s$ ensures minimal impact on real-time performance.
+
+\subsection{Implementation Guidelines}
+
+\subsubsection{ISR Best Practices}
+
+\begin{itemize}
+    \item Keep ISR code minimal - only essential operations
+    \item Use FromISR versions of FreeRTOS API functions
+    \item Always check higher priority task woken flag
+    \item Avoid floating-point operations in ISR context
+    \item Use appropriate interrupt priorities
+\end{itemize}
+
+\subsubsection{Task Communication}
+
+\begin{itemize}
+    \item Use queues for data passing between ISR and tasks
+    \item Use semaphores for synchronization and event notification
+    \item Implement proper timeout handling in task context
+    \item Consider queue overflow scenarios and error handling
+\end{itemize}
+
+\end{document}

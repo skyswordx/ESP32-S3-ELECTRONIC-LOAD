@@ -60,11 +60,20 @@ void update_gui_task(void *pvParameters)
               if (guider_ui.main_page_measure_voltage_label != NULL && queue_element.data_description == DATA_DESCRIPTION_VOLTAGE){ lv_label_set_text_fmt(guider_ui.main_page_measure_voltage_label, "%.3f", queue_element.data); }
               if (guider_ui.main_page_measure_power_label != NULL && queue_element.data_description == DATA_DESCRIPTION_POWER){ lv_label_set_text_fmt(guider_ui.main_page_measure_power_label, "%.3f", queue_element.data); }
               if (guider_ui.main_page_measure_resistance_label != NULL && queue_element.data_description == DATA_DESCRIPTION_RESISTANCE){ lv_label_set_text_fmt(guider_ui.main_page_measure_resistance_label, "%.1f", queue_element.data); }
-              break;
-            case TASK_ENCODER:
+              break;            case TASK_ENCODER:
               // 显示编码器的电流值
               if (guider_ui.main_page_set_current_box != NULL && queue_element.data_description == DATA_DESCRIPTION_SET_CURRENT){ lv_spinbox_set_value(guider_ui.main_page_set_current_box, queue_element.data); }
-              lv_spinbox_set_value(guider_ui.main_page_over_voltage_box, WARNING_VOLTAGE); // shi 以后要删掉
+              // 根据当前button功能模式更新过压/电流spinbox显示
+              if (guider_ui.main_page_over_voltage_box != NULL) {
+                switch(current_button34_mode) {
+                  case VOLTAGE_ADJUSTMENT:
+                    lv_spinbox_set_value(guider_ui.main_page_over_voltage_box, Warning_Voltage);
+                    break;
+                  case CURRENT_ADJUSTMENT:
+                    lv_spinbox_set_value(guider_ui.main_page_over_voltage_box, (int32_t)load_test_high_current_mA);
+                    break;
+                }
+              }
               break;
             case TASK_DUMMY_SENSOR:
 
@@ -75,7 +84,12 @@ void update_gui_task(void *pvParameters)
 
             case EVENT_OVER_VOLTAGE:
               printf("\n[update_gui_task] over voltage event");
-
+            
+            case TASK_ADC1:
+              // 显示 ADC1 读取的电压值
+              if (guider_ui.main_page_temperature_label != NULL){
+                lv_label_set_text_fmt(guider_ui.main_page_temperature_label, "%.1f", queue_element.data);
+              }
               break;
             default:
               break;

@@ -1,0 +1,87 @@
+\documentclass{article}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\begin{document}
+
+\section{PID Controller with Anti-Derivative Kick and Intelligent Integral Windup Protection}
+
+\subsection{Algorithm Description}
+
+This PID controller implements an incremental structure with two key features: Anti-Derivative Kick to prevent output spikes during setpoint changes, and Intelligent Integral Windup Protection to prevent integral saturation.
+
+\begin{algorithm}
+\caption{PID Controller with Anti-Derivative Kick and Intelligent Integral Windup Protection}
+\label{alg:pid_enhanced}
+\begin{algorithmic}[1]
+\REQUIRE $r(k)$: setpoint, $y(k)$: measured value, $K_p, K_i, K_d$: PID parameters
+\ENSURE $u(k)$: controller output
+\STATE Initialize: $e_{prev} \leftarrow 0$, $y_{prev} \leftarrow 0$, $u_{prev} \leftarrow 0$, $I \leftarrow 0$
+\STATE Set limits: $u_{min}$, $u_{max}$
+\WHILE{system is running}
+    \STATE $e(k) \leftarrow r(k) - y(k)$ \COMMENT{Calculate current error}
+    \STATE $P \leftarrow K_p \cdot e(k)$ \COMMENT{Proportional term}
+    \STATE $I \leftarrow I + K_i \cdot e(k)$ \COMMENT{Integral term accumulation}
+    \STATE $D \leftarrow K_d \cdot (y_{prev} - y(k))$ \COMMENT{Anti-derivative kick}
+    \STATE $u(k) \leftarrow u_{prev} + P + I + D$ \COMMENT{Incremental PID output}
+    \IF{$u(k) > u_{max}$}
+        \STATE $I \leftarrow I - (u(k) - u_{max})$ \COMMENT{Intelligent integral windup protection}
+        \STATE $u(k) \leftarrow u_{max}$
+    \ELSIF{$u(k) < u_{min}$}
+        \STATE $I \leftarrow I - (u(k) - u_{min})$ \COMMENT{Intelligent integral windup protection}
+        \STATE $u(k) \leftarrow u_{min}$
+    \ENDIF
+    \STATE $e_{prev} \leftarrow e(k)$, $y_{prev} \leftarrow y(k)$, $u_{prev} \leftarrow u(k)$
+    \STATE \textbf{output} $u(k)$
+\ENDWHILE
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Mathematical Formulation}
+
+The discrete-time PID controller with the proposed enhancements can be expressed as:
+
+\begin{equation}
+u(k) = u(k-1) + K_p e(k) + K_i e(k) + K_d [y(k-1) - y(k)]
+\end{equation}
+
+where:
+\begin{itemize}
+    \item $u(k)$ is the controller output at sample $k$
+    \item $e(k) = r(k) - y(k)$ is the error at sample $k$
+    \item $r(k)$ and $y(k)$ are the setpoint and measured values respectively
+    \item $K_p$, $K_i$, $K_d$ are the proportional, integral, and derivative gains
+\end{itemize}
+
+\subsection{Key Innovations}
+
+\subsubsection{Anti-Derivative Kick}
+
+Traditional derivative term: $D = K_d[e(k) - e(k-1)]$
+
+Enhanced derivative term: $D = K_d[y(k-1) - y(k)]$
+
+This modification prevents derivative spikes when the setpoint changes abruptly, as the derivative is computed based on the measured variable rather than the error.
+
+\subsubsection{Intelligent Integral Windup Protection}
+
+The integral windup protection mechanism adjusts the integral term before output limitation:
+
+\begin{equation}
+I_{adjusted} = I - [u(k) - u_{limit}]
+\end{equation}
+
+where $u_{limit}$ is either $u_{max}$ or $u_{min}$ depending on which limit is exceeded.
+
+\subsection{Performance Characteristics}
+
+\begin{itemize}
+    \item \textbf{Reduced settling time}: Intelligent integral protection prevents overshoot recovery delays
+    \item \textbf{Improved transient response}: Anti-derivative kick eliminates output spikes during setpoint changes
+    \item \textbf{Enhanced stability}: Incremental structure provides better numerical stability
+    \item \textbf{Robustness}: Suitable for systems with actuator limitations and frequent setpoint changes
+\end{itemize}
+
+\end{document}

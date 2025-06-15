@@ -19,14 +19,16 @@
 
 
 /**
- * @brief 旋转编码器模式
+ * @brief 旋转编码器步进长度
  * @author skyswordx
- * @details QUAD 模式：四倍频模式，默认使用这个模式
- *          SINGLE 模式：单倍频模式，使用这个模式可以减少编码器的抖动
+ * @details SINGLE 模式：单倍模式
+ *          TEN 模式：十倍模式
+ *          HUNDRED 模式：百倍模式
  */
 enum encoder_mode_t {
-    QUAD = 0,
-    SINGLE = 1
+    TEN = 0,
+    SINGLE = 1,
+    HUNDRED = 2
 };
 
 
@@ -47,13 +49,16 @@ class encoder_handle_t
         int64_t single_count;
         double read_count_accum_clear();
         void set_count(int64_t value);
+        
+        // 新增：读取增量计数值（不清除计数器，返回相对于上次调用的增量）
+        double read_count_increment();
 
         encoder_mode_t mode = SINGLE;
 
 
         encoder_handle_t(int pin_A, int pin_B);
     private:
-        /* 没想好 */
+        int64_t last_count; // 用于记录上次的计数值，计算增量
 };
 
 

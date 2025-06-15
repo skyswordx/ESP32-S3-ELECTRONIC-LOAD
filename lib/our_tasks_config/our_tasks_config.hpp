@@ -32,7 +32,7 @@
 
 #define USE_LCD_DISPLAY 1  // 是否使用 LCD 显示屏
 #define USE_ENCODER1 1 // 是否使用编码器 1
-// #define USE_ADC1 1 // 是否使用 ADC1 通道 5 读取电压值
+#define USE_ADC1 1 // 是否使用 ADC1 通道 5 读取电压值
 
 #define USE_BUTTON 1 // 是否使用按键
     #define USE_BUTTON1 1 // 是否使用按键 1
@@ -56,7 +56,7 @@ extern SemaphoreHandle_t startup_xBinarySemaphore; // 启动二值信号量
 /*********************************** Current PID Setup ***********************************/
 // 包含自定义的 PID 控制器类和 VOFA 下位机
 #ifdef USE_PID_CONTROLLER
-    #include "our_pid_controller.hpp"
+    #include "../our_pid_controller/our_pid_controller.hpp"
     // #include "our_vofa_debuger.hpp"
 
     extern PID_controller_t<double> current_ctrl;
@@ -66,9 +66,9 @@ extern SemaphoreHandle_t startup_xBinarySemaphore; // 启动二值信号量
     // #define CURRENT_TASK_KP 0.0022226816 // 电流控制器比例系数
     // #define CURRENT_TASK_KI 0.00 // 电流控制器积分系数
             
-    #define CURRENT_TASK_KP 0.001 // 电流控制器比例系数
-    #define CURRENT_TASK_KI 0.00 // 电流控制器积分系数
-    #define CURRENT_TASK_KD 0.001 // 电流控制器微分系数
+    #define CURRENT_TASK_KP 0.0005 // 电流控制器比例系数
+    #define CURRENT_TASK_KI 0.0000 // 电流控制器积分系数
+    #define CURRENT_TASK_KD 0.000 // 电流控制器微分系数
             
     void set_current_task(void *pvParameters); // 设置电流任务函数
             
@@ -144,9 +144,9 @@ extern SemaphoreHandle_t startup_xBinarySemaphore; // 启动二值信号量
 #endif // USE_OUTPUT_CALIBRATION 
 
 
-
-
-
+/*************************************** Safty Setup ********************************/
+extern uint8_t Warning_Voltage; // 过压保护阈值
+extern bool circuit_enabled; // 电路开关状态（true=开启，false=关闭）
 
 /*************************************** Encoder Setup *****************************/
 #ifdef USE_ENCODER1
@@ -157,6 +157,8 @@ extern SemaphoreHandle_t startup_xBinarySemaphore; // 启动二值信号量
     extern encoder_handle_t encoder1; // 旋转编码器对象
 
     void get_encoder1_data_task(void *pvParameters); // 获取编码器数据的任务函数
+    void set_encoder_current_setpoint(double setpoint_mA); // 设置编码器任务的当前电流设定值
+    double get_encoder_current_setpoint(); // 获取编码器任务的当前电流设定值
 #endif // USE_ENCODER1
 
 /*********************************** INA226 & MCP4725 Setup *************************/
@@ -193,13 +195,21 @@ extern SemaphoreHandle_t startup_xBinarySemaphore; // 启动二值信号量
 
         #ifdef USE_VOLTAGE_PROTECTION
             extern BaseType_t over_voltage_protection_flag; // 过压保护标志位
-            extern BaseType_t over_voltage_igonre_pid_flag; // 忽略 PID 控制器标志位
             extern SemaphoreHandle_t over_voltage_protection_xBinarySemaphore; // 过压保护二值信号量
             void over_voltage_protection_task(void *pvParameters); // 过压保护任务函数
         #endif // USE_VOLTAGE_PROTECTION
     #endif // USE_MCP4725
-    
-    
+
+    // 添加I2C互斥锁保护，防止并发访问冲突
+    extern SemaphoreHandle_t i2c_device_mutex;
+
+    // 线程安全的INA226读取函数
+    double safe_read_ina226_current_mA();
+    double safe_read_ina226_voltage_V();
+    double safe_read_ina226_power_W();
+    void init_pid_controller();
+
+
 #endif // USE_IIC_DEVICE
 
 
@@ -266,6 +276,41 @@ extern SemaphoreHandle_t startup_xBinarySemaphore; // 启动二值信号量
     void get_dummy_sensor_data_task(void *pvParameters); // 模拟获得传感器数据的任务函数
 #endif // USE_DUMMY_SENSOR
 
+/*********************************** Load Mode Setup *********************************/
+/**
+ * @brief 负载模式枚举
+ * @author Triwalt
+ * @details 支持三种负载模式：恒流、恒功率、恒阻
+ */
+enum LoadMode {
+    CONSTANT_CURRENT,     // 恒流模式
+    CONSTANT_POWER,       // 恒功率模式
+    CONSTANT_RESISTANCE   // 恒阻模式
+};
 
+// 全局变量声明
+extern LoadMode current_load_mode;       // 当前负载模式
+extern double load_setpoint_current_mA;  // 恒流模式设定值(mA)
+extern double load_setpoint_power_W;     // 恒功率模式设定值(W)
+extern double load_setpoint_resistance_ohm; // 恒阻模式设定值(Ω)
+
+// 负载模式相关函数声明
+void switch_load_mode();                 // 切换负载模式
+void update_load_mode_display();         // 更新负载模式显示
+double calculate_target_current_for_mode(); // 根据当前模式计算目标电流
+
+/*********************************** Button34 Function Mode Setup *******************/
+enum Button34Mode {
+    VOLTAGE_ADJUSTMENT,   // 过压阈值调节模式（默认）
+    CURRENT_ADJUSTMENT    // 负载测试电流调节模式
+};
+
+// Button3/4功能模式相关变量声明
+extern Button34Mode current_button34_mode;     // 当前button3/4功能模式
+extern double load_test_high_current_mA;       // 负载测试高电流值(mA)
+
+// Button3/4功能模式相关函数声明
+void switch_button34_mode();                   // 切换button3/4功能模式
+void update_button34_mode_display();           // 更新button3/4功能模式显示
 
 #endif // OUR_CONFIG_HPP

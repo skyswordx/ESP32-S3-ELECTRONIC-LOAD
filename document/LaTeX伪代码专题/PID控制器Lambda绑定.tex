@@ -1,0 +1,112 @@
+\documentclass{article}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\begin{document}
+
+\section{PID Controller Lambda Binding Design Pattern}
+
+\subsection{Functional Programming Design Pattern}
+
+The PID controller implementation employs functional programming design patterns through lambda expressions for sensor reading and output conversion functions, achieving complete decoupling between control algorithms and hardware interfaces.
+
+\begin{algorithm}
+\caption{Hardware Interface Binding through Function Pointers}
+\label{alg:function_binding}
+\begin{algorithmic}[1]
+\REQUIRE PID controller instance, sensor interface, actuator interface
+\ENSURE Configured PID controller with bound I/O functions
+\STATE \textbf{Define sensor reading function:}
+\STATE $\text{read\_sensor} \leftarrow \lambda() \rightarrow \text{double}$
+\STATE \quad \textbf{return} $\text{INA226\_getCurrent\_mA()}$
+\STATE
+\STATE \textbf{Define output conversion function:}
+\STATE $\text{convert\_output} \leftarrow \lambda(\text{output: double}) \rightarrow \text{double}$
+\STATE \quad $\text{MCP4725\_setVoltage}(\text{output})$
+\STATE \quad \textbf{return} $\text{output}$
+\STATE
+\STATE \textbf{Bind functions to PID controller:}
+\STATE $\text{controller.read\_sensor} \leftarrow \text{read\_sensor}$
+\STATE $\text{controller.convert\_output} \leftarrow \text{convert\_output}$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Architecture Advantages}
+
+This functional programming approach provides several advantages:
+\begin{itemize}
+    \item \textbf{Hardware abstraction}: Control logic is independent of specific sensor/actuator implementations
+    \item \textbf{Enhanced testability}: Mock functions can be easily substituted for unit testing
+    \item \textbf{Improved maintainability}: Hardware changes require only function binding modifications
+    \item \textbf{Runtime flexibility}: I/O functions can be dynamically reconfigured during operation
+\end{itemize}
+
+\subsection{Implementation Example}
+
+\begin{algorithm}
+\caption{Lambda Function Implementation for Sensor Interface}
+\label{alg:lambda_implementation}
+\begin{algorithmic}[1]
+\REQUIRE Sensor hardware interface, data processing requirements
+\ENSURE Bound lambda functions for PID controller
+\STATE \textbf{Current sensor reading lambda:}
+\STATE $\text{current\_reader} \leftarrow \lambda() \{$
+\STATE \quad $raw\_value \leftarrow \text{INA226.getCurrent\_raw()}$
+\STATE \quad $calibrated\_value \leftarrow raw\_value \times cal\_factor + offset$
+\STATE \quad \textbf{return} $calibrated\_value$
+\STATE $\}$
+\STATE
+\STATE \textbf{Voltage output lambda:}
+\STATE $\text{voltage\_writer} \leftarrow \lambda(output\_voltage) \{$
+\STATE \quad $dac\_value \leftarrow (output\_voltage / V_{ref}) \times 4095$
+\STATE \quad $\text{MCP4725.setVoltage}(dac\_value)$
+\STATE \quad \textbf{return} $output\_voltage$
+\STATE $\}$
+\STATE
+\STATE \textbf{Controller binding:}
+\STATE $\text{pid\_controller.bind\_input}(current\_reader)$
+\STATE $\text{pid\_controller.bind\_output}(voltage\_writer)$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Design Pattern Benefits}
+
+\subsubsection{Decoupling and Modularity}
+
+The lambda binding pattern creates a clear separation between:
+\begin{itemize}
+    \item Control algorithm logic (PID computation)
+    \item Hardware interface details (sensor/actuator communication)
+    \item Data processing operations (calibration, scaling)
+\end{itemize}
+
+\subsubsection{Testing and Validation}
+
+Mock functions can be easily substituted for hardware interfaces:
+
+\begin{algorithm}
+\caption{Mock Function Binding for Testing}
+\label{alg:mock_binding}
+\begin{algorithmic}[1]
+\REQUIRE Test scenarios, simulation parameters
+\ENSURE Testable PID controller configuration
+\STATE \textbf{Mock sensor function:}
+\STATE $\text{mock\_sensor} \leftarrow \lambda() \{$
+\STATE \quad \textbf{return} $test\_value + noise\_generator()$
+\STATE $\}$
+\STATE
+\STATE \textbf{Mock actuator function:}
+\STATE $\text{mock\_output} \leftarrow \lambda(value) \{$
+\STATE \quad $test\_log.append(value)$
+\STATE \quad \textbf{return} $value$
+\STATE $\}$
+\STATE
+\STATE \textbf{Test configuration:}
+\STATE $\text{pid\_controller.bind\_input}(mock\_sensor)$
+\STATE $\text{pid\_controller.bind\_output}(mock\_output)$
+\end{algorithmic}
+\end{algorithm}
+
+\end{document}

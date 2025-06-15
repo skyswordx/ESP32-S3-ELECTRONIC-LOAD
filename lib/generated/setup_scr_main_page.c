@@ -2455,7 +2455,7 @@ void setup_scr_main_page(lv_ui *ui)
     ui->main_page_temperature_label = lv_label_create(ui->main_page);
     lv_label_set_text(ui->main_page_temperature_label, "25 ");
     lv_label_set_long_mode(ui->main_page_temperature_label, LV_LABEL_LONG_WRAP);
-    lv_obj_set_pos(ui->main_page_temperature_label, 230, 254);
+    lv_obj_set_pos(ui->main_page_temperature_label, 220, 254);
     lv_obj_set_size(ui->main_page_temperature_label, 79, 22);
 
     //Write style for main_page_temperature_label, Part: LV_PART_MAIN, State: LV_STATE_DEFAULT.
@@ -2769,7 +2769,7 @@ void setup_scr_main_page(lv_ui *ui)
     //Write style for main_page_measure_current_label, Part: LV_PART_MAIN, State: LV_STATE_DEFAULT.
     lv_obj_set_style_border_width(ui->main_page_measure_current_label, 0, LV_PART_MAIN|LV_STATE_DEFAULT);
     lv_obj_set_style_radius(ui->main_page_measure_current_label, 0, LV_PART_MAIN|LV_STATE_DEFAULT);
-    lv_obj_set_style_text_color(ui->main_page_measure_current_label, lv_color_hex(0xff9600), LV_PART_MAIN|LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(ui->main_page_measure_current_label, lv_color_hex(0xc4c4c4), LV_PART_MAIN|LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(ui->main_page_measure_current_label, &lv_font_IntelOneMono_Medium_30, LV_PART_MAIN|LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui->main_page_measure_current_label, 255, LV_PART_MAIN|LV_STATE_DEFAULT);
     lv_obj_set_style_text_letter_space(ui->main_page_measure_current_label, 0, LV_PART_MAIN|LV_STATE_DEFAULT);
@@ -2847,7 +2847,7 @@ void setup_scr_main_page(lv_ui *ui)
 
     //Write codes main_page_over_voltage_warning_msgbox
     static const char * main_page_over_voltage_warning_msgbox_btns[] = {""};
-    ui->main_page_over_voltage_warning_msgbox = lv_msgbox_create(ui->main_page, "OVER  VOLATGE  WARNING", "\n极限过压了\n\n\n\n", main_page_over_voltage_warning_msgbox_btns, false);
+    ui->main_page_over_voltage_warning_msgbox = lv_msgbox_create(ui->main_page, "过压警告", "\n达到过压保护阈值，已关闭电流输入。\n等待电压回落......\n\n", main_page_over_voltage_warning_msgbox_btns, false);
     lv_obj_set_size(lv_msgbox_get_btns(ui->main_page_over_voltage_warning_msgbox), 0, 30);
     lv_obj_set_pos(ui->main_page_over_voltage_warning_msgbox, 101, 83);
     lv_obj_set_size(ui->main_page_over_voltage_warning_msgbox, 280, 150);
