@@ -150,37 +150,6 @@ ESP32-S3-ELECTRONIC-LOAD/
 - **参数设置**: 目标值设定与控制器参数调整
 - **数据监控**: 历史曲线与实时波形显示
 
-## 🎛️ 控制算法
-
-### 🔄 PID控制器
-```cpp
-// 增强型PID控制器特性
-- 积分抗饱和处理
-- 微分先行技术
-- 死区控制
-- 卡尔曼滤波集成
-- 自适应参数调整
-```
-
-### 🧠 MPC控制器
-```cpp
-// 模型预测控制特性
-- 预测时域: 10步 (100ms)
-- 控制时域: 5步 (50ms)  
-- 约束处理: 输出限制 + 变化率限制
-- 优化算法: 梯度下降法
-- 权重配置: Q=1.0, R=0.1, S=0.01
-```
-
-### 📈 卡尔曼滤波器
-```cpp
-// 一维卡尔曼滤波器
-- 过程噪声: Q = 0.002
-- 测量噪声: R = 0.0005
-- 实时收敛: < 5个采样周期
-- 噪声抑制: 60%以上
-- 精度提升: 50%以上
-```
 
 ## 📋 硬件要求
 
@@ -247,30 +216,11 @@ pio device monitor
 
 ## 📺 演示视频
 
-- 🎬 **更 换IPS 全视角显示屏**: [✨2025.6.14 智能直流电子负载demo演示](https://www.bilibili.com/video/BV1d8MUzvEH5/?spm_id_from=333.1387.homepage.video_card.click&vd_source=9c85d181a345808c304a6fa2780bb4da)
+- 🎬 **更换IPS 全视角显示屏**: [✨2025.6.14 智能直流电子负载demo演示](https://www.bilibili.com/video/BV1d8MUzvEH5/?spm_id_from=333.1387.homepage.video_card.click&vd_source=9c85d181a345808c304a6fa2780bb4da)
 - 🔧 **增加侧边栏和电流控制器**: [✨2025.5.5 简易直流电子负载demo演示](https://www.bilibili.com/video/BV1UhVzzkEg6/?spm_id_from=333.1387.homepage.video_card.click&vd_source=9c85d181a345808c304a6fa2780bb4da)  
 - 🧪 ***统一 GUI 风格** [✨2025.4.20 电子负载系统测试](https://www.bilibili.com/video/BV1Cc5fzoE1t/?spm_id_from=333.1387.homepage.video_card.click&vd_source=9c85d181a345808c304a6fa2780bb4da)
 - 📊 **硬件恒流电路测试**: [✨2025.3.27 恒流测试](https://www.bilibili.com/video/BV1WaRXYPE3B/?spm_id_from=333.1387.homepage.video_card.click&vd_source=9c85d181a345808c304a6fa2780bb4da)
 
-## 📚 文档
-
-### 📖 用户文档
-- [🚀 快速入门指南](document/项目设计文档/manual.md)
-- [⚙️ 硬件连接说明](document/项目设计文档/ConstCurrentBoy-软件设计部分与结构设计部分素材.md)
-- [🔧 软件配置教程](document/系统调试文档/schedule.md)
-- [❗ 故障排除指南](document/系统调试文档/I2C_冲突分析与解决方案.md)
-
-### 🧠 技术文档  
-- [🎛️ PID控制器详解](document/LaTeX伪代码专题/PID控制器Lambda绑定.pdf)
-- [🧮 MPC控制器原理](document/MPC控制器专题/MPC控制器工作原理详解.md)
-- [📈 卡尔曼滤波理论](document/滤波算法专题/卡尔曼滤波器原理与实现.md)
-- [🔄 RTOS任务设计](document/项目设计文档/Learn-RTOS-With-ESP32.md)
-
-### 📊 算法专题
-- [📐 数学推导](document/LaTeX伪代码专题/)
-- [💻 代码实现](document/MPC控制器专题/MPC代码详解.md)
-- [⚖️ 性能对比](document/MPC控制器专题/MPC控制器分析与实现.md)
-- [🎯 参数调优](document/MPC控制器专题/MPC参数命名详解.md)
 
 ## 🤝 贡献指南
 
