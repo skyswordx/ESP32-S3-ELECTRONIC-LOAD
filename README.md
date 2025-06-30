@@ -13,7 +13,7 @@
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square&logo=open-source-initiative)](LICENSE)
 [![Build](https://img.shields.io/badge/Build-PlatformIO-orange?style=flat-square&logo=platformio)](https://platformio.org/)
 [![Display](https://img.shields.io/badge/Display-LVGL-purple?style=flat-square)](https://lvgl.io/)
-[![Controller](https://img.shields.io/badge/Controller-PID%20%2B%20MPC-red?style=flat-square&logo=controlthings)](https://github.com/)
+[![Controller](https://img.shields.io/badge/Controller-PID%20%2B%20KalmanFliter-red?style=flat-square&logo=controlthings)](https://github.com/)
 
 ---
 
