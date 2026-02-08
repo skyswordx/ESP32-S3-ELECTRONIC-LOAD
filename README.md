@@ -1,5 +1,6 @@
 <div align="center">
 
+**简体中文** | [English](README.en.md)
 
 ![实物演示图](assets-of-README/image-demo.png)
 
